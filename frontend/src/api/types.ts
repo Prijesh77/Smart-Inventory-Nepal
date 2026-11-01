@@ -288,6 +288,7 @@ export type ImportType = "suppliers" | "products" | "opening_stock" | "sales";
 /** GET /forecasts/model: the shop's own Random Forest and what "auto" forecasts use. */
 export interface ModelStatus {
   trained: boolean;
+  needs_retraining?: boolean;   // trained before the current features (e.g. festivals)
   trained_at: string | null;
   history_days: number;
   needed_days: number;

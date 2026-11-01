@@ -6,7 +6,8 @@ Each row only uses two kinds of information:
   1. Sales statistics from days strictly BEFORE the origin (what a planner
      would know on the morning of the origin day).
   2. Facts about the target day that are known in advance: weekday, month,
-     SNAP day, holiday/event type, and the planned price.
+     Nepali festivals (days until Dashain and Tihar, festival build-up windows;
+     ml/calendar/festivals.py), and the planned price.
 
 Because the same features are computed for every horizon h = 1..28, one model
 forecasts all horizons at once ("direct" strategy). It never feeds its own
@@ -26,10 +27,10 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from ml.calendar.festivals import FESTIVAL_FEATURES
 from ml.evaluation.backtest import build_sales_matrix
 from ml.models.baselines import last_valid
 
-EVENT_TYPES = ["Cultural", "National", "Religious", "Sporting"]
 MIN_HISTORY_DAYS = 91           # longest look-back window used below
 DAYS_SINCE_SALE_CAP = 365
 
@@ -39,7 +40,7 @@ FEATURES = [
     # sales history before the origin
     "ma_7", "ma_28", "ma_91", "std_28", "zero_share_28", "days_since_sale", "same_wday_mean_4w",
     # known facts about the target day
-    "wday", "month", "snap", "is_event", *[f"event_{e.lower()}" for e in EVENT_TYPES],
+    "wday", "month", *FESTIVAL_FEATURES,
     "price_change", "price_vs_91d",
 ]
 
@@ -67,16 +68,11 @@ def make_panel(daily: pd.DataFrame, last_day: int) -> Panel:
     cats = daily.assign(item_id=ids).drop_duplicates("item_id").set_index("item_id")["cat_id"].astype(str)
     cat_codes = pd.Categorical(cats.reindex(sales.index), categories=sorted(cats.unique())).codes
 
-    cal = (
-        daily.drop_duplicates("d_num").set_index("d_num")[["wday", "month", "snap", "event_type_1"]]
+    # Calendar columns are the same for every item on a day: wday, month and the festival features.
+    calendar = (
+        daily.drop_duplicates("d_num").set_index("d_num")[["wday", "month", *FESTIVAL_FEATURES]]
         .reindex(range(1, last_day + 1))
     )
-    event = cal["event_type_1"].astype(str)
-    calendar = pd.DataFrame({
-        "wday": cal["wday"], "month": cal["month"], "snap": cal["snap"],
-        "is_event": cal["event_type_1"].notna().astype(int),
-        **{f"event_{e.lower()}": (event == e).astype(int) for e in EVENT_TYPES},
-    })
     return Panel(
         item_ids=sales.index.to_numpy(),
         cat_codes=np.asarray(cat_codes),

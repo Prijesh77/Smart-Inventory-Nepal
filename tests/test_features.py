@@ -12,8 +12,8 @@ def make_test_panel(sales: np.ndarray, price: np.ndarray | None = None) -> Panel
     n_items, n_days = sales.shape
     d = np.arange(1, n_days + 1)
     calendar = pd.DataFrame({
-        "wday": (d - 1) % 7 + 1, "month": 1, "snap": 0, "is_event": 0,
-        "event_cultural": 0, "event_national": 0, "event_religious": 0, "event_sporting": 0,
+        "wday": (d - 1) % 7 + 1, "month": 1,
+        "days_to_dashain": 45.0, "days_to_tihar": 45.0, "in_dashain": 0.0, "in_tihar": 0.0, "in_other_festival": 0.0,
     }, index=d)
     return Panel(
         item_ids=np.array([f"I{i}" for i in range(n_items)]),

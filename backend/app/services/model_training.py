@@ -27,7 +27,7 @@ from app.core.errors import AppError, ConflictError
 from app.db.tenancy import current_shop_id, shop_session
 from app.models import DailySales, ModelEvaluation, Product
 from app.models.enums import EvaluationPeriod
-from app.services.forecast_engine import ForecastUnavailable, load_context, model_file
+from app.services.forecast_engine import ForecastUnavailable, load_context, model_file, model_is_current
 from app.services.forecasting import choose_model, holdout_wape, last_sales_date
 from ml.evaluation.metrics import summarize
 from ml.features.build import MIN_HISTORY_DAYS, build_rows
@@ -122,7 +122,8 @@ def model_status(db: Session) -> dict:
     days = history_days(db)
     model, reason = choose_model(db, "auto")
     job = _training.get(shop_id, {})
-    return {"trained": path.exists(), "trained_at": trained_at, "history_days": days,
+    return {"trained": path.exists(), "needs_retraining": path.exists() and not model_is_current(path),
+            "trained_at": trained_at, "history_days": days,
             "needed_days": MIN_TRAINING_DAYS, "can_train": days >= MIN_TRAINING_DAYS,
             "training": job.get("state") == "running", "last_error": job.get("message"),
             "holdout_wape": holdout_wape(db), "auto_uses": model, "auto_reason": reason}

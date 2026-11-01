@@ -53,6 +53,12 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
         <span className="font-medium text-slate-900">Forecasts use: {MODEL_LABEL[data.auto_uses] ?? data.auto_uses}.</span>{" "}
         {data.auto_reason?.replace(/^Auto: [^,]*, /, "Chosen ")}
       </p>
+      {data.needs_retraining && (
+        <p role="note" className="rounded-md bg-amber-50 p-3 text-amber-900">
+          This Random Forest was trained before the forecasts learned about Nepali festivals. Retrain it so it can
+          learn this shop&apos;s Dashain and Tihar patterns; until then the moving average is used.
+        </p>
+      )}
       {data.trained ? (
         <p>
           The Random Forest was trained on this shop&apos;s own sales{data.trained_at ? ` on ${fmtDateTime(data.trained_at)}` : ""}.

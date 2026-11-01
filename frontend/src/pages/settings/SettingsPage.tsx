@@ -9,6 +9,7 @@ import { fmtDateTime, fmtInt } from "../../lib/format";
 import { PolicyForm } from "./PolicyForm";
 import { CatalogSetup } from "./CatalogSetup";
 import { DataImport, IMPORT_STEPS } from "./DataImport";
+import { FestivalCalendar } from "./FestivalCalendar";
 import { UsersAdmin } from "./UsersAdmin";
 
 const JOB_TONE = { pending: "gray", running: "blue", completed: "green", failed: "red" } as const;
@@ -77,6 +78,10 @@ export function SettingsPage() {
               </tbody>
             </table>
           )}
+        </Card>
+
+        <Card title="Festival calendar">
+          <FestivalCalendar />
         </Card>
 
         {isAdmin && <Card title="User accounts"><UsersAdmin /></Card>}

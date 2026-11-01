@@ -43,6 +43,13 @@ describe("ShopModelCard", () => {
     expect(calls.filter((c) => c.url.endsWith("/forecasts/model/train"))).toHaveLength(1);
   });
 
+  it("asks for retraining when the forest was trained before the festival features", async () => {
+    mockFetch({ "GET /forecasts/model": () => ({ body: { ...TRAINED, needs_retraining: true, auto_uses: "moving_avg_28" } }) });
+    render(<ShopModelCard canTrain onTrained={() => undefined} />);
+    expect(await screen.findByRole("note")).toHaveTextContent("trained before the forecasts learned about Nepali festivals");
+    expect(screen.getByRole("button", { name: "Retrain model" })).toBeEnabled();
+  });
+
   it("viewers see the status without a button", async () => {
     mockFetch({ "GET /forecasts/model": () => ({ body: TRAINED }) });
     render(<ShopModelCard canTrain={false} onTrained={() => undefined} />);
