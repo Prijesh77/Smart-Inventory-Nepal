@@ -1,1 +1,1 @@
-"""Inventory decision engine: reorder formulas, recommendations and simulation."""
+"""Inventory decision engine: reorder formulas and recommendations."""

@@ -21,7 +21,7 @@ describe("login flow", () => {
   it("sends visitors who are not logged in to the login page", async () => {
     mockFetch({});
     renderApp("/inventory");
-    expect(await screen.findByRole("heading", { name: "Smart Inventory" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Smart Inventory Nepal" })).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
   });
 

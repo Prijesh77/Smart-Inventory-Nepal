@@ -41,7 +41,7 @@ export function LoginPage() {
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-700">
             <Icon.box className="h-5 w-5" />
           </span>
-          <span className="text-lg font-semibold">Smart Inventory</span>
+          <span className="text-lg font-semibold">Smart Inventory Nepal</span>
         </div>
         <div className="relative max-w-md">
           <p className="text-3xl font-semibold leading-tight tracking-tight">
@@ -61,7 +61,7 @@ export function LoginPage() {
             })}
           </ul>
         </div>
-        <p className="relative text-xs text-slate-500">Undergraduate IT capstone project · Prijesh</p>
+        <p className="relative text-xs text-slate-500">For kirana shops, pharmacies, hardware stores and wholesalers in Nepal · © 2026 Prijesh</p>
       </section>
 
       {/* Sign-in form */}
@@ -71,7 +71,7 @@ export function LoginPage() {
             <span className="mb-6 flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-700 text-white lg:hidden">
               <Icon.box className="h-5 w-5" />
             </span>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Smart Inventory</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Smart Inventory Nepal</h1>
             <p className="mt-1.5 text-sm text-slate-500">Sign in to see forecasts and reorder recommendations.</p>
           </div>
           <form onSubmit={onSubmit} className="space-y-5" noValidate>
@@ -108,7 +108,7 @@ export function LoginPage() {
 }
 
 const FEATURES = [
-  { icon: "trend", text: "Machine-learning demand forecasts for every product" },
-  { icon: "cart", text: "Reorder recommendations that explain their own numbers" },
-  { icon: "clipboard", text: "Purchase orders, deliveries and a full stock audit trail" },
+  { icon: "trend", text: "Demand forecasts that learn your shop's sales and know Dashain and Tihar" },
+  { icon: "cart", text: "Reorder suggestions in rupees that explain their own numbers" },
+  { icon: "clipboard", text: "Bikram Sambat dates, Excel import, orders and a full stock audit trail" },
 ] as const satisfies readonly { icon: IconName; text: string }[];

@@ -20,14 +20,14 @@ Demand forecasting and explainable reorder recommendations for Nepali retailers 
 
 | Area | Now (from the capstone) | Product goal |
 |---|---|---|
-| Data | Demo data from the M5 Walmart competition. It cannot be used commercially and is **not** in this repository. | Each shop's own data, imported from Excel or accounting exports (e.g. Tally) |
-| Forecast model | One Random Forest trained on M5 data (`models/*.joblib`, not in the repository) | Trained automatically per shop on its own sales; simple methods until there is enough history |
+| Data | Each shop's own data from Excel/CSV templates, or the synthetic demo shop (done; no M5 data) | Imports from accounting/billing exports (e.g. Tally) |
+| Forecast model | Each shop's own Random Forest with Nepali festival features, trained from the app; the 28-day moving average until it is trained or when it is more accurate (done) | — |
 | Businesses | Many shops, each with private, separate data and users (done) | Self sign-up page |
 | Currency | Stored natively in NPR (done) | — |
 | Calendar | Bikram Sambat dates, the Shrawan–Asar fiscal year, and Nepali festivals (Dashain, Tihar, Chhath, Teej, Holi, Shivaratri, New Year, Maghe Sankranti) as forecast features and "Festival ahead" advice (done, BS 2081–2083) | Add each new year's festival dates when the government publishes them |
 | Tax | None | 13% VAT on purchases; supplier PAN/VAT numbers |
 | Language | English | Nepali / English |
-| Analytics simulation | Research simulation on M5 data (`ml/experiments`, `experiments/results`) | Replaced by shop-level reports |
+| Analytics | Category performance, slow-moving stock and CSV reports (done; the research simulation was removed) | More shop reports (ABC analysis, supplier performance, profit) |
 
 ## Tech stack
 

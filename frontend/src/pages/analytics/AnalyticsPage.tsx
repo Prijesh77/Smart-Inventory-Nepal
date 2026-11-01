@@ -4,7 +4,7 @@ import { ApiError, downloadFile } from "../../api/client";
 import { Button, Card, ErrorMessage, PageHeader } from "../../components/ui";
 import { ModelComparison } from "../forecasts/ModelComparison";
 import { CategoryTable, WeeklyTrend } from "./CategorySection";
-import { SimulationSection } from "./SimulationSection";
+import { SlowMovers } from "./SlowMovers";
 
 export const EXPORTS = [
   { dataset: "products", label: "Products" },
@@ -44,23 +44,22 @@ function Exports() {
       {message?.kind === "ok" && <p role="status" className="mt-3 text-sm text-emerald-700">{message.text}</p>}
       {message?.kind === "error" && <div className="mt-3"><ErrorMessage message={message.text} /></div>}
       <p className="mt-3 text-xs text-slate-500">
-        CSV files open in Excel. Columns based on simulated data are marked "(simulated)" in their header; text cells are
-        protected so a spreadsheet cannot run them as formulas.
+        CSV files open in Excel. Text cells are protected so a spreadsheet cannot run them as formulas.
       </p>
     </>
   );
 }
 
-export function AnalyticsPage({ pollMs }: { pollMs?: number }) {
+export function AnalyticsPage() {
   return (
     <>
       <PageHeader title="Analytics & reports"
-                  description="Sales trends and category performance, forecast accuracy, simulated policy comparison, and CSV reports." />
+                  description="Sales trends and category performance, slow-moving stock, forecast accuracy, and CSV reports." />
       <div className="grid grid-cols-1 gap-6">
         <Card title="Category performance"><CategoryTable /></Card>
         <Card title="Weekly demand by category"><WeeklyTrend /></Card>
         <Card title="Forecast accuracy by model and demand pattern"><ModelComparison /></Card>
-        <Card title="Inventory policy simulation: cost vs service"><SimulationSection pollMs={pollMs} /></Card>
+        <Card title="Slow-moving stock"><SlowMovers /></Card>
         <Card title="Download reports (CSV)"><Exports /></Card>
       </div>
       <p className="mt-6 text-xs text-slate-500">

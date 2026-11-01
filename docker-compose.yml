@@ -1,13 +1,12 @@
 # The whole application in containers: database + API + web frontend.
 #
 #   docker compose up -d --build                      # start everything
-#   docker compose run --rm api python scripts/seed.py # load project data (first time)
+#   docker compose run --rm api python scripts/seed.py # load the synthetic demo shop (optional)
 #   docker compose run --rm -it api python scripts/create_user.py --email you@example.com --name "You" --role admin
 #   open http://localhost:8080
 #
-# Values come from .env (copy .env.example). The research data, trained models and
-# results are mounted read-only from this folder; build them first with the Phase 2-4
-# scripts (see README). M5 data may not be redistributed, so it is never baked into an image.
+# Values come from .env (copy .env.example). Each shop's trained forecast models are kept
+# in the "models" volume, so they survive rebuilds of the API image.
 name: smart-inventory
 
 services:
@@ -42,9 +41,7 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
     volumes:
-      - ./data:/app/data:ro
-      - ./models:/app/models:ro
-      - ./experiments:/app/experiments:ro
+      - models:/app/models
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
       interval: 10s
@@ -64,3 +61,4 @@ services:
 
 volumes:
   pgdata:
+  models:

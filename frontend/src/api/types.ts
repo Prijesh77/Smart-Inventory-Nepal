@@ -238,39 +238,14 @@ export interface WeeklyPoint {
   units: number;
 }
 
-export type SimPolicy = "baseline_demand_sd" | "engine_ma28" | "engine_rf";
-
-export interface SimulationRow {
-  policy: SimPolicy;
-  service_level: number;
-  demand_class: string;
-  fill_rate: number | null;
-  stockout_rate: number | null;
-  units_lost: number;
-  avg_inventory_value: number;
-  n_orders: number;
-  holding_cost: number;
-  ordering_cost: number;
-  total_cost: number;
-  lost_margin: number;
-}
-
-export interface SimulationRun {
-  id: number;
-  name: string;
-  status: RunStatus;
-  params: { service_levels: number[]; ordering_cost: number; holding_cost_rate: number; uncertain_lead_time: boolean };
-  results: {
-    note: string;
-    summary: SimulationRow[];
-    matched_comparisons: { policy: SimPolicy; reference: SimPolicy; fill_rate: number | null; policy_value: number | null;
-      reference_value: number | null; pct_diff: number | null }[];
-    items: number;
-    days: number;
-  } | null;
-  error_message: string | null;
-  created_at: string;
-  completed_at: string | null;
+/** GET /analytics/slow-movers: stock that has not sold for `days` days. */
+export interface SlowMovers {
+  as_of: string | null;
+  days: number;
+  total_value: number;
+  products_without_cost: number;
+  items: { product_id: number; sku: string; name: string; category: string; on_hand: number; unit_cost: number | null;
+    stock_value: number | null; last_sold: string | null; days_since_sale: number | null }[];
 }
 
 export interface PolicyDefaults extends PolicySettings {

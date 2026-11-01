@@ -11,13 +11,14 @@ WORKDIR /app
 COPY backend/requirements-api.txt backend/requirements-api.txt
 RUN pip install -r backend/requirements-api.txt
 
-# Code only. Data, trained models and experiment results are mounted at run time
-# (see docker-compose.yml): M5 data may not be redistributed inside an image.
+# Code only. Each shop's trained models are written to /app/models, a Docker volume
+# (see docker-compose.yml), so they survive rebuilds.
 COPY ml/ ml/
 COPY backend/ backend/
 
-# Run as a normal user, not root.
-RUN useradd --create-home --uid 10001 appuser && chown -R appuser /app
+# Run as a normal user, not root. The models folder is created here, owned by that user,
+# so the new volume gets the same owner and the API can save trained models.
+RUN useradd --create-home --uid 10001 appuser && mkdir -p /app/models && chown -R appuser /app
 USER appuser
 
 WORKDIR /app/backend

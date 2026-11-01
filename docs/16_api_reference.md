@@ -24,7 +24,9 @@ Base path `/api/v1`. **Reads** need any login (viewer, manager or admin). **Chan
 | Import | `GET /imports/types` · `GET /imports/templates/{type}.xlsx` · `POST /imports/{type}/preview` · `POST /imports/{type}` (*manager*) · `GET /imports/jobs` | below |
 | Suppliers, categories | `GET /suppliers` · `POST /suppliers` · `PATCH /suppliers/{id}` · `GET /categories` · `POST /categories` (*manager* for changes) | |
 | Export | `GET /exports/{products, inventory, transactions, recommendations, purchase-orders, forecast}.csv` | below |
-| Simulations | `POST/GET /simulations` · `GET /simulations/{id}` | below |
+| Model | `GET /forecasts/model` · `POST /forecasts/model/train` (*manager*) | each shop's Random Forest |
+| Reports | `GET /analytics/slow-movers?days=60` | stock with no sale for `days` days |
+| Festivals | `GET /festivals` | the festival calendar the forecasts use |
 | Settings | `GET /settings/policy` · `PUT /settings/policy` (*admin*) | below |
 
 ## Dashboard and analytics
@@ -79,10 +81,6 @@ Six datasets. Every file:
 - marks columns based on simulated inputs with **"(simulated)"**, and the stockout probability with "(model estimate)";
 - is **protected against CSV injection**: text cells starting with `= + - @` get an apostrophe, so a spreadsheet will not run them as formulas. Numbers, including negatives, are left as numbers.
 
-## Simulations
-
-`POST /simulations` (manager/admin) runs the Phase 4 experiment as a background job (about 10–30 s) on the research data set. Options: `service_levels` (any of 0.6–0.99), `ordering_cost`, `holding_cost_rate`, `uncertain_lead_time`. Results: fill rate, stockouts, lost units, stock value, holding/ordering/total cost per policy, service level and demand class, plus cost-at-the-same-fill-rate comparisons when two or more service levels are chosen. Every result carries a **"SIMULATED"** note.
-
 ## Settings
 
 `GET /settings/policy` returns the defaults used by new recommendation runs: service level, review period, ordering cost, holding rate, order-size limits, excess threshold and forecast horizons. `PUT` (*admin*) validates them, e.g. max cycle ≥ min cycle.
@@ -95,4 +93,4 @@ Every amount in the API (prices, costs, order values, the ordering-cost setting)
 
 ## Tests
 
-`backend/tests/test_api_operations.py`, 19 tests: hand-checked dashboard figures; analytics; CSV content, file name and formula protection; settings permissions and validation; import preview, row-numbered errors, rejection of a whole bad file (nothing written, job logged), add + replace, custom column mapping, bad files, non-UTF-8, permissions; simulation input rules and a full simulation run. **Full suite: 203 passed.**
+`backend/tests/test_api_operations.py`: hand-checked dashboard figures; analytics and slow-moving stock; CSV content, file name and formula protection; settings permissions and validation; import preview, row-numbered errors, rejection of a whole bad file (nothing written, job logged), add + replace, custom column mapping, bad files, non-UTF-8, permissions. Onboarding imports: `test_imports.py`; shop isolation: `test_shop_isolation.py`.

@@ -159,3 +159,16 @@ def test_festival_ahead_advice_uses_last_years_tihar(db, data):
     high = np.full(28, 100.0)
     assert festival_note(ctx, row["CANDLE-6"], origin, high, 9, "random_forest_v1").endswith("already expects this rise.")
     assert festival_note(ctx, row["SALT-1KG"], origin, values[row["SALT-1KG"]], 9, "moving_avg_28") is None
+
+
+def test_demo_shop_exports_label_made_up_columns(api):
+    from tests.conftest import TEST_PASSWORD
+    from app.core.security import hash_password
+    from app.models import User
+    with api.app.state.make_session() as s:
+        demo_shop.load(s, demo_shop.generate(END, days=60))
+        s.add(User(email="d@demo.test", full_name="D", role="viewer", hashed_password=hash_password(TEST_PASSWORD, iterations=1_000)))
+        s.commit()
+    token = api.post("/api/v1/auth/login", data={"username": "d@demo.test", "password": TEST_PASSWORD}).json()
+    text = api.get("/api/v1/exports/products.csv", headers={"Authorization": f"Bearer {token['access_token']}"}).text
+    assert "unit_cost (simulated)" in text.splitlines()[0]

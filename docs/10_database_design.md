@@ -9,7 +9,7 @@ Code: [backend/app/models/](../backend/app/models/). Migration: [backend/alembic
 | **Normalised** | Suppliers, categories and products are separate tables linked by foreign keys, so a supplier's lead time is stored once |
 | **History ≠ current state** | `inventory_transactions` is an append-only log of every stock movement; `inventory_balances` holds only the current numbers. Each change to the balance writes a transaction in the **same database transaction** |
 | **On-order is derived** | Stock on order = Σ(ordered − received) over open purchase-order lines. It is not stored twice, so it cannot drift out of sync |
-| **Runs are recorded** | Every forecast, recommendation set, simulation and CSV import is a "run" row with its settings, status, creator and timestamps, so results are traceable |
+| **Runs are recorded** | Every forecast, recommendation set and import is a "run" row with its settings, status, creator and timestamps, so results are traceable |
 | **Constraints in the database** | Unique SKUs and PO numbers; CHECK constraints for non-negative stock, positive pack sizes, valid statuses and probabilities between 0 and 1. Invalid data is rejected even if the API has a bug |
 | **Money as NUMERIC** | Prices and costs use `NUMERIC(12,2)`, never floating point, so cents never drift |
 | **Portable status fields** | Statuses are `VARCHAR` + `CHECK` (SQLAlchemy `Enum(native_enum=False)`), easier to migrate than PostgreSQL enum types |
@@ -38,7 +38,6 @@ erDiagram
     users ||--o{ purchase_orders : "creates"
     users ||--o{ forecast_runs : "starts"
     users ||--o{ recommendation_runs : "starts"
-    users ||--o{ simulation_runs : "starts"
     users ||--o{ import_jobs : "uploads"
 
     categories ||--o{ products : "groups"
@@ -197,13 +196,6 @@ erDiagram
         json warnings
         string review_status "pending | approved | rejected | ordered"
     }
-    simulation_runs {
-        int id PK
-        string name
-        string status
-        json params
-        json results
-    }
     import_jobs {
         int id PK
         string filename
@@ -237,7 +229,6 @@ erDiagram
 | `forecast_runs` / `forecasts` | Each forecast batch and its predictions | Run records the model version, origin, horizon and metrics; predictions ≥ 0 |
 | `model_evaluations` | Backtest scores (Phase 3) for the Forecasting page | One row per model, period, horizon and demand class |
 | `recommendation_runs` / `reorder_recommendations` | Engine output with explanation | One recommendation per product per run; probability in [0, 1]; review status tracks approval |
-| `simulation_runs` | Phase 4 experiments started from the app | Params and summary results stored as JSON |
 | `import_jobs` | CSV uploads | Counts of valid and invalid rows, plus row-level errors |
 | `app_settings` | Policy and forecasting settings | Key-value with JSON values |
 

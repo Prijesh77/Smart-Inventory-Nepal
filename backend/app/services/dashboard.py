@@ -171,3 +171,33 @@ def category_performance(db: Session, days: int = 28) -> list[dict]:
                     "inventory_value": round(float(value), 2),
                     "days_of_cover": round(int(on_hand) / avg, 1) if avg > 0 else None})
     return out
+
+
+def slow_movers(db: Session, days: int = 60) -> dict:
+    """Products with stock on the shelf but no sale in the last `days` days (up to the last sales day),
+    with the money tied up in them at cost. Biggest value first, so the owner sees what to discount or stop buying."""
+    end = _last_sales_date(db)
+    if end is None:
+        return {"as_of": None, "days": days, "items": [], "total_value": 0.0, "products_without_cost": 0}
+    cutoff = end - timedelta(days=days - 1)
+    last_sold = (select(DailySales.product_id, func.max(DailySales.sales_date).label("last_sold"))
+                 .where(DailySales.units > 0).group_by(DailySales.product_id).subquery())
+    rows = db.execute(
+        select(Product.id, Product.sku, Product.name, Category.name, InventoryBalance.on_hand, Product.unit_cost,
+               last_sold.c.last_sold)
+        .join(InventoryBalance, InventoryBalance.product_id == Product.id)
+        .join(Category, Category.id == Product.category_id)
+        .outerjoin(last_sold, last_sold.c.product_id == Product.id)
+        .where(Product.is_active.is_(True), InventoryBalance.on_hand > 0,
+               (last_sold.c.last_sold.is_(None)) | (last_sold.c.last_sold < cutoff))
+    ).all()
+    items = [{"product_id": pid, "sku": sku, "name": name, "category": category, "on_hand": int(on_hand),
+              "unit_cost": float(cost) if cost is not None else None,
+              "stock_value": round(float(cost) * on_hand, 2) if cost is not None else None,
+              "last_sold": sold.isoformat() if sold else None,
+              "days_since_sale": (end - sold).days if sold else None}
+             for pid, sku, name, category, on_hand, cost, sold in rows]
+    items.sort(key=lambda r: (r["stock_value"] is None, -(r["stock_value"] or 0), r["sku"]))
+    return {"as_of": end.isoformat(), "days": days, "items": items,
+            "total_value": round(sum(r["stock_value"] or 0 for r in items), 2),
+            "products_without_cost": sum(r["unit_cost"] is None for r in items)}

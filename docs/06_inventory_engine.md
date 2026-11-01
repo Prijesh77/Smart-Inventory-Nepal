@@ -88,7 +88,11 @@ Generated explanation:
 
 Note the two different risk ideas: the 1.3% chance of running out before an order placed **today** arrives is low, yet the item is still flagged "reorder soon". If we waited until the next review in 7 days, the 12-day risk would be much higher; that is what the reorder point protects against.
 
-## 5. Next steps in Phase 4
+## 5. Research follow-up (capstone only)
+
+The steps below were the capstone's research plan. The simulation and the M5
+experiments are not part of Smart Inventory Nepal and were removed from this
+repository; the product uses the engine directly on each shop's own data.
 
 1. **Synthetic inventory parameters** (clearly labelled as simulated): unit cost from real prices, supplier lead times, minimum order quantities, pack sizes, initial stock.
 2. **Simulation** of the test year, day by day: demand arrives, unmet demand is a **lost sale**, orders arrive after L days. Compare the forecast-driven policy (RF and MA-28 forecasts) with a simple baseline policy under identical conditions.

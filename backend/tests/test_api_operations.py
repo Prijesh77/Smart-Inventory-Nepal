@@ -14,7 +14,6 @@ from datetime import date
 import pytest
 
 from app.models import DailySales
-from ml import config
 from tests.conftest import login
 
 
@@ -61,7 +60,8 @@ def test_export_products_csv(client):
     assert response.status_code == 200 and response.headers["content-type"].startswith("text/csv")
     assert 'filename="products_2016-04-10.csv"' in response.headers["content-disposition"]
     rows = read_csv(response)
-    assert rows[0][:2] == ["sku", "name"] and "unit_cost (simulated)" in rows[0]
+    assert rows[0][:2] == ["sku", "name"] and "unit_cost" in rows[0]           # a real shop: no "(simulated)"
+    assert not any("simulated" in column for column in rows[0])
     assert [r[0] for r in rows[1:]] == ["FOODS_1_001", "FOODS_1_002", "HOBBIES_1_001"]
 
 
@@ -176,25 +176,24 @@ def test_import_needs_manager(api):
     assert response.status_code == 403
 
 
-# ---------- simulations ----------
+# ---------- slow-moving stock ----------
 
-def test_simulation_input_rules(api, client):
-    assert client.post("/api/v1/simulations", json={"service_levels": [0.42]}).status_code == 422
-    assert client.post("/api/v1/simulations", json={"ordering_cost": -1}).status_code == 422
-    assert api.post("/api/v1/simulations", json={}, headers=login(api, "viewer")).status_code == 403
+def test_slow_movers_lists_stock_that_does_not_sell(client, api):
+    response = client.get("/api/v1/analytics/slow-movers", params={"days": 30})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    # Product 1 sells most days; product 2 has no stock; product 3 (5 on hand, never sold) is dead stock.
+    assert [r["sku"] for r in body["items"]] == ["HOBBIES_1_001"]
+    item = body["items"][0]
+    assert item["on_hand"] == 5 and item["stock_value"] == 2.5 and item["last_sold"] is None
+    assert body["total_value"] == 2.5 and body["as_of"] == "2016-04-09"
 
-
-RESEARCH_FILES = [config.PROCESSED_DIR / "sample_daily.parquet", config.MODELS_DIR / "random_forest_v1.joblib",
-                  config.MODELS_DIR / "random_forest_v1_final.joblib"]
-
-
-@pytest.mark.skipif(not all(p.exists() for p in RESEARCH_FILES), reason="research data/models not present")
-def test_simulation_run_produces_labelled_results(client):
-    response = client.post("/api/v1/simulations", json={"name": "test", "service_levels": [0.95]})
-    assert response.status_code == 202
-    run = client.get(f"/api/v1/simulations/{response.json()['id']}").json()
-    assert run["status"] == "completed", run["error_message"]
-    assert run["results"]["note"].startswith("SIMULATED") and run["results"]["items"] == 267
-    policies = {r["policy"] for r in run["results"]["summary"] if r["demand_class"] == "all"}
-    assert policies == {"baseline_demand_sd", "engine_ma28", "engine_rf"}
-    assert run["results"]["matched_comparisons"] == []          # needs at least 2 service levels
+    # Product 1 sold 2 units on its last day; a stock adjustment does not count as a sale.
+    with api.app.state.make_session() as s:
+        s.query(DailySales).filter(DailySales.product_id == 1, DailySales.sales_date > date(2016, 3, 1)).update(
+            {"units": 0})
+        s.commit()
+    body = client.get("/api/v1/analytics/slow-movers", params={"days": 30}).json()
+    assert [r["sku"] for r in body["items"]] == ["FOODS_1_001", "HOBBIES_1_001"]       # biggest value first
+    assert body["items"][0]["days_since_sale"] > 30
+    assert client.get("/api/v1/analytics/slow-movers", params={"days": 3}).status_code == 422

@@ -8,7 +8,7 @@
 | **Dockerfile** | The recipe for building one image. | `backend/Dockerfile`, `frontend/Dockerfile` |
 | **Container** | A running copy of an image, like a small separate computer. | `db`, `api`, `web` |
 | **Volume** | Storage that survives when a container is deleted. | `pgdata`: the database files |
-| **Bind mount** | A folder from your PC shown inside a container. | `data/`, `models/`, `experiments/` (read-only) |
+| **Named volume** (models) | Storage Docker keeps between restarts, like `pgdata`. | `models`: each shop's trained forecast model |
 | **Docker Compose** | One file that describes all containers and starts them together. | `docker-compose.yml` |
 | **Port mapping** | "Requests to this port on my PC go to that port in the container." | `8080` → web, `5433` → database |
 
@@ -58,17 +58,12 @@ Open `.env` in VS Code. Docker needs these lines (they are already there; do not
 
 The `DATABASE_URL` line is **not** used by Docker: `docker-compose.yml` builds its own address pointing to the `db` container.
 
-### 2.3 Check the research files exist
+### 2.3 No data files are needed
 
-The API reads these from your project folder, so they must exist:
-
-- `data/raw/m5/calendar.csv`
-- `data/processed/sample_daily.parquet`
-- `data/synthetic/item_inventory_params.csv`
-- `models/random_forest_v1_final.joblib`
-- `experiments/results/simulation_item_runs.csv`
-
-They are already on your PC. On a fresh copy, run `.venv\Scripts\python.exe scripts\reproduce_all.py` first.
+The image needs no research data. Each shop's data lives in the database, and its trained
+forecast model in the `models` volume. Load the synthetic demo shop with
+`docker compose run --rm api python scripts/seed.py` if you want something to look at, or
+create a real shop with `scripts/create_shop.py`.
 
 ## 3. Start the system
 
@@ -178,8 +173,8 @@ Both can run at the same time: they use different ports and different databases.
 - **`backend/Dockerfile`:**
   - starts from `python:3.12.7-slim`;
   - installs only the API's packages (`backend/requirements-api.txt`);
-  - copies `ml/` and `backend/`, but **not the data** (the M5 rules forbid redistribution);
-  - creates a normal user and runs as that user, not root;
+  - copies `ml/` and `backend/` (code and the festival calendar only; no shop data);
+  - creates a normal user and the `/app/models` folder it owns, and runs as that user, not root;
   - on start, migrates the database, then runs uvicorn.
 - **`frontend/Dockerfile`** has two stages:
   - **build:** Node 20 runs `npm ci` and `npm run build`;
