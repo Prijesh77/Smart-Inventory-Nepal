@@ -39,7 +39,11 @@ export function OverviewPage({ pollMs }: { pollMs?: number }) {
   const header = (
     <PageHeader
       title="Overview"
-      description={data?.as_of ? `Sales data up to ${fmtDate(data.as_of)}. All figures are calculated live from the database.` : undefined}
+      description={data?.as_of ? [
+        `Sales data up to ${fmtDate(data.as_of)}.`,
+        data.sales?.fiscal_year && `Fiscal year ${data.sales.fiscal_year.label} so far: ${fmtMoney(data.sales.fiscal_year.revenue, true)} revenue, ${fmtInt(data.sales.fiscal_year.units)} units.`,
+        "All figures are calculated live from the database.",
+      ].filter(Boolean).join(" ") : undefined}
       actions={can("admin", "manager") && (
         <Button onClick={startPlanning} disabled={!!planning}>
           {planning ? "Running…" : "Run forecast & recommendations"}

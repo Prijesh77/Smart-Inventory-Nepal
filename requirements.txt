@@ -17,6 +17,7 @@ httpx>=0.27              # used by FastAPI's TestClient
 PyJWT>=2.8               # signed login tokens (HS256, pure Python)
 python-multipart>=0.0.9  # login form used by the /docs "Authorize" button
 openpyxl==3.1.5          # Excel (.xlsx) import files and templates (pure Python)
+nepali-datetime==1.0.8.5 # Bikram Sambat dates (MIT, pure Python; also the source of frontend/src/lib/bs-calendar.json)
 ipykernel>=6.29
 nbconvert>=7.16
 pytest>=8

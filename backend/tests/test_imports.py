@@ -255,3 +255,24 @@ def test_categories_and_suppliers_can_be_added_in_the_app(api, new_shop, client)
     assert "BAG-DAIRY" not in {s["code"] for s in client.get("/api/v1/suppliers").json()}
     viewer = login(api, "viewer")
     assert api.post("/api/v1/categories", headers=viewer, json={"name": "X"}).status_code == 403
+
+
+def test_sales_dates_can_be_written_in_bikram_sambat(api, new_shop):
+    h = new_shop
+    send(api, h, "suppliers", xlsx(SUPPLIERS))
+    assert send(api, h, "products", xlsx(PRODUCTS)).status_code == 201
+    rows = [["sku", "date", "units"],
+            ["NOODLES-70G", "2083-07-14", 20],                    # BS text = 31 Oct 2026
+            ["NOODLES-70G", "2083/07/15", 21],                    # BS with slashes = 1 Nov 2026
+            ["NOODLES-70G", datetime(2083, 7, 13), 19],           # an Excel date cell typed as a BS date
+            ["NOODLES-70G", "2026-10-29", 18]]                    # AD still works
+    job = send(api, h, "sales", xlsx(rows))
+    assert job.status_code == 201, job.text
+    pid = api.get("/api/v1/products", headers=h, params={"search": "NOODLES"}).json()["items"][0]["id"]
+    history = api.get(f"/api/v1/products/{pid}/sales", headers=h,
+                      params={"start": "2026-10-29", "end": "2026-11-01"}).json()
+    assert {p["sales_date"]: p["units"] for p in history["points"]} == {
+        "2026-10-29": 18, "2026-10-30": 19, "2026-10-31": 20, "2026-11-01": 21}
+
+    bad = send(api, h, "sales", xlsx([["sku", "date", "units"], ["NOODLES-70G", "2083-07-31", 1]]), check=True).json()
+    assert "not a real BS date" in bad["errors"][0]["message"]           # Kartik 2083 has only 30 days

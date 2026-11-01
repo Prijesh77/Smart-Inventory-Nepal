@@ -13,6 +13,7 @@ Demand forecasting and explainable reorder recommendations for Nepali retailers 
 - **Onboards a shop from Excel:** download templates, then import suppliers, products, opening stock and sales history. Every row is checked and nothing is saved unless the whole file is valid.
 - **Controls access with roles:** admin, manager and viewer.
 - **Works in Nepalese rupees:** every amount is stored and typed in NPR and shown with lakh/crore formatting.
+- **Speaks the Nepali calendar:** dates are shown in Bikram Sambat (15 Kartik 2083, or १५ कार्तिक २०८३), with AD as an option; dates can be typed and imported in BS; sales are summed by Nepali fiscal year (Shrawan–Asar).
 
 ## Current state and the plan
 
@@ -22,7 +23,7 @@ Demand forecasting and explainable reorder recommendations for Nepali retailers 
 | Forecast model | One Random Forest trained on M5 data (`models/*.joblib`, not in the repository) | Trained automatically per shop on its own sales; simple methods until there is enough history |
 | Businesses | Many shops, each with private, separate data and users (done) | Self sign-up page |
 | Currency | Stored natively in NPR (done) | — |
-| Calendar | Gregorian dates; US events and SNAP days | Bikram Sambat dates, Shrawan–Ashadh fiscal year, Dashain/Tihar/Chhath and other festivals as forecast features |
+| Calendar | Bikram Sambat dates and the Shrawan–Asar fiscal year (done); the forecast model still has US event features | Dashain/Tihar/Chhath and other festivals as forecast features |
 | Tax | None | 13% VAT on purchases; supplier PAN/VAT numbers |
 | Language | English | Nepali / English |
 | Analytics simulation | Research simulation on M5 data (`ml/experiments`, `experiments/results`) | Replaced by shop-level reports |

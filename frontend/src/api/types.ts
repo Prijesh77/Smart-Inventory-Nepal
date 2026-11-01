@@ -56,6 +56,8 @@ export interface DashboardSummary {
     last_28_days_revenue: number;
     change_vs_previous_28_days: number | null;
     daily_trend: { date: string; units: number; revenue: number }[];
+    /** Nepali fiscal year (1 Shrawan - end of Asar) up to the last sales day. */
+    fiscal_year?: { label: string; start: string; end: string; units: number; revenue: number };
   } | null;
   recommendations: {
     run_id: number;
