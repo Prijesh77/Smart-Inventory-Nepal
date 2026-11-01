@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -6,16 +6,13 @@ import { describe, expect, it } from "vitest";
 import { AppRoutes } from "../App";
 import { mockFetch, TEST_USER } from "../test/fetchMock";
 import { AuthProvider } from "./AuthContext";
-import { CurrencyProvider } from "./CurrencyContext";
 
 function renderApp(path = "/") {
   return render(
     <AuthProvider>
-      <CurrencyProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AppRoutes />
-        </MemoryRouter>
-      </CurrencyProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <AppRoutes />
+      </MemoryRouter>
     </AuthProvider>,
   );
 }
@@ -58,6 +55,22 @@ describe("login flow", () => {
     renderApp("/");
     // The Overview page is loaded on demand, so allow a little longer than the default 1 s.
     expect(await screen.findByRole("heading", { name: "Overview" }, { timeout: 5000 })).toBeInTheDocument();
+  });
+
+  it("shows which shop the data belongs to, and labels a demo shop's data as synthetic", async () => {
+    sessionStorage.setItem("smart-inventory.token", "stored");
+    mockFetch({ "GET /auth/me": () => ({ body: TEST_USER }), "GET /dashboard/summary": () => ({ status: 503, body: {} }) });
+    const { unmount } = renderApp("/");
+    const shop = within((await screen.findAllByRole("region", { name: "Shop" }, { timeout: 5000 }))[0]);
+    expect(shop.getByText("Test Kirana Pasal")).toBeInTheDocument();
+    expect(shop.queryByText(/Demo shop:/)).toBeNull();
+    unmount();
+
+    const demo = { ...TEST_USER, shop: { id: 2, name: "Demo Kirana Pasal (synthetic data)", is_demo: true } };
+    mockFetch({ "GET /auth/me": () => ({ body: demo }), "GET /dashboard/summary": () => ({ status: 503, body: {} }) });
+    renderApp("/");
+    const demoShop = within((await screen.findAllByRole("region", { name: "Shop" }, { timeout: 5000 }))[0]);
+    expect(demoShop.getByText(/Demo shop:/)).toBeInTheDocument();
   });
 
   it("drops an expired stored session and asks to log in", async () => {

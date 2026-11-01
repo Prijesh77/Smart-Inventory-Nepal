@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import type { DashboardSummary } from "../api/types";
 import { withRollingAverage } from "../components/charts/SalesTrendChart";
-import { mockFetch } from "../test/fetchMock";
+import { mockFetch, TEST_USER } from "../test/fetchMock";
 import { meRoute, renderLoggedIn } from "../test/renderWithAuth";
 import { OverviewPage } from "./OverviewPage";
 
@@ -40,12 +40,20 @@ function card(label: string) {
 }
 
 describe("OverviewPage", () => {
+  it("labels made-up figures as simulated only in a demo shop", async () => {
+    const demoUser = { ...TEST_USER, shop: { id: 2, name: "Demo Kirana Pasal (synthetic data)", is_demo: true } };
+    mockFetch({ "GET /auth/me": () => ({ body: demoUser }), "GET /dashboard/summary": () => ({ body: EMPTY }) });
+    renderLoggedIn(<OverviewPage />);
+    expect(await screen.findByText("267")).toBeInTheDocument();
+    expect(await within(card("Inventory value (at cost)")).findByText("Simulated")).toBeInTheDocument();
+  });
+
   it("shows live figures and says when nothing has been run yet", async () => {
     mockFetch({ ...meRoute("manager"), "GET /dashboard/summary": () => ({ body: EMPTY }) });
     renderLoggedIn(<OverviewPage />);
     expect(await screen.findByText("267")).toBeInTheDocument();
-    expect(within(card("Inventory value (at cost)")).getByText("$30.2K")).toBeInTheDocument();
-    expect(within(card("Inventory value (at cost)")).getByText("Simulated")).toBeInTheDocument();
+    expect(within(card("Inventory value (at cost)")).getByText("Rs 30,235.04")).toBeInTheDocument();
+    expect(within(card("Inventory value (at cost)")).queryByText("Simulated")).toBeNull();   // a real shop's own figures
     expect(within(card("Units sold, last 28 days")).getByText("14,103")).toBeInTheDocument();
     expect(within(card("Products to reorder")).getByText("No recommendations yet")).toBeInTheDocument();
     expect(within(card("Low or out of stock")).getByText("5")).toBeInTheDocument();

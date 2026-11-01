@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { api } from "../../api/client";
 import type { Page, Product } from "../../api/types";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth, useIsDemoShop } from "../../auth/AuthContext";
 import { Dialog } from "../../components/Dialog";
 import { FilterSelect } from "../../components/fields";
 import { Pagination } from "../../components/Pagination";
@@ -21,6 +21,7 @@ export const CLASS_TONE = { smooth: "green", erratic: "amber", intermittent: "bl
 /** Filters live in the URL, so the back button and shared links keep them. */
 export function ProductsPage() {
   const { can } = useAuth();
+  const demo = useIsDemoShop();
   const [params, setParams] = useSearchParams();
   const [searchText, setSearchText] = useState(params.get("search") ?? "");
   const search = useDebounce(searchText);
@@ -61,7 +62,7 @@ export function ProductsPage() {
     <>
       <PageHeader
         title="Products"
-        description="Search, filter and edit products. Unit cost, supplier and lead time are simulated values."
+        description={`Search, filter and edit products.${demo ? " In this demo shop, unit cost, supplier and lead time are simulated values." : ""}`}
         actions={can("admin", "manager") && <Button onClick={() => setCreating(true)}>Add product</Button>}
       />
       {notice && <p role="status" className="mb-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}

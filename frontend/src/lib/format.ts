@@ -1,11 +1,7 @@
 /** Number and date formatting used across pages, so every page shows values the same way. */
-import { displayCurrency, toDisplay } from "./currency";
 
 const integer = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const oneDecimal = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const compactMoney = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact",
-  maximumFractionDigits: 1 });
 // Rupees use South Asian grouping: Rs 1,23,456.00, and lakh (L) / crore (Cr) when compact.
 const rupees = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const compactRupees = new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 });
@@ -30,17 +26,10 @@ export function fmtDecimal(value: Num): string {
   return n === null ? DASH : oneDecimal.format(n);
 }
 
-/** An amount from the API (US dollars), shown in the selected display currency. */
+/** An amount in Nepalese rupees (every amount in the app is stored in NPR). */
 export function fmtMoney(value: Num, compact = false): string {
   const n = toNumber(value);
-  return n === null ? DASH : fmtLocalMoney(toDisplay(n), compact);
-}
-
-/** An amount that is already in the selected display currency (e.g. a total of values typed in a form). */
-export function fmtLocalMoney(value: Num, compact = false): string {
-  const n = toNumber(value);
   if (n === null) return DASH;
-  if (displayCurrency() === "USD") return compact && Math.abs(n) >= 10_000 ? compactMoney.format(n) : money.format(n);
   const text = compact && Math.abs(n) >= 100_000 ? compactRupees.format(Math.abs(n)) : rupees.format(Math.abs(n));
   return `${n < 0 ? "-" : ""}Rs ${text}`;
 }

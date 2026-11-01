@@ -60,7 +60,7 @@ describe("PurchaseOrdersPage", () => {
     renderLoggedIn(<PurchaseOrdersPage />, "/purchase-orders");
     const row = (await screen.findByRole("link", { name: "PO-000001" })).closest("tr")!;
     expect(within(row).getByText("Draft")).toBeInTheDocument();
-    expect(within(row).getByText("$30.00")).toBeInTheDocument();
+    expect(within(row).getByText("Rs 30.00")).toBeInTheDocument();
     expect(screen.getByText(/Nothing is ever sent to a supplier/)).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText("Order status"), "submitted");
     await waitFor(() => expect(calls.at(-1)!.url).toContain("status=submitted"));
@@ -86,7 +86,7 @@ describe("PurchaseOrdersPage", () => {
     expect(calls.some((c) => c.url.includes("supplier_id=4") && c.url.includes("search=147"))).toBe(true);
     await userEvent.clear(within(dialog).getByLabelText("Quantity for HOBBIES_2_147"));
     await userEvent.type(within(dialog).getByLabelText("Quantity for HOBBIES_2_147"), "24");
-    expect(within(dialog).getByText("$36.00", { selector: "tfoot td" })).toBeInTheDocument();     // 24 x 1.50
+    expect(within(dialog).getByText("Rs 36.00", { selector: "tfoot td" })).toBeInTheDocument();     // 24 x 1.50
     await userEvent.click(within(dialog).getByRole("button", { name: "Create draft" }));
     expect(await screen.findByText("Order page")).toBeInTheDocument();
     const body = JSON.parse(String(calls.find((c) => c.init?.method === "POST")!.init!.body));

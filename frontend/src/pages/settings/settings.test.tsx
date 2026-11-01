@@ -6,7 +6,8 @@ import type { ImportPreview, PolicyDefaults } from "../../api/types";
 import { mockFetch, TEST_USER } from "../../test/fetchMock";
 import { meRoute, renderLoggedIn } from "../../test/renderWithAuth";
 import { toPolicy, validatePolicy } from "./PolicyForm";
-import { buildForm } from "./SalesImport";
+import { validateSupplier } from "./CatalogSetup";
+import { buildForm } from "./DataImport";
 import { SettingsPage } from "./SettingsPage";
 
 const POLICY: PolicyDefaults = { service_level: 0.95, review_period_days: 7, ordering_cost: 10, holding_cost_rate: 0.25,
@@ -23,6 +24,8 @@ function routes(role: "admin" | "manager" | "viewer", extra = {}) {
     ...meRoute(role),
     "GET /settings/policy": () => ({ body: POLICY }),
     "GET /imports/jobs": () => ({ body: [] }),
+    "GET /categories": () => ({ body: [] }),
+    "GET /suppliers": () => ({ body: [] }),
     "GET /users": () => ({ body: [{ ...TEST_USER, role: role }, { ...TEST_USER, id: 2, email: "viewer@test.local", full_name: "Vee", role: "viewer" }] }),
     ...extra,
   };
@@ -47,6 +50,13 @@ describe("policy rules", () => {
     expect(form.get("sku_column")).toBe("Item");
     expect(form.get("date_column")).toBe("date");        // blank falls back to the default
     expect(form.get("price_column")).toBe("");
+    expect(buildForm(csv()).has("sku_column")).toBe(false);   // other import types send only the file
+  });
+
+  it("check a new supplier before sending it", () => {
+    expect(validateSupplier({ code: "KTM-GRAIN", name: "Grain", lead_time_days: "3", contact_email: "" })).toEqual({});
+    const bad = validateSupplier({ code: "KTM GRAIN", name: " ", lead_time_days: "0", contact_email: "nope" });
+    expect(Object.keys(bad).sort()).toEqual(["code", "contact_email", "lead_time_days", "name"]);
   });
 });
 
@@ -80,7 +90,8 @@ describe("SettingsPage", () => {
   it("lists row errors and does not offer to import a bad file", async () => {
     mockFetch(routes("manager", { "POST /imports/sales/preview": () => ({ body: BAD }) }));
     renderLoggedIn(<SettingsPage />, "/settings");
-    await userEvent.upload(await screen.findByLabelText(/CSV file/), csv());
+    await userEvent.click(await screen.findByRole("button", { name: "4. Sales history" }));
+    await userEvent.upload(screen.getByLabelText(/Excel or CSV file/), csv());
     await userEvent.click(screen.getByRole("button", { name: "Check file" }));
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Nothing will be imported while any row has an error");
@@ -98,21 +109,69 @@ describe("SettingsPage", () => {
         rows_total: 2, rows_valid: 2, rows_invalid: 0, errors: { added: 1, replaced: 1 }, created_at: "2026-10-29T12:00:00Z" }] : [] }),
     }));
     renderLoggedIn(<SettingsPage />, "/settings");
-    await userEvent.upload(await screen.findByLabelText(/CSV file/), csv());
+    await userEvent.click(await screen.findByRole("button", { name: "4. Sales history" }));
+    await userEvent.upload(screen.getByLabelText(/Excel or CSV file/), csv());
     await userEvent.click(screen.getByRole("button", { name: "Check file" }));
     expect(await screen.findByText(/1 existing day\(s\) will be replaced/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Import 2 rows" }));
-    expect(await screen.findByText("Imported sales.csv: 1 rows added, 1 replaced.")).toBeInTheDocument();
+    expect(await screen.findByText("Imported sales.csv: 1 added, 1 replaced.")).toBeInTheDocument();
     expect(await screen.findByText("1 added, 1 replaced")).toBeInTheDocument();        // history refreshed
     const upload = calls.find((c) => c.url.endsWith("/imports/sales/preview"))!;
     expect((upload.init!.body as FormData).get("file")).toBeInstanceOf(File);
+  });
+
+  it("imports products from Excel to the products endpoint and shows the new categories", async () => {
+    const preview: ImportPreview = { rows_total: 1, rows_valid: 1, rows_invalid: 0, would_add: 1, would_replace: 0,
+      errors: [], errors_truncated: false, can_import: true,
+      preview: [{ sku: "RICE-5KG", name: "Rice 5 kg", category: "Rice", supplier_code: "KTM-GRAIN", unit_price: "780" }] };
+    let imported = false;
+    const { calls } = mockFetch(routes("manager", {
+      "POST /imports/products/preview": () => ({ body: preview }),
+      "POST /imports/products": () => { imported = true; return { status: 201, body: { id: 2, filename: "products.xlsx",
+        import_type: "products", status: "completed", rows_total: 1, rows_valid: 1, rows_invalid: 0,
+        errors: { added: 1, replaced: 0, categories_added: 1 }, created_at: "2026-11-01T12:00:00Z" } }; },
+      "GET /categories": () => ({ body: imported ? [{ id: 1, code: "RICE", name: "Rice" }] : [] }),
+    }));
+    renderLoggedIn(<SettingsPage />, "/settings");
+    expect(await screen.findByText("No categories yet")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "2. Products" }));
+    expect(screen.getByRole("button", { name: "2. Products" })).toHaveAttribute("aria-pressed", "true");
+    const xlsx = new File(["PK"], "products.xlsx");
+    await userEvent.upload(screen.getByLabelText(/Excel or CSV file/), xlsx);
+    await userEvent.click(screen.getByRole("button", { name: "Check file" }));
+    expect(await screen.findByText("Rs 780.00")).toBeInTheDocument();                // price shown in rupees
+    await userEvent.click(screen.getByRole("button", { name: "Import 1 rows" }));
+    expect(await screen.findByText("Imported products.xlsx: 1 added, 0 updated, 1 new categories.")).toBeInTheDocument();
+    expect(await screen.findByText("Rice")).toBeInTheDocument();                     // supplier/category lists refreshed
+    expect((calls.find((c) => c.url.endsWith("/imports/products"))!.init!.body as FormData).has("sku_column")).toBe(false);
+  });
+
+  it("managers add a supplier and a category", async () => {
+    const { calls } = mockFetch(routes("manager", {
+      "POST /suppliers": () => ({ status: 201, body: { id: 1, code: "KTM-GRAIN", name: "Grain", lead_time_days: 3,
+        lead_time_sd_days: "0", contact_email: null } }),
+      "POST /categories": () => ({ status: 201, body: { id: 1, code: "SNACKS", name: "Snacks" } }),
+    }));
+    renderLoggedIn(<SettingsPage />, "/settings");
+    const form = within(await screen.findByRole("form", { name: "Add supplier" }));
+    await userEvent.type(form.getByLabelText("Code"), "ktm-grain");
+    await userEvent.type(form.getByLabelText("Name"), "Grain");
+    await userEvent.type(form.getByLabelText("Lead time (days)"), "3");
+    await userEvent.click(form.getByRole("button", { name: "Add supplier" }));
+    expect(await screen.findByText("Supplier KTM-GRAIN added.")).toBeInTheDocument();
+    expect(JSON.parse(String(calls.find((c) => c.url.endsWith("/suppliers") && c.init?.method === "POST")!.init!.body)))
+      .toEqual({ code: "ktm-grain", name: "Grain", lead_time_days: 3, contact_email: null });
+
+    await userEvent.type(screen.getByLabelText("New category"), "Snacks");
+    await userEvent.click(screen.getByRole("button", { name: "Add category" }));
+    expect(await screen.findByText("Category Snacks added.")).toBeInTheDocument();
   });
 
   it("refuses files over 5 MB before uploading", async () => {
     const { calls } = mockFetch(routes("manager"));
     renderLoggedIn(<SettingsPage />, "/settings");
     const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.csv", { type: "text/csv" });
-    await userEvent.upload(await screen.findByLabelText(/CSV file/), big);
+    await userEvent.upload(await screen.findByLabelText(/Excel or CSV file/), big);
     expect(await screen.findByRole("alert")).toHaveTextContent("larger than 5 MB");
     expect(screen.getByRole("button", { name: "Check file" })).toBeDisabled();
     expect(calls.some((c) => c.url.includes("/imports"))).toBe(calls.some((c) => c.url.endsWith("/imports/jobs")));

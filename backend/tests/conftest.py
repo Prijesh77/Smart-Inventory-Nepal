@@ -17,8 +17,9 @@ import app.models  # noqa: F401  (registers every table)
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import get_db, session_factory_dependency
+from app.db.tenancy import SHOP_KEY
 from app.main import create_app
-from app.models import CalendarDay, Category, DailySales, InventoryBalance, Product, Supplier, User
+from app.models import CalendarDay, Category, DailySales, InventoryBalance, Product, Shop, Supplier, User
 from app.models.enums import UserRole
 
 # Test-only credentials for the in-memory test database.
@@ -42,10 +43,28 @@ def _sqlite_engine():
     return engine
 
 
+TEST_SHOP_ID = 1
+
+
+@pytest.fixture(autouse=True)
+def empty_model_folder(tmp_path, monkeypatch):
+    """Every test starts with no trained models, whatever is in the project's models/ folder."""
+    monkeypatch.setattr("app.services.forecast_engine.MODEL_DIR", tmp_path / "models")
+    return tmp_path / "models"
+
+
+def _add_test_shop(engine) -> None:
+    with Session(engine) as s:
+        s.add(Shop(id=TEST_SHOP_ID, name="Test shop"))
+        s.commit()
+
+
 @pytest.fixture
 def db() -> Iterator[Session]:
+    """A session on a fresh in-memory database, working in the test shop."""
     engine = _sqlite_engine()
-    with Session(engine) as session:
+    _add_test_shop(engine)
+    with Session(engine, info={SHOP_KEY: TEST_SHOP_ID}) as session:
         yield session
     engine.dispose()
 
@@ -80,18 +99,21 @@ def _seed_api_data(s: Session) -> None:
 def api() -> Iterator[TestClient]:
     """A test client with NO login, on a fresh in-memory database."""
     engine = _sqlite_engine()
-    make_session = sessionmaker(bind=engine, expire_on_commit=False)
+    _add_test_shop(engine)
+    plain = sessionmaker(bind=engine, expire_on_commit=False)            # like the app: no shop until login
+    make_session = sessionmaker(bind=engine, expire_on_commit=False, info={SHOP_KEY: TEST_SHOP_ID})
     with make_session() as s:
         _seed_api_data(s)
 
     def override() -> Iterator[Session]:
-        with make_session() as session:
+        with plain() as session:
             yield session
 
     application = create_app()
     application.dependency_overrides[get_db] = override
-    application.dependency_overrides[session_factory_dependency] = lambda: make_session   # background jobs
-    application.state.make_session = make_session   # lets tests set up rows the API cannot create yet
+    application.dependency_overrides[session_factory_dependency] = lambda: plain   # background jobs pick their shop
+    application.state.make_session = make_session   # lets tests set up rows (in the test shop) the API cannot create yet
+    application.state.plain_session = plain
     with TestClient(application) as test_client:
         yield test_client
     engine.dispose()

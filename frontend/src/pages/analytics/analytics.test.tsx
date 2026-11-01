@@ -70,7 +70,7 @@ describe("AnalyticsPage", () => {
     renderLoggedIn(<AnalyticsPage />, "/analytics");
     expect(await screen.findByText(/not results from a real store/)).toBeInTheDocument();
     expect(screen.getByText(/At the same fill rate/).closest("li")).toHaveTextContent(
-      "At the same fill rate (98.78%), Engine + Random Forest costs 1.8% less than Textbook baseline ($28,800.00 vs $29,330.00).");
+      "At the same fill rate (98.78%), Engine + Random Forest costs 1.8% less than Textbook baseline (Rs 28,800.00 vs Rs 29,330.00).");
     expect(screen.queryByRole("button", { name: "Run simulation" })).not.toBeInTheDocument();
   });
 
@@ -85,8 +85,8 @@ describe("AnalyticsPage", () => {
     renderLoggedIn(<AnalyticsPage pollMs={0} />, "/analytics");
     await screen.findByText(/not results from a real store/);
     await userEvent.click(screen.getByRole("checkbox", { name: "80%" }));       // untick 80%
-    await userEvent.clear(screen.getByLabelText("Ordering cost per order ($)"));
-    await userEvent.type(screen.getByLabelText("Ordering cost per order ($)"), "2");
+    await userEvent.clear(screen.getByLabelText("Ordering cost per order (Rs)"));
+    await userEvent.type(screen.getByLabelText("Ordering cost per order (Rs)"), "2");
     await userEvent.click(screen.getByRole("checkbox", { name: /Real lead times vary/ }));
     await userEvent.click(screen.getByRole("button", { name: "Run simulation" }));
     await waitFor(() => expect(screen.getByLabelText("Simulation run")).toHaveValue("3"));

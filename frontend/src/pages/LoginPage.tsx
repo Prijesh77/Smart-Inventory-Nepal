@@ -99,7 +99,7 @@ export function LoginPage() {
           </form>
           <p className="mt-8 flex items-start gap-2 rounded-lg bg-slate-50 p-3 text-xs leading-relaxed text-slate-500 ring-1 ring-inset ring-slate-200">
             <Icon.info className="mt-px h-4 w-4 shrink-0 text-slate-400" />
-            Sales: real M5 data (Walmart store CA_1). Stock, costs and lead times are simulated.
+            Each shop sees only its own products, stock, sales and orders. Demo shops use synthetic data. Amounts are in Nepalese rupees.
           </p>
         </div>
       </div>

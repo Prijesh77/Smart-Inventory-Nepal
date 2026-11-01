@@ -16,8 +16,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
+from app.db.tenancy import all_shops, use_shop
 from app.models import (
-    AppSetting, Category, InventoryBalance, Product, PurchaseOrder, PurchaseOrderItem, Supplier,
+    AppSetting, Category, InventoryBalance, Product, PurchaseOrder, PurchaseOrderItem, Shop, Supplier,
 )
 
 pytestmark = pytest.mark.postgres
@@ -43,10 +44,14 @@ def pg_engine():
 
 @pytest.fixture
 def pg(pg_engine) -> Iterator[Session]:
-    """A session whose work is always rolled back at the end of the test."""
+    """A session in a new test shop, whose work is always rolled back at the end of the test."""
     with pg_engine.connect() as conn:
         outer = conn.begin()
         session = Session(bind=conn, join_transaction_mode="create_savepoint")
+        shop = Shop(name="Test shop (rolled back)")
+        session.add(shop)
+        session.flush()
+        use_shop(session, shop.id)
         try:
             yield session
         finally:
@@ -135,3 +140,14 @@ def test_money_is_exact_and_json_round_trips(pg):
         "SELECT data_type FROM information_schema.columns WHERE table_name='app_settings' AND column_name='value'"
     )).scalar()
     assert column_type == "jsonb"
+
+
+def test_same_sku_allowed_in_another_shop(pg):
+    _product(pg, "TEST_SHARED")
+    other = Shop(name="Second test shop (rolled back)")
+    pg.add(other)
+    pg.flush()
+    use_shop(pg, other.id)
+    _product(pg, "TEST_SHARED")                      # same SKU, category and supplier codes: allowed
+    with all_shops(pg):
+        assert pg.scalar(select(text("count(*)")).select_from(Product).where(Product.sku == "TEST_SHARED")) == 2

@@ -4,36 +4,38 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, ForeignKey, Numeric, String
+from sqlalchemy import CheckConstraint, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin
+from app.db.base import Base, ShopOwned, TimestampMixin
 
 
-class Category(Base):
+class Category(ShopOwned, Base):
     __tablename__ = "categories"
+    __table_args__ = (UniqueConstraint("shop_id", "code", name="uq_categories_shop_code"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    code: Mapped[str] = mapped_column(String(30), unique=True)
+    code: Mapped[str] = mapped_column(String(30))
     name: Mapped[str] = mapped_column(String(100))
 
 
-class Supplier(TimestampMixin, Base):
+class Supplier(ShopOwned, TimestampMixin, Base):
     __tablename__ = "suppliers"
     __table_args__ = (
         CheckConstraint("lead_time_days >= 1", name="lead_time_positive"),
         CheckConstraint("lead_time_sd_days >= 0", name="lead_time_sd_non_negative"),
+        UniqueConstraint("shop_id", "code", name="uq_suppliers_shop_code"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    code: Mapped[str] = mapped_column(String(30), unique=True)
+    code: Mapped[str] = mapped_column(String(30))
     name: Mapped[str] = mapped_column(String(120))
     lead_time_days: Mapped[int]
     lead_time_sd_days: Mapped[Decimal] = mapped_column(Numeric(6, 2), default=Decimal("0"))
     contact_email: Mapped[str | None] = mapped_column(String(254))
 
 
-class Product(TimestampMixin, Base):
+class Product(ShopOwned, TimestampMixin, Base):
     __tablename__ = "products"
     __table_args__ = (
         CheckConstraint("unit_price >= 0", name="price_non_negative"),
@@ -41,10 +43,11 @@ class Product(TimestampMixin, Base):
         CheckConstraint("lead_time_days IS NULL OR lead_time_days >= 1", name="lead_time_positive"),
         CheckConstraint("min_order_qty >= 1", name="moq_positive"),
         CheckConstraint("pack_size >= 1", name="pack_positive"),
+        UniqueConstraint("shop_id", "sku", name="uq_products_shop_sku"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    sku: Mapped[str] = mapped_column(String(50), unique=True)
+    sku: Mapped[str] = mapped_column(String(50))           # unique within the shop
     name: Mapped[str] = mapped_column(String(200))
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), index=True)
     department: Mapped[str | None] = mapped_column(String(50))

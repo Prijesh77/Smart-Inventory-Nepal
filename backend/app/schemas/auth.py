@@ -14,6 +14,13 @@ Password = Annotated[str, Field(min_length=MIN_PASSWORD_LENGTH, max_length=128,
 Email = Annotated[str, Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
 
 
+class ShopOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    is_demo: bool = Field(description="True = synthetic demo data")
+
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -22,6 +29,7 @@ class UserOut(BaseModel):
     role: UserRole
     is_active: bool
     created_at: datetime
+    shop: ShopOut
 
 
 class Token(BaseModel):

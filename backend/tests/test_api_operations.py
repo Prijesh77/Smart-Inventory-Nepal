@@ -30,7 +30,7 @@ def test_dashboard_summary_hand_checked(client):
     assert len(s["sales"]["daily_trend"]) == 90
     assert s["recommendations"] is None and s["forecast"] is None           # nothing run yet: no invented numbers
     assert s["purchase_orders"] == {"open": 0, "open_order_value": 0.0, "drafts": 0}
-    assert "inventory_value" in s["simulated_fields"]
+    assert s["simulated_fields"] == []          # a real shop: nothing is labelled as simulated
 
 
 def test_analytics(client):
@@ -91,18 +91,6 @@ def test_policy_settings(api):
     assert api.get("/api/v1/settings/policy", headers=manager).json()["service_level"] == 0.98
     bad = {**defaults, "min_cycle_days": 30, "max_cycle_days": 7}
     assert api.put("/api/v1/settings/policy", json=bad, headers=admin).status_code == 422
-
-
-def test_currency_settings(api):
-    admin, viewer = login(api, "admin"), login(api, "viewer")
-    assert api.get("/api/v1/settings/currency").status_code == 401
-    rate = api.get("/api/v1/settings/currency", headers=viewer).json()
-    assert rate == {"npr_per_usd": 152.66, "rate_date": "2026-10-29", "rate_source": "Nepal Rastra Bank (selling rate)"}
-    new = {"npr_per_usd": 150.5, "rate_date": "2026-11-01", "rate_source": "Nepal Rastra Bank"}
-    assert api.put("/api/v1/settings/currency", json=new, headers=viewer).status_code == 403
-    assert api.put("/api/v1/settings/currency", json=new, headers=admin).status_code == 200
-    assert api.get("/api/v1/settings/currency", headers=viewer).json() == new
-    assert api.put("/api/v1/settings/currency", json={**new, "npr_per_usd": 0}, headers=admin).status_code == 422
 
 
 # ---------- sales import ----------

@@ -3,10 +3,14 @@ to every active product using a stored forecast run and current stock.
 
 Safety stock uses the forecast model's MEASURED past errors (Phase 4 finding):
   1. Backtest the same model at up to 16 weekly origins whose whole protection
-     period ended before the forecast origin.
+     period ended before the forecast origin (and that had enough history for the model).
   2. >= 8 complete periods for the item: RMSE of its protection-period errors.
   3. Otherwise >= 14 daily errors: daily RMSE with the sqrt(days) rule.
-  4. Otherwise: "insufficient data" (no recommendation is invented).
+  4. Otherwise, a shop with little history (but >= 14 days of the item's sales): the
+     textbook rule, the standard deviation of daily sales with the sqrt(days) rule.
+     Clearly labelled as an estimate, and replaced by measured errors once there is
+     enough history (about 5 weeks with the moving average).
+  5. Otherwise: "insufficient data" (no recommendation is invented).
 """
 
 from __future__ import annotations
@@ -22,17 +26,19 @@ from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session, joinedload, sessionmaker
 
 from app.core.errors import AppError, ConflictError, NotFoundError
+from app.db.tenancy import current_shop_id, shop_session
 from app.models import AppSetting, Forecast, ForecastRun, Product, RecommendationRun, ReorderRecommendation, User
 from app.models.enums import ReviewStatus, RiskCategory, RunStatus
 from app.services import inventory
-from app.services.forecast_engine import ForecastContext, forecast_matrix, load_context
+from app.services.forecast_engine import ForecastContext, forecast_matrix, load_context, min_history_days
 from app.services.forecasting import latest_completed_run
-from ml.features.build import MIN_HISTORY_DAYS
 from ml.inventory import formulas as f
 from ml.inventory.recommend import ItemState, PolicySettings, insufficient, recommend
 
 logger = logging.getLogger("app.recommendations")
 ERROR_ORIGINS = 16
+MIN_SALES_DAYS_FOR_ESTIMATE = 14     # fallback 4: days of the item's own sales needed
+SALES_SIGMA_WINDOW = 56              # fallback 4 uses at most the last 8 weeks
 POLICY_FIELDS = {fld.name for fld in fields(PolicySettings)}
 RISK_ORDER = {RiskCategory.CRITICAL: 0, RiskCategory.REORDER_SOON: 1, RiskCategory.EXCESS: 2,
               RiskCategory.INSUFFICIENT: 3, RiskCategory.HEALTHY: 4}
@@ -42,7 +48,7 @@ RISK_ORDER = {RiskCategory.CRITICAL: 0, RiskCategory.REORDER_SOON: 1, RiskCatego
 
 def policy_settings(db: Session, overrides: dict[str, Any] | None = None) -> PolicySettings:
     """Stored defaults (app_settings.policy_defaults), then any per-run overrides."""
-    stored = db.get(AppSetting, "policy_defaults")
+    stored = db.get(AppSetting, (current_shop_id(db), "policy_defaults"))
     values = {k: v for k, v in (stored.value if stored else {}).items() if k in POLICY_FIELDS}
     values.update({k: v for k, v in (overrides or {}).items() if k in POLICY_FIELDS and v is not None})
     return PolicySettings(**values)
@@ -71,7 +77,7 @@ def error_sigmas(ctx: ForecastContext, model_name: str, origin, protection: np.n
     max_p = int(protection.max())
     origin_d = ctx.d_num(origin)
     starts = [origin_d - max_p - 7 * k for k in range(ERROR_ORIGINS)]
-    starts = [s for s in starts if s - 1 >= MIN_HISTORY_DAYS]
+    starts = [s for s in starts if s - 1 >= min_history_days(model_name)]
     n = len(ctx.panel.item_ids)
     period_err: list[list[float]] = [[] for _ in range(n)]
     daily_err: list[list[float]] = [[] for _ in range(n)]
@@ -92,8 +98,18 @@ def error_sigmas(ctx: ForecastContext, model_name: str, origin, protection: np.n
     return period_sigma, daily_sigma
 
 
-def execute_run(session_factory: sessionmaker[Session], run_id: int) -> None:
-    with session_factory() as db:
+def sales_sigmas(ctx: ForecastContext, origin) -> list[tuple[float, int] | None]:
+    """Fallback 4, per item: (std of daily sales, days used) over the last 8 weeks before the origin."""
+    history = ctx.panel.sales[:, max(ctx.d_num(origin) - 1 - SALES_SIGMA_WINDOW, 0): ctx.d_num(origin) - 1]
+    out: list[tuple[float, int] | None] = []
+    for row in history:
+        known = row[~np.isnan(row)]
+        out.append((float(np.std(known)), int(known.size)) if known.size >= MIN_SALES_DAYS_FOR_ESTIMATE else None)
+    return out
+
+
+def execute_run(session_factory: sessionmaker[Session], shop_id: int, run_id: int) -> None:
+    with shop_session(session_factory, shop_id) as db:
         run = db.get(RecommendationRun, run_id)
         run.status = RunStatus.RUNNING
         db.commit()
@@ -132,6 +148,7 @@ def _compute(db: Session, run: RecommendationRun) -> int:
     protection = np.array([lead_of.get(int(pid), 0) for pid in ctx.product_ids]) + policy.review_period_days
     period_sigma, daily_sigma = error_sigmas(ctx, forecast_run.model_name, forecast_run.origin_date,
                                              np.minimum(protection, horizon))
+    fallback_sigma = sales_sigmas(ctx, forecast_run.origin_date)
 
     records = []
     for product in products:
@@ -152,9 +169,16 @@ def _compute(db: Session, run: RecommendationRun) -> int:
             rec = insufficient(state, f"forecast horizon {horizon} days is shorter than the "
                                       f"{lead_time + policy.review_period_days}-day protection period")
         else:
-            rec = recommend(state, forecasts[product.id], daily_sigma[i], policy, period_sigma=period_sigma[i])
-            method = ("measured protection-period forecast errors" if period_sigma[i] is not None
-                      else "daily forecast errors x sqrt(days)" if daily_sigma[i] is not None else None)
+            sigma, method = daily_sigma[i], None
+            if period_sigma[i] is not None:
+                method = "measured protection-period forecast errors"
+            elif sigma is not None:
+                method = "daily forecast errors x sqrt(days)"
+            elif fallback_sigma[i] is not None:
+                sigma, days = fallback_sigma[i]
+                method = (f"an ESTIMATE: day-to-day variation of the last {days} days of sales (little history "
+                          f"yet; measured forecast errors replace it after about 5 weeks of sales)")
+            rec = recommend(state, forecasts[product.id], sigma, policy, period_sigma=period_sigma[i])
         records.append(_to_row(run.id, product.id, rec, method))
     db.add_all(records)
     db.flush()

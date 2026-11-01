@@ -8,7 +8,7 @@ from decimal import Decimal
 from sqlalchemy import CheckConstraint, Date, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, ShopOwned
 
 
 class CalendarDay(Base):
@@ -24,7 +24,7 @@ class CalendarDay(Base):
     is_store_open: Mapped[bool] = mapped_column(default=True)
 
 
-class DailySales(Base):
+class DailySales(ShopOwned, Base):
     __tablename__ = "daily_sales"
     __table_args__ = (CheckConstraint("units >= 0", name="units_non_negative"),)
 

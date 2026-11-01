@@ -9,11 +9,11 @@ from typing import Any
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, Quantity, string_enum
+from app.db.base import Base, Quantity, ShopOwned, string_enum
 from app.models.enums import ReviewStatus, RiskCategory, RunStatus
 
 
-class RecommendationRun(Base):
+class RecommendationRun(ShopOwned, Base):
     __tablename__ = "recommendation_runs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -27,7 +27,7 @@ class RecommendationRun(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
-class ReorderRecommendation(Base):
+class ReorderRecommendation(ShopOwned, Base):
     __tablename__ = "reorder_recommendations"
     __table_args__ = (
         UniqueConstraint("recommendation_run_id", "product_id", name="uq_reorder_recommendations_run_product"),

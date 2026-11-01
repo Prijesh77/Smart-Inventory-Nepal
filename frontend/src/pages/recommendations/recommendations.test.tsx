@@ -52,12 +52,12 @@ describe("RecommendationsPage", () => {
   it("shows the run summary, risk counts and the table", async () => {
     mockFetch(routes());
     renderLoggedIn(<RecommendationsPage />, "/recommendations");
-    expect(await screen.findByText("$8,216.03")).toBeInTheDocument();
+    expect(await screen.findByText("Rs 8,216.03")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Critical stockout risk 5/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /All 267/ })).toHaveAttribute("aria-pressed", "true");
     const row = screen.getByRole("link", { name: "FOODS_2_219" }).closest("tr")!;
     expect(within(row).getByText("83")).toBeInTheDocument();
-    expect(within(row).getByText("$131.14")).toBeInTheDocument();
+    expect(within(row).getByText("Rs 131.14")).toBeInTheDocument();
     expect(within(row).getByText("To review")).toBeInTheDocument();
   });
 

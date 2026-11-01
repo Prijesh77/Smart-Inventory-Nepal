@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
-import { useCurrency } from "../auth/CurrencyContext";
-import type { CurrencyCode } from "../lib/currency";
 import { Icon, type IconName } from "./Icons";
 import { Badge } from "./ui";
 
@@ -27,7 +25,6 @@ function currentItem(pathname: string) {
 
 export function Layout() {
   const { user, logout } = useAuth();
-  const currency = useCurrency();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const current = currentItem(pathname);
@@ -68,13 +65,16 @@ export function Layout() {
     </nav>
   );
 
-  const dataNote = (
-    <div className="rounded-lg bg-white/5 p-3 text-xs leading-relaxed text-slate-400 ring-1 ring-inset ring-white/10">
+  // Which shop's data is on screen. Demo shops say clearly that their data is made up.
+  const dataNote = user && (
+    <section aria-label="Shop" className="rounded-lg bg-white/5 p-3 text-xs leading-relaxed text-slate-400 ring-1 ring-inset ring-white/10">
       <p className="mb-1 flex items-center gap-1.5 font-medium text-slate-200">
-        <Icon.info className="h-3.5 w-3.5" /> Data sources
+        <Icon.box className="h-3.5 w-3.5" /> {user.shop.name}
       </p>
-      Real M5 sales · <span className="text-violet-300">simulated</span> stock, costs and lead times
-    </div>
+      {user.shop.is_demo
+        ? <>Demo shop: <span className="text-violet-300">synthetic</span> sales, stock, costs and lead times · amounts in Rs</>
+        : <>Your shop&apos;s own data · amounts in Rs</>}
+    </section>
   );
 
   return (
@@ -111,7 +111,6 @@ export function Layout() {
               </div>
               <Badge tone={ROLE_TONE[user.role]}>{user.role}</Badge>
               <span aria-hidden className="hidden h-6 w-px bg-slate-200 sm:block" />
-              <CurrencySwitch />
               <button type="button" onClick={() => logout()}
                       className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                 <Icon.logout className="h-4 w-4" />
@@ -129,8 +128,7 @@ export function Layout() {
           </div>
         )}
 
-        {/* Re-drawn when the currency or rate changes, so every amount and money input switches together. */}
-        <main key={`${currency.code}-${currency.rate.npr_per_usd}`} className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8">
           <Outlet />
         </main>
       </div>
@@ -148,29 +146,6 @@ function Brand() {
         <span className="block text-sm font-semibold text-white">Smart Inventory</span>
         <span className="block text-[11px] text-slate-400">Forecast &amp; reorder</span>
       </span>
-    </div>
-  );
-}
-
-const CURRENCIES: { code: CurrencyCode; label: string; name: string }[] = [
-  { code: "NPR", label: "Rs", name: "Nepalese rupees" },
-  { code: "USD", label: "$", name: "US dollars" },
-];
-
-/** Rs / $ toggle. Amounts are stored in dollars; rupees use the rate set in Settings. */
-function CurrencySwitch() {
-  const { code, setCode, rate } = useCurrency();
-  return (
-    <div role="group" aria-label="Currency" className="inline-flex rounded-md bg-slate-100 p-0.5"
-         title={`Rs ${rate.npr_per_usd} = $1 (${rate.rate_source}${rate.rate_date ? `, ${rate.rate_date}` : ""})`}>
-      {CURRENCIES.map((c) => (
-        <button key={c.code} type="button" aria-pressed={code === c.code} aria-label={`Show amounts in ${c.name}`}
-                onClick={() => setCode(c.code)}
-                className={`min-w-[36px] rounded px-2.5 py-1 text-sm font-semibold transition-colors ${
-                  code === c.code ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
-          {c.label}
-        </button>
-      ))}
     </div>
   );
 }

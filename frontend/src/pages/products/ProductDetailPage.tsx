@@ -69,7 +69,7 @@ export function ProductDetailPage() {
           </div>
         </Card>
 
-        <Card className="lg:col-span-2" title="Sales history (actual, real M5 data)"
+        <Card className="lg:col-span-2" title="Sales history (actual)"
               actions={<FilterSelect label="Period" value={days} onChange={setDays}>
                 <option value="30">Last 30 days</option>
                 <option value="90">Last 90 days</option>

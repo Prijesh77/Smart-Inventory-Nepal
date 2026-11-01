@@ -65,7 +65,7 @@ export function RunsTable({ runs, selectedId, onSelect }:
 /** Start a forecast run and wait for it in the background. */
 export function NewRunForm({ lastSalesDate, onDone, pollMs }:
   { lastSalesDate: string | null; onDone: (run: ForecastRun) => void; pollMs?: number }) {
-  const [model, setModel] = useState<ForecastModel>("random_forest_v1");
+  const [model, setModel] = useState<ForecastModel>("auto");
   const [horizon, setHorizon] = useState("28");
   const [origin, setOrigin] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -92,7 +92,8 @@ export function NewRunForm({ lastSalesDate, onDone, pollMs }:
       {error && <ErrorMessage message={error} />}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SelectField id="model" label="Model" value={model} onChange={(e) => setModel(e.target.value as ForecastModel)}>
-          <option value="random_forest_v1">Random Forest (recommended)</option>
+          <option value="auto">Best available (recommended)</option>
+          <option value="random_forest_v1">Random Forest (trained on this shop's sales)</option>
           <option value="moving_avg_28">28-day moving average (baseline)</option>
         </SelectField>
         <SelectField id="horizon" label="Forecast length" value={horizon} onChange={(e) => setHorizon(e.target.value)}>

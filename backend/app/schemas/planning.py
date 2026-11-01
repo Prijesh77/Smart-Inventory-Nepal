@@ -12,7 +12,8 @@ from app.models.enums import EvaluationPeriod, ReviewStatus, RiskCategory, RunSt
 
 
 class ForecastRunCreate(BaseModel):
-    model_name: Literal["random_forest_v1", "moving_avg_28"] = "random_forest_v1"
+    model_name: Literal["auto", "random_forest_v1", "moving_avg_28"] = Field(
+        "auto", description="auto = the shop's own Random Forest once trained, else the 28-day moving average")
     horizon_days: Literal[7, 14, 28] = 28
     origin_date: date | None = Field(
         default=None, description="First forecast day; default = the day after the last sales data. "

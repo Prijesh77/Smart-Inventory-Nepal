@@ -4,7 +4,6 @@ import { api, ApiError } from "../../api/client";
 import type { PolicyDefaults } from "../../api/types";
 import { TextField } from "../../components/fields";
 import { Button, ErrorMessage, SimulatedTag } from "../../components/ui";
-import { currencySymbol, inputToMoney, moneyToInput, toDisplay } from "../../lib/currency";
 import { fmtMoney, fmtPct } from "../../lib/format";
 
 interface Values {
@@ -22,7 +21,7 @@ type Errors = Partial<Record<keyof Values, string>>;
 
 const toValues = (p: PolicyDefaults): Values => ({
   service_level: String(+(p.service_level * 100).toFixed(1)), review_period_days: String(p.review_period_days),
-  ordering_cost: moneyToInput(p.ordering_cost), holding_cost_rate: String(+(p.holding_cost_rate * 100).toFixed(1)),
+  ordering_cost: String(p.ordering_cost ?? ""), holding_cost_rate: String(+(p.holding_cost_rate * 100).toFixed(1)),
   min_cycle_days: String(p.min_cycle_days), max_cycle_days: String(p.max_cycle_days),
   excess_cover_days: String(p.excess_cover_days), forecast_horizons: p.forecast_horizons,
 });
@@ -35,7 +34,7 @@ export function validatePolicy(v: Values): Errors {
   const e: Errors = {};
   if (!number(v.service_level, 50, 99.9)) e.service_level = "Between 50 and 99.9";
   if (!whole(v.review_period_days, 1, 28)) e.review_period_days = "Whole days, 1–28";
-  if (!number(v.ordering_cost, 0, toDisplay(10000))) e.ordering_cost = `Between ${fmtMoney(0)} and ${fmtMoney(10000)}`;
+  if (!number(v.ordering_cost, 0, 100_000)) e.ordering_cost = `Between ${fmtMoney(0)} and ${fmtMoney(100_000)}`;
   if (!number(v.holding_cost_rate, 0.1, 100)) e.holding_cost_rate = "Between 0.1 and 100";
   if (!whole(v.min_cycle_days, 1, 90)) e.min_cycle_days = "Whole days, 1–90";
   if (!whole(v.max_cycle_days, 1, 180)) e.max_cycle_days = "Whole days, 1–180";
@@ -47,7 +46,7 @@ export function validatePolicy(v: Values): Errors {
 
 export function toPolicy(v: Values): PolicyDefaults {
   return {
-    service_level: +v.service_level / 100, review_period_days: +v.review_period_days, ordering_cost: +inputToMoney(v.ordering_cost),
+    service_level: +v.service_level / 100, review_period_days: +v.review_period_days, ordering_cost: +v.ordering_cost,
     holding_cost_rate: +v.holding_cost_rate / 100, min_cycle_days: +v.min_cycle_days, max_cycle_days: +v.max_cycle_days,
     excess_cover_days: +v.excess_cover_days, forecast_horizons: [...v.forecast_horizons].sort((a, b) => a - b),
   };
@@ -96,7 +95,7 @@ export function PolicyForm({ policy, canEdit, onSaved }:
       </fieldset>
       <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <legend className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">Cost assumptions <SimulatedTag /></legend>
-        {field("ordering_cost", `Cost per order (${currencySymbol()})`, "Fixed cost of placing one order line")}
+        {field("ordering_cost", `Cost per order (Rs)`, "Fixed cost of placing one order line")}
         {field("holding_cost_rate", "Holding cost (% of unit cost per year)", "Cost of keeping stock on the shelf")}
       </fieldset>
       <fieldset>
