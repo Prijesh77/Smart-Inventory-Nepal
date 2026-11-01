@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-slate-50 font-sans text-[14px] text-slate-900 antialiased;
+    font-feature-settings: "tnum" 0;
+  }
+  /* Visible keyboard focus everywhere (accessibility). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2;
+  }
+
+  /* One consistent look for every data table in the app. */
+  thead th {
+    @apply border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500;
+  }
+  tbody td {
+    @apply align-middle;
+  }
+  tbody tr {
+    @apply transition-colors;
+  }
+  tbody tr:hover {
+    @apply bg-slate-50/70;
+  }
+  td.tabular-nums, .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Form controls: same height, border and focus ring everywhere. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea {
+    @apply rounded-md border-slate-300 shadow-sm transition-colors;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+  select:focus, textarea:focus {
+    @apply border-brand-500 outline-none ring-2 ring-brand-500/20 ring-offset-0;
+  }
+  input[type="checkbox"], input[type="radio"] {
+    @apply h-4 w-4 rounded border-slate-300 accent-brand-600;
+  }
+  input[type="file"] {
+    @apply text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-2
+           file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100;
+  }
+  input::placeholder, textarea::placeholder {
+    @apply text-slate-400;
+  }
+}

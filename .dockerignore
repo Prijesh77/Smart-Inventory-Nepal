@@ -1,0 +1,14 @@
+# Keep the API build context small and free of secrets and data.
+.git
+.env
+.venv
+**/__pycache__
+**/.pytest_cache
+data
+models
+experiments
+docs
+notebooks
+frontend
+.claude
+*.ipynb

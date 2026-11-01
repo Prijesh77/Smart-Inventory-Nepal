@@ -1,0 +1,24 @@
+Reproducibility check, 2026-10-30 17:57
+Python 3.12.10
+
+[    ok] Clean M5 data and sample items (17 s)
+[    ok] Generate synthetic inventory settings (1 s)
+[    ok] Baseline forecasts (validation) (2 s)
+[    ok] Random Forest (validation) (22 s)
+[    ok] Random Forest (test year) (25 s)
+[    ok] Inventory simulation (23 s)
+[    ok] Sensitivity analysis (220 s)
+
+Comparison with the saved results:
+  [same] data/processed/item_demand_classes.csv: 3,049 rows identical (max numeric difference 0.0e+00)
+  [same] data/processed/sample_items.csv: 267 rows identical (max numeric difference 0.0e+00)
+  [same] data/processed/sample_daily.parquet: 457,480 rows identical (max numeric difference 0.0e+00)
+  [same] data/synthetic/item_inventory_params.csv: 267 rows identical (max numeric difference 0.0e+00)
+  [same] experiments/results/baselines_validation_scores.csv: 75 rows identical (max numeric difference 0.0e+00)
+  [same] experiments/results/random_forest_validation_scores.csv: 60 rows identical (max numeric difference 1.3e-15)
+  [same] experiments/results/random_forest_test_scores.csv: 60 rows identical (max numeric difference 1.3e-15)
+  [same] experiments/results/simulation_summary.csv: 105 rows identical (max numeric difference 0.0e+00)
+  [same] experiments/results/sensitivity_results.csv: 12 rows identical (max numeric difference 0.0e+00)
+  [same] experiments/results/sensitivity_bootstrap.csv: 3 rows identical (max numeric difference 0.0e+00)
+
+RESULT: all results reproduced exactly

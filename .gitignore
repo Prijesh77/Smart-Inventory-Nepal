@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data: M5 competition rules forbid redistribution, and files are large
+data/raw/
+data/processed/
+# Derived from M5 prices; rebuild with `python -m ml.inventory.synthetic`
+data/synthetic/*.csv
+
+# Trained models are large and can be rebuilt from the experiment scripts
+models/*.joblib
+# Item-level forecast files contain the actual M5 daily sales; rebuilt by the experiment scripts
+experiments/results/*.parquet
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/e2e/.credentials.json
+frontend/test-results/
+frontend/e2e-report/
+
+# Secrets
+.env
+
+# Editors / OS
+.vscode/
+.DS_Store
+Thumbs.db

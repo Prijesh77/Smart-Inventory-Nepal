@@ -1,0 +1,48 @@
+{
+  "seed": 42,
+  "cost_share_low": 0.6,
+  "cost_share_high": 0.7,
+  "pack_options": [
+    1,
+    6,
+    12,
+    24
+  ],
+  "pack_max_cover_days": 7,
+  "initial_cover_days": 21,
+  "recent_days": 28,
+  "suppliers": [
+    {
+      "supplier_id": "SUP_A",
+      "name": "Supplier A",
+      "lead_time_days": 3,
+      "lead_time_sd_days": 0.5
+    },
+    {
+      "supplier_id": "SUP_B",
+      "name": "Supplier B",
+      "lead_time_days": 5,
+      "lead_time_sd_days": 1.0
+    },
+    {
+      "supplier_id": "SUP_C",
+      "name": "Supplier C",
+      "lead_time_days": 7,
+      "lead_time_sd_days": 1.0
+    },
+    {
+      "supplier_id": "SUP_D",
+      "name": "Supplier D",
+      "lead_time_days": 10,
+      "lead_time_sd_days": 2.0
+    },
+    {
+      "supplier_id": "SUP_E",
+      "name": "Supplier E",
+      "lead_time_days": 14,
+      "lead_time_sd_days": 3.0
+    }
+  ],
+  "test_start": 1578,
+  "note": "SIMULATED parameters; not retailer observations"
+}

@@ -1,0 +1,63 @@
+{
+  "created_at": "2026-10-30T12:13:39+00:00",
+  "features": [
+    "h",
+    "cat_code",
+    "ma_7",
+    "ma_28",
+    "ma_91",
+    "std_28",
+    "zero_share_28",
+    "days_since_sale",
+    "same_wday_mean_4w",
+    "wday",
+    "month",
+    "snap",
+    "is_event",
+    "event_cultural",
+    "event_national",
+    "event_religious",
+    "event_sporting",
+    "price_change",
+    "price_vs_91d"
+  ],
+  "params": {
+    "max_features": 0.5,
+    "max_samples": 0.3,
+    "min_samples_leaf": 50,
+    "n_estimators": 100,
+    "n_jobs": -1,
+    "random_state": 42
+  },
+  "model_name": "random_forest_v1",
+  "store": "CA_1",
+  "train_origins": [
+    92,
+    1542,
+    10
+  ],
+  "last_target_day": 1577,
+  "n_training_rows": 947406,
+  "evaluation_period": "test",
+  "evaluation_origins": [
+    1578,
+    1606,
+    1634,
+    1662,
+    1690,
+    1718,
+    1746,
+    1774,
+    1802,
+    1830,
+    1858,
+    1886,
+    1914
+  ],
+  "evaluation_28d_all": {
+    "wape": 0.7212194760691919,
+    "mae": 1.3197391456887506,
+    "rmse": 2.6152921783795993,
+    "bias_pct": 0.0034250691047908546
+  }
+}

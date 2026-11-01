@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+pythonpath = [".", "backend"]
+testpaths = ["tests", "backend/tests"]
+markers = ["postgres: needs the PostgreSQL database in DATABASE_URL (skipped if unreachable)"]
