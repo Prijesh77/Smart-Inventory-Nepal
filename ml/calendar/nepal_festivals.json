@@ -1,0 +1,419 @@
+{
+ "note": "Nepali festival dates used by the forecasts. Main dates come from public-holiday lists (sources per entry); the AD date is converted from the BS date. Entries with check=true are disputed between sources and should be confirmed against the Ministry of Home Affairs list. To add a year, add its festivals and extend 'covers'; backend/tests/test_festivals.py checks every entry.",
+ "covers": {
+  "from": "2024-04-13",
+  "to": "2027-04-13",
+  "from_bs": "2081-01-01",
+  "to_bs": "2083-12-end"
+ },
+ "festivals": [
+  {
+   "key": "new_year",
+   "name": "Nepali New Year",
+   "nepali": "नयाँ वर्ष",
+   "bs_year": 2081,
+   "main_label": "1 Baisakh",
+   "main_bs": "2081-01-01",
+   "main": "2024-04-13",
+   "check": false,
+   "note": "fixed: 1 Baisakh",
+   "sources": [
+    "BS calendar (fixed date)"
+   ]
+  },
+  {
+   "key": "teej",
+   "name": "Teej",
+   "nepali": "तीज",
+   "bs_year": 2081,
+   "main_label": "Haritalika Teej",
+   "main_bs": "2081-05-21",
+   "main": "2024-09-06",
+   "check": false,
+   "note": "",
+   "sources": [
+    "edusanjal.com 2081 holiday list",
+    "myrepublica.nagariknetwork.com (govt announces 35 public holidays for 2081)",
+    "github.com/Saleep24/Holiday-in-Nepal (2081 CSV)",
+    "english.onlinekhabar.com public holidays 2081"
+   ]
+  },
+  {
+   "key": "dashain",
+   "name": "Dashain",
+   "nepali": "दशैँ",
+   "bs_year": 2081,
+   "main_label": "Vijaya Dashami",
+   "main_bs": "2081-06-26",
+   "main": "2024-10-12",
+   "start_bs": "2081-06-17",
+   "start": "2024-10-03",
+   "check": false,
+   "note": "Ghatasthapana 2081-06-17",
+   "sources": [
+    "edusanjal.com 2081 holiday list",
+    "myrepublica.nagariknetwork.com (govt announces 35 public holidays for 2081)",
+    "github.com/Saleep24/Holiday-in-Nepal (2081 CSV)",
+    "english.onlinekhabar.com public holidays 2081"
+   ]
+  },
+  {
+   "key": "tihar",
+   "name": "Tihar",
+   "nepali": "तिहार",
+   "bs_year": 2081,
+   "main_label": "Laxmi Puja",
+   "main_bs": "2081-07-15",
+   "main": "2024-10-31",
+   "end_bs": "2081-07-18",
+   "end": "2024-11-03",
+   "check": false,
+   "note": "Bhai Tika 2081-07-18",
+   "sources": [
+    "edusanjal.com 2081 holiday list",
+    "myrepublica.nagariknetwork.com (govt announces 35 public holidays for 2081)",
+    "github.com/Saleep24/Holiday-in-Nepal (2081 CSV)",
+    "english.onlinekhabar.com public holidays 2081"
+   ]
+  },
+  {
+   "key": "chhath",
+   "name": "Chhath",
+   "nepali": "छठ",
+   "bs_year": 2081,
+   "main_label": "Chhath",
+   "main_bs": "2081-07-22",
+   "main": "2024-11-07",
+   "check": false,
+   "note": "",
+   "sources": [
+    "edusanjal.com 2081 holiday list",
+    "myrepublica.nagariknetwork.com (govt announces 35 public holidays for 2081)",
+    "github.com/Saleep24/Holiday-in-Nepal (2081 CSV)",
+    "english.onlinekhabar.com public holidays 2081"
+   ]
+  },
+  {
+   "key": "maghe_sankranti",
+   "name": "Maghe Sankranti",
+   "nepali": "माघे संक्रान्ति",
+   "bs_year": 2081,
+   "main_label": "1 Magh",
+   "main_bs": "2081-10-01",
+   "main": "2025-01-14",
+   "check": false,
+   "note": "fixed: 1 Magh",
+   "sources": [
+    "BS calendar (fixed date)"
+   ]
+  },
+  {
+   "key": "shivaratri",
+   "name": "Maha Shivaratri",
+   "nepali": "महाशिवरात्रि",
+   "bs_year": 2081,
+   "main_label": "Maha Shivaratri",
+   "main_bs": "2081-11-14",
+   "main": "2025-02-26",
+   "check": false,
+   "note": "",
+   "sources": [
+    "edusanjal.com 2081 holiday list",
+    "myrepublica.nagariknetwork.com (govt announces 35 public holidays for 2081)",
+    "github.com/Saleep24/Holiday-in-Nepal (2081 CSV)",
+    "english.onlinekhabar.com public holidays 2081"
+   ]
+  },
+  {
+   "key": "holi",
+   "name": "Holi",
+   "nepali": "होली",
+   "bs_year": 2081,
+   "main_label": "Fagu Purnima (hill districts)",
+   "main_bs": "2081-11-29",
+   "main": "2025-03-13",
+   "check": false,
+   "note": "Terai districts: Chaitra 1",
+   "sources": [
+    "edusanjal.com 2081 holiday list",
+    "myrepublica.nagariknetwork.com (govt announces 35 public holidays for 2081)",
+    "github.com/Saleep24/Holiday-in-Nepal (2081 CSV)",
+    "english.onlinekhabar.com public holidays 2081"
+   ]
+  },
+  {
+   "key": "new_year",
+   "name": "Nepali New Year",
+   "nepali": "नयाँ वर्ष",
+   "bs_year": 2082,
+   "main_label": "1 Baisakh",
+   "main_bs": "2082-01-01",
+   "main": "2025-04-14",
+   "check": false,
+   "note": "fixed: 1 Baisakh",
+   "sources": [
+    "BS calendar (fixed date)"
+   ]
+  },
+  {
+   "key": "teej",
+   "name": "Teej",
+   "nepali": "तीज",
+   "bs_year": 2082,
+   "main_label": "Haritalika Teej",
+   "main_bs": "2082-05-10",
+   "main": "2025-08-26",
+   "check": false,
+   "note": "",
+   "sources": [
+    "edusanjal.com 2082 holiday list",
+    "globalimebank.com public holidays 2082",
+    "collegenp.com 2082 list",
+    "calendarific.com / officeholidays.com / spotlightnepal.com (Laxmi Puja 20 Oct 2025)"
+   ]
+  },
+  {
+   "key": "dashain",
+   "name": "Dashain",
+   "nepali": "दशैँ",
+   "bs_year": 2082,
+   "main_label": "Vijaya Dashami",
+   "main_bs": "2082-06-16",
+   "main": "2025-10-02",
+   "start_bs": "2082-06-06",
+   "start": "2025-09-22",
+   "check": false,
+   "note": "Ghatasthapana 2082-06-06",
+   "sources": [
+    "edusanjal.com 2082 holiday list",
+    "globalimebank.com public holidays 2082",
+    "collegenp.com 2082 list",
+    "calendarific.com / officeholidays.com / spotlightnepal.com (Laxmi Puja 20 Oct 2025)"
+   ]
+  },
+  {
+   "key": "tihar",
+   "name": "Tihar",
+   "nepali": "तिहार",
+   "bs_year": 2082,
+   "main_label": "Laxmi Puja",
+   "main_bs": "2082-07-03",
+   "main": "2025-10-20",
+   "end_bs": "2082-07-06",
+   "end": "2025-10-23",
+   "check": false,
+   "note": "Bhai Tika 2082-07-06; one source gives Laxmi Puja a day later",
+   "sources": [
+    "edusanjal.com 2082 holiday list",
+    "globalimebank.com public holidays 2082",
+    "collegenp.com 2082 list",
+    "calendarific.com / officeholidays.com / spotlightnepal.com (Laxmi Puja 20 Oct 2025)"
+   ]
+  },
+  {
+   "key": "chhath",
+   "name": "Chhath",
+   "nepali": "छठ",
+   "bs_year": 2082,
+   "main_label": "Chhath",
+   "main_bs": "2082-07-10",
+   "main": "2025-10-27",
+   "check": false,
+   "note": "",
+   "sources": [
+    "edusanjal.com 2082 holiday list",
+    "globalimebank.com public holidays 2082",
+    "collegenp.com 2082 list",
+    "calendarific.com / officeholidays.com / spotlightnepal.com (Laxmi Puja 20 Oct 2025)"
+   ]
+  },
+  {
+   "key": "maghe_sankranti",
+   "name": "Maghe Sankranti",
+   "nepali": "माघे संक्रान्ति",
+   "bs_year": 2082,
+   "main_label": "1 Magh",
+   "main_bs": "2082-10-01",
+   "main": "2026-01-15",
+   "check": false,
+   "note": "fixed: 1 Magh",
+   "sources": [
+    "BS calendar (fixed date)"
+   ]
+  },
+  {
+   "key": "shivaratri",
+   "name": "Maha Shivaratri",
+   "nepali": "महाशिवरात्रि",
+   "bs_year": 2082,
+   "main_label": "Maha Shivaratri",
+   "main_bs": "2082-11-03",
+   "main": "2026-02-15",
+   "check": false,
+   "note": "",
+   "sources": [
+    "edusanjal.com 2082 holiday list",
+    "globalimebank.com public holidays 2082",
+    "collegenp.com 2082 list",
+    "calendarific.com / officeholidays.com / spotlightnepal.com (Laxmi Puja 20 Oct 2025)"
+   ]
+  },
+  {
+   "key": "holi",
+   "name": "Holi",
+   "nepali": "होली",
+   "bs_year": 2082,
+   "main_label": "Fagu Purnima (hill districts)",
+   "main_bs": "2082-11-18",
+   "main": "2026-03-02",
+   "check": false,
+   "note": "hill districts; Terai districts a day later",
+   "sources": [
+    "edusanjal.com 2082 holiday list",
+    "globalimebank.com public holidays 2082",
+    "collegenp.com 2082 list",
+    "calendarific.com / officeholidays.com / spotlightnepal.com (Laxmi Puja 20 Oct 2025)"
+   ]
+  },
+  {
+   "key": "new_year",
+   "name": "Nepali New Year",
+   "nepali": "नयाँ वर्ष",
+   "bs_year": 2083,
+   "main_label": "1 Baisakh",
+   "main_bs": "2083-01-01",
+   "main": "2026-04-14",
+   "check": false,
+   "note": "fixed: 1 Baisakh",
+   "sources": [
+    "BS calendar (fixed date)"
+   ]
+  },
+  {
+   "key": "teej",
+   "name": "Teej",
+   "nepali": "तीज",
+   "bs_year": 2083,
+   "main_label": "Haritalika Teej",
+   "main_bs": "2083-05-29",
+   "main": "2026-09-14",
+   "check": false,
+   "note": "",
+   "sources": [
+    "nepalhrm.com holiday calendar 2083/84",
+    "merokalam.com 2083 holidays",
+    "katigate.com festivals 2083",
+    "my.nepalembassy.gov.np and br.nepalembassy.gov.np 2083 lists",
+    "travelhimalayanepal.com / nepalhikingteam.com (Dashain, Laxmi Puja 2026)"
+   ]
+  },
+  {
+   "key": "dashain",
+   "name": "Dashain",
+   "nepali": "दशैँ",
+   "bs_year": 2083,
+   "main_label": "Vijaya Dashami",
+   "main_bs": "2083-07-04",
+   "main": "2026-10-21",
+   "start_bs": "2083-06-25",
+   "start": "2026-10-11",
+   "check": false,
+   "note": "Ghatasthapana 2083-06-25",
+   "sources": [
+    "nepalhrm.com holiday calendar 2083/84",
+    "merokalam.com 2083 holidays",
+    "katigate.com festivals 2083",
+    "my.nepalembassy.gov.np and br.nepalembassy.gov.np 2083 lists",
+    "travelhimalayanepal.com / nepalhikingteam.com (Dashain, Laxmi Puja 2026)"
+   ]
+  },
+  {
+   "key": "tihar",
+   "name": "Tihar",
+   "nepali": "तिहार",
+   "bs_year": 2083,
+   "main_label": "Laxmi Puja",
+   "main_bs": "2083-07-22",
+   "main": "2026-11-08",
+   "end_bs": "2083-07-25",
+   "end": "2026-11-11",
+   "check": false,
+   "note": "Bhai Tika 2083-07-25",
+   "sources": [
+    "nepalhrm.com holiday calendar 2083/84",
+    "merokalam.com 2083 holidays",
+    "katigate.com festivals 2083",
+    "my.nepalembassy.gov.np and br.nepalembassy.gov.np 2083 lists",
+    "travelhimalayanepal.com / nepalhikingteam.com (Dashain, Laxmi Puja 2026)"
+   ]
+  },
+  {
+   "key": "chhath",
+   "name": "Chhath",
+   "nepali": "छठ",
+   "bs_year": 2083,
+   "main_label": "Chhath",
+   "main_bs": "2083-07-29",
+   "main": "2026-11-15",
+   "check": false,
+   "note": "",
+   "sources": [
+    "nepalhrm.com holiday calendar 2083/84",
+    "merokalam.com 2083 holidays",
+    "katigate.com festivals 2083",
+    "my.nepalembassy.gov.np and br.nepalembassy.gov.np 2083 lists",
+    "travelhimalayanepal.com / nepalhikingteam.com (Dashain, Laxmi Puja 2026)"
+   ]
+  },
+  {
+   "key": "maghe_sankranti",
+   "name": "Maghe Sankranti",
+   "nepali": "माघे संक्रान्ति",
+   "bs_year": 2083,
+   "main_label": "1 Magh",
+   "main_bs": "2083-10-01",
+   "main": "2027-01-15",
+   "check": false,
+   "note": "fixed: 1 Magh",
+   "sources": [
+    "BS calendar (fixed date)"
+   ]
+  },
+  {
+   "key": "shivaratri",
+   "name": "Maha Shivaratri",
+   "nepali": "महाशिवरात्रि",
+   "bs_year": 2083,
+   "main_label": "Maha Shivaratri",
+   "main_bs": "2083-11-22",
+   "main": "2027-03-06",
+   "check": true,
+   "note": "sources disagree: Falgun 22 or 23",
+   "sources": [
+    "nepalhrm.com holiday calendar 2083/84",
+    "merokalam.com 2083 holidays",
+    "katigate.com festivals 2083",
+    "my.nepalembassy.gov.np and br.nepalembassy.gov.np 2083 lists",
+    "travelhimalayanepal.com / nepalhikingteam.com (Dashain, Laxmi Puja 2026)"
+   ]
+  },
+  {
+   "key": "holi",
+   "name": "Holi",
+   "nepali": "होली",
+   "bs_year": 2083,
+   "main_label": "Fagu Purnima (hill districts)",
+   "main_bs": "2083-12-08",
+   "main": "2027-03-22",
+   "check": true,
+   "note": "sources disagree: Chaitra 7 or 8 (two embassy lists give Chaitra 8)",
+   "sources": [
+    "nepalhrm.com holiday calendar 2083/84",
+    "merokalam.com 2083 holidays",
+    "katigate.com festivals 2083",
+    "my.nepalembassy.gov.np and br.nepalembassy.gov.np 2083 lists",
+    "travelhimalayanepal.com / nepalhikingteam.com (Dashain, Laxmi Puja 2026)"
+   ]
+  }
+ ]
+}

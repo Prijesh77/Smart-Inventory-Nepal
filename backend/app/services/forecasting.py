@@ -15,7 +15,7 @@ from app.models import DailySales, Forecast, ForecastRun, ModelEvaluation, Produ
 from app.models.enums import EvaluationPeriod, RunStatus
 from app.db.tenancy import current_shop_id
 from app.services.forecast_engine import (
-    ASSUMPTIONS, MODELS, ForecastUnavailable, forecast_matrix, load_context, model_file,
+    ASSUMPTIONS, MODELS, ForecastUnavailable, forecast_matrix, load_context, model_file, model_is_current,
 )
 
 logger = logging.getLogger("app.forecasting")
@@ -42,8 +42,12 @@ def choose_model(db: Session, model_name: str) -> tuple[str, str | None]:
     28-day moving average on the held-back days; otherwise the moving average."""
     if model_name != "auto":
         return model_name, None
-    if not model_file(current_shop_id(db)).exists():
+    path = model_file(current_shop_id(db))
+    if not path.exists():
         return "moving_avg_28", "Auto: 28-day moving average, because this shop's Random Forest is not trained yet."
+    if not model_is_current(path):
+        return "moving_avg_28", ("Auto: 28-day moving average, because this shop's Random Forest was trained before "
+                                 "the festival features were added and needs retraining.")
     wape = holdout_wape(db)
     rf, ma = wape.get("random_forest_v1"), wape.get("moving_avg_28")
     if rf is not None and ma is not None and rf > ma:

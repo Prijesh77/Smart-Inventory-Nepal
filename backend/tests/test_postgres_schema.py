@@ -135,7 +135,7 @@ def test_money_is_exact_and_json_round_trips(pg):
     pg.flush()
     pg.expire_all()
     assert pg.get(Product, product.id).unit_price == Decimal("0.30")      # no float drift
-    assert pg.get(AppSetting, "test_policy").value["horizons"] == [7, 14, 28]
+    assert pg.get(AppSetting, (product.shop_id, "test_policy")).value["horizons"] == [7, 14, 28]   # key is (shop, name)
     column_type = pg.execute(text(
         "SELECT data_type FROM information_schema.columns WHERE table_name='app_settings' AND column_name='value'"
     )).scalar()

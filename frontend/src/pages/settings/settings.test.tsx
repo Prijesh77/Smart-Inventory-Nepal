@@ -26,10 +26,18 @@ function routes(role: "admin" | "manager" | "viewer", extra = {}) {
     "GET /imports/jobs": () => ({ body: [] }),
     "GET /categories": () => ({ body: [] }),
     "GET /suppliers": () => ({ body: [] }),
+    "GET /festivals": () => ({ body: FESTIVALS }),
     "GET /users": () => ({ body: [{ ...TEST_USER, role: role }, { ...TEST_USER, id: 2, email: "viewer@test.local", full_name: "Vee", role: "viewer" }] }),
     ...extra,
   };
 }
+
+const FESTIVALS = { covers: { from: "2024-04-13", to: "2027-04-13" }, festivals: [
+  { key: "tihar", name: "Tihar", nepali: "तिहार", bs_year: 2083, main_label: "Laxmi Puja", main: "2026-11-08",
+    main_bs: "2083-07-22", check: false, note: "", sources: ["a", "b"] },
+  { key: "holi", name: "Holi", nepali: "होली", bs_year: 2083, main_label: "Fagu Purnima", main: "2027-03-22",
+    main_bs: "2083-12-08", check: true, note: "sources disagree: Chaitra 7 or 8", sources: ["a"] },
+] };
 
 const csv = () => new File(["sku,date,units\nFOODS_1_013,2016-05-23,4\n"], "sales.csv", { type: "text/csv" });
 
@@ -165,6 +173,15 @@ describe("SettingsPage", () => {
     await userEvent.type(screen.getByLabelText("New category"), "Snacks");
     await userEvent.click(screen.getByRole("button", { name: "Add category" }));
     expect(await screen.findByText("Category Snacks added.")).toBeInTheDocument();
+  });
+
+  it("shows the festival calendar and which dates need checking", async () => {
+    mockFetch(routes("viewer"));
+    renderLoggedIn(<SettingsPage />, "/settings");
+    expect(await screen.findByText("Laxmi Puja")).toBeInTheDocument();
+    expect(screen.getByText("2083-07-22")).toBeInTheDocument();
+    expect(screen.getByRole("note", { name: "" })).toHaveTextContent("1 date differ between sources");
+    expect(screen.getByText("Please check")).toBeInTheDocument();
   });
 
   it("refuses files over 5 MB before uploading", async () => {

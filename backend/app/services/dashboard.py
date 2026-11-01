@@ -18,6 +18,7 @@ from app.models import (
 )
 from app.models.enums import PurchaseOrderStatus, RunStatus
 from app.services import inventory, recommendations
+from app.services.bs_calendar import fiscal_year
 from app.services.forecasting import latest_completed_run
 
 SIMULATED_FIELDS = ["inventory_value", "on_hand", "estimated_order_cost", "open_order_value"]
@@ -54,9 +55,14 @@ def summary(db: Session) -> dict:
     if end:
         units_28, revenue_28 = _sales_totals(db, end - timedelta(days=27), end)
         units_prev, revenue_prev = _sales_totals(db, end - timedelta(days=55), end - timedelta(days=28))
+        fy = fiscal_year(end)
+        units_fy, revenue_fy = _sales_totals(db, fy.start, end)
         sales = {"last_28_days_units": units_28, "last_28_days_revenue": round(revenue_28, 2),
                  "change_vs_previous_28_days": _pct_change(units_28, units_prev),
-                 "daily_trend": sales_trend(db, days=90)}
+                 "daily_trend": sales_trend(db, days=90),
+                 # Nepali fiscal year (1 Shrawan - end of Asar) up to the last sales day.
+                 "fiscal_year": {"label": fy.label, "start": fy.start.isoformat(), "end": fy.end.isoformat(),
+                                 "units": units_fy, "revenue": round(revenue_fy, 2)}}
 
     rec_run = db.scalar(select(RecommendationRun).where(RecommendationRun.status == RunStatus.COMPLETED)
                         .order_by(RecommendationRun.id.desc()).limit(1))

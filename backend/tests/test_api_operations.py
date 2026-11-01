@@ -31,6 +31,9 @@ def test_dashboard_summary_hand_checked(client):
     assert s["recommendations"] is None and s["forecast"] is None           # nothing run yet: no invented numbers
     assert s["purchase_orders"] == {"open": 0, "open_order_value": 0.0, "drafts": 0}
     assert s["simulated_fields"] == []          # a real shop: nothing is labelled as simulated
+    # Nepali fiscal year 2072/73 (from 1 Shrawan 2072 = 17 July 2015) holds all the test sales.
+    assert s["sales"]["fiscal_year"]["label"] == "2072/73" and s["sales"]["fiscal_year"]["start"] == "2015-07-17"
+    assert s["sales"]["fiscal_year"]["units"] == sum(d % 3 for d in range(100))
 
 
 def test_analytics(client):

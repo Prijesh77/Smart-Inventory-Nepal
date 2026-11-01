@@ -2,7 +2,8 @@ import { useState, type FormEvent } from "react";
 
 import { api, ApiError } from "../../api/client";
 import type { ForecastModel, ForecastRun } from "../../api/types";
-import { SelectField, TextField } from "../../components/fields";
+import { DateField } from "../../components/DateField";
+import { SelectField } from "../../components/fields";
 import { Badge, Button, EmptyState, ErrorMessage, Spinner } from "../../components/ui";
 import { fmtDate, fmtDateTime, fmtInt, fmtPct } from "../../lib/format";
 import { waitForRun } from "../../lib/runs";
@@ -67,13 +68,14 @@ export function NewRunForm({ lastSalesDate, onDone, pollMs }:
   { lastSalesDate: string | null; onDone: (run: ForecastRun) => void; pollMs?: number }) {
   const [model, setModel] = useState<ForecastModel>("auto");
   const [horizon, setHorizon] = useState("28");
-  const [origin, setOrigin] = useState("");
+  const [origin, setOrigin] = useState<string | null>("");     // null = not a valid date yet
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    if (origin === null) return setError("The start date is not a valid date");
     setStatus("Forecasting every product…");
     try {
       const run = await api.post<ForecastRun>("/forecasts/runs", {
@@ -101,8 +103,8 @@ export function NewRunForm({ lastSalesDate, onDone, pollMs }:
           <option value="14">14 days</option>
           <option value="28">28 days</option>
         </SelectField>
-        <TextField id="origin" label="Start date (optional)" type="date" value={origin} max={lastSalesDate ?? undefined}
-                   onChange={(e) => setOrigin(e.target.value)}
+        <DateField id="origin" label="Start date (optional)" value={origin ?? ""} max={lastSalesDate ?? undefined}
+                   onChange={setOrigin}
                    hint="Empty = day after the last sales data. An earlier date lets you compare with what really sold." />
       </div>
       <div className="flex items-center gap-3">

@@ -50,12 +50,18 @@ export function RecommendationTable({ rows, canReview, busyId, onReview }: {
           {rows.map((r) => {
             const expanded = open.has(r.id);
             const canDecide = canReview && r.review_status !== "ordered";
+            const festival = r.warnings.find((w) => w.startsWith("Festival ahead:"));
             return (
               <Fragment key={r.id}>
                 <tr className={expanded ? "bg-slate-50" : "hover:bg-slate-50"}>
                   <td className="py-2 pr-3">
                     <Link to={`/products/${r.product_id}`} className="font-medium text-brand-600 hover:underline">{r.sku}</Link>
                     <p className="text-xs text-slate-500">{r.name}</p>
+                    {festival && (
+                      <button type="button" onClick={() => toggle(r.id)} title={festival} className="mt-1">
+                        <Badge tone="amber">Festival ahead</Badge>
+                      </button>
+                    )}
                   </td>
                   <td className="py-2 pr-3"><RiskBadge risk={r.risk_category} /></td>
                   <td className="py-2 pr-3 text-right tabular-nums">{fmtInt(r.on_hand)}</td>
@@ -121,7 +127,7 @@ function Explanation({ rec }: { rec: Recommendation }) {
       </dl>
       {rec.warnings.length > 0 && (
         <ul className="list-disc space-y-1 pl-5 text-xs text-amber-800">
-          {rec.warnings.map((w) => <li key={w}>{w}</li>)}
+          {rec.warnings.map((w) => <li key={w} className={w.startsWith("Festival ahead:") ? "text-sm font-medium" : undefined}>{w}</li>)}
         </ul>
       )}
     </div>

@@ -56,6 +56,8 @@ export interface DashboardSummary {
     last_28_days_revenue: number;
     change_vs_previous_28_days: number | null;
     daily_trend: { date: string; units: number; revenue: number }[];
+    /** Nepali fiscal year (1 Shrawan - end of Asar) up to the last sales day. */
+    fiscal_year?: { label: string; start: string; end: string; units: number; revenue: number };
   } | null;
   recommendations: {
     run_id: number;
@@ -286,6 +288,7 @@ export type ImportType = "suppliers" | "products" | "opening_stock" | "sales";
 /** GET /forecasts/model: the shop's own Random Forest and what "auto" forecasts use. */
 export interface ModelStatus {
   trained: boolean;
+  needs_retraining?: boolean;   // trained before the current features (e.g. festivals)
   trained_at: string | null;
   history_days: number;
   needed_days: number;

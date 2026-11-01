@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+import numpy as np
 import pytest
 from sqlalchemy import func, select
 
@@ -46,9 +47,14 @@ def test_sales_show_festivals_weekends_and_stockouts(data):
         rows = [u for d, u, _, a in data.sales[sku] if d in days and a]
         return sum(rows) / len(rows)
 
-    tihar_2025 = {date(2025, 10, 16) + timedelta(days=k) for k in range(8)}
-    october_2025 = {date(2025, 8, 1) + timedelta(days=k) for k in range(30)}
-    assert mean_units("CANDLE-6", tihar_2025) > 3 * mean_units("CANDLE-6", october_2025)
+    # Tihar 2082: Laxmi Puja on 20 Oct 2025 (ml/calendar/nepal_festivals.json). Candles are "lumpy", so the
+    # designed lift is checked exactly and the random sales more loosely.
+    candle = next(p for p in data.products if p.sku == "CANDLE-6")
+    assert demo_shop.expected_units(candle, date(2025, 10, 20), data.start) > 8 * demo_shop.expected_units(
+        candle, date(2025, 7, 1), data.start)
+    tihar_2025 = {date(2025, 10, 14) + timedelta(days=k) for k in range(10)}
+    summer_2025 = {date(2025, 6, 1) + timedelta(days=k) for k in range(90)}
+    assert mean_units("CANDLE-6", tihar_2025) > 1.5 * mean_units("CANDLE-6", summer_2025)
 
     saturdays = {d for d, *_ in data.sales["NOODLES-70G"] if d.weekday() == 5}
     tuesdays = {d for d, *_ in data.sales["NOODLES-70G"] if d.weekday() == 1}
@@ -133,3 +139,23 @@ def test_retrain_from_the_app(api, empty_model_folder):
     assert (empty_model_folder / f"shop_{shop_id}_random_forest.joblib").exists()
     assert set(status["holdout_wape"]) == {"random_forest_v1", "moving_avg_28"}
     assert status["auto_uses"] in ("random_forest_v1", "moving_avg_28") and "Auto:" in status["auto_reason"]
+
+
+def test_festival_ahead_advice_uses_last_years_tihar(db, data):
+    from app.services.forecast_engine import forecast_matrix, load_context
+    from app.services.recommendations import festival_note
+    demo_shop.load(db, data)
+    db.commit()
+    origin = END + timedelta(days=1)                       # 1 Nov 2026: Tihar 2083's build-up has started
+    ctx = load_context(db, through=origin + timedelta(days=27))
+    values = forecast_matrix(ctx, "moving_avg_28", origin, 28)
+    row = {sku: i for i, sku in enumerate(ctx.panel.item_ids)}
+
+    candles = festival_note(ctx, row["CANDLE-6"], origin, values[row["CANDLE-6"]], 9, "moving_avg_28")
+    assert candles.startswith("Festival ahead: Tihar (Laxmi Puja on 22 Kartik 2083, in 7 days)")
+    assert "last time, this item sold" in candles and "does not know festivals" in candles
+    assert "Consider about" in candles
+    # Whatever the model: a forecast that already expects the rise gets no extra units.
+    high = np.full(28, 100.0)
+    assert festival_note(ctx, row["CANDLE-6"], origin, high, 9, "random_forest_v1").endswith("already expects this rise.")
+    assert festival_note(ctx, row["SALT-1KG"], origin, values[row["SALT-1KG"]], 9, "moving_avg_28") is None

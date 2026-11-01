@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import { api, ApiError } from "../../api/client";
 import type { PurchaseOrder, Supplier } from "../../api/types";
+import { DateField } from "../../components/DateField";
 import { SelectField, TextField } from "../../components/fields";
 import { ProductPicker } from "../../components/ProductPicker";
 import { Button, ErrorMessage } from "../../components/ui";
@@ -43,7 +44,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
 }) {
   const [supplierId, setSupplierId] = useState(order ? String(order.supplier_id) : "");
   const [notes, setNotes] = useState(order?.notes ?? "");
-  const [expected, setExpected] = useState(order?.expected_date ?? "");
+  const [expected, setExpected] = useState<string | null>(order?.expected_date ?? "");   // null = not a valid date yet
   const [lines, setLines] = useState<DraftLine[]>(() => order?.lines.map((l) => ({
     product_id: l.product_id, sku: l.sku, name: l.name, quantity: String(l.quantity_ordered), unit_cost: String(l.unit_cost ?? ""),
   })) ?? []);
@@ -56,7 +57,8 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    const problem = !supplierId ? "Choose a supplier" : lineErrors(lines);
+    const problem = !supplierId ? "Choose a supplier"
+      : expected === null ? "The expected delivery date is not a valid date" : lineErrors(lines);
     setError(problem);
     if (problem) return;
     setSaving(true);
@@ -82,8 +84,8 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
           <option value="">Choose…</option>
           {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.lead_time_days}-day lead time)</option>)}
         </SelectField>
-        <TextField id="po-expected" label="Expected delivery (optional)" type="date" value={expected}
-                   onChange={(e) => setExpected(e.target.value)} hint="Empty = set from the lead time when submitted" />
+        <DateField id="po-expected" label="Expected delivery (optional)" value={expected ?? ""} onChange={setExpected}
+                   hint="Empty = set from the lead time when submitted" />
       </div>
       {supplierId && (
         <ProductPicker label="Add a product from this supplier" selected={null} supplierId={Number(supplierId)}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
+import { DATE_STYLES, dateStyle, setDateStyle, type DateStyle } from "../lib/nepaliDate";
 import { Icon, type IconName } from "./Icons";
 import { Badge } from "./ui";
 
@@ -27,6 +28,7 @@ export function Layout() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dates, setDates] = useState<DateStyle>(dateStyle);
   const current = currentItem(pathname);
 
   useEffect(() => setMenuOpen(false), [pathname]);
@@ -110,6 +112,14 @@ export function Layout() {
                 </div>
               </div>
               <Badge tone={ROLE_TONE[user.role]}>{user.role}</Badge>
+              <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                <span className="hidden md:inline">Dates</span>
+                <select aria-label="Show dates as" value={dates}
+                        onChange={(e) => { setDateStyle(e.target.value as DateStyle); setDates(e.target.value as DateStyle); }}
+                        className="rounded-md border border-slate-300 bg-white py-1 pl-2 pr-7 text-xs text-slate-700">
+                  {DATE_STYLES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </label>
               <span aria-hidden className="hidden h-6 w-px bg-slate-200 sm:block" />
               <button type="button" onClick={() => logout()}
                       className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
@@ -128,7 +138,8 @@ export function Layout() {
           </div>
         )}
 
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8">
+        {/* Re-drawn when the date style changes, so every date on the page switches together. */}
+        <main key={dates} className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8">
           <Outlet />
         </main>
       </div>

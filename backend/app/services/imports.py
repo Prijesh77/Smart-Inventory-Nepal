@@ -35,6 +35,7 @@ from app.models import (
     CalendarDay, Category, DailySales, ImportJob, InventoryBalance, InventoryTransaction, Product, Supplier, User,
 )
 from app.models.enums import RunStatus, TransactionType
+from app.services.bs_calendar import parse_date
 from app.services.inventory import apply_movement
 
 MAX_BYTES = 5 * 1024 * 1024
@@ -99,7 +100,8 @@ IMPORT_TYPES: dict[str, dict] = {
                        "Existing days are replaced.",
         "columns": [
             Column("sku", True, "Product SKU", ("NOODLES-70G", "RICE-JEERA-5KG")),
-            Column("date", True, "Day of the sale, YYYY-MM-DD (or an Excel date cell)", ("2026-10-31", "2026-10-31")),
+            Column("date", True, "Day of the sale: AD (2026-10-31) or BS (2083-07-14), or an Excel date cell",
+                   ("2083-07-14", "2026-10-31")),
             Column("units", True, "Units sold that day (whole number, 0 or more)", ("24", "2")),
             Column("unit_price", False, "Selling price that day in Rs", ("25", "")),
         ],
@@ -282,11 +284,16 @@ class _Row:
         return number
 
     def day(self, column: str) -> date | None:
+        """AD (2026-11-01) or BS (2083-07-15, any year from 2051); '-', '/' or '.' between the parts."""
         value = self.raw(column)
+        text = value[:10] if len(value) > 10 and value[10] in " T" else value
         try:
-            return date.fromisoformat(value[:10] if len(value) > 10 and value[10] in " T" else value)
-        except ValueError:
-            self.bad(column, f"Date '{value}' is not YYYY-MM-DD")
+            return parse_date(text)[0]
+        except ValueError as exc:
+            if "BS" in str(exc):
+                self.bad(column, f"Date '{value}' is not a real BS date (check the day of the month)")
+            else:
+                self.bad(column, f"Date '{value}' is not YYYY-MM-DD (AD, or BS such as 2083-07-15)")
             return None
 
 

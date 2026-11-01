@@ -1,4 +1,5 @@
 /** Number and date formatting used across pages, so every page shows values the same way. */
+import { dateStyle, formatBs } from "./nepaliDate";
 
 const integer = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const oneDecimal = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -43,23 +44,38 @@ export function fmtPct(value: Num, signed = false): string {
   return n > 0 ? `+${text}` : n < 0 ? `-${text}` : text;
 }
 
-/** "2016-05-22" -> "22 May 2016" without time-zone surprises. */
-export function fmtDate(value: string | null | undefined): string {
-  if (!value) return DASH;
+function adDate(value: string, withYear = true): string {
   const [y, m, d] = value.slice(0, 10).split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    day: "numeric", month: "short", ...(withYear ? { year: "numeric" } : {}), timeZone: "UTC" });
 }
 
+/** A date in the style chosen in the header (lib/nepaliDate.ts): "15 Kartik 2083", "१५ कार्तिक २०८३",
+ * "15 Kartik 2083 (1 Nov 2026)" or "1 Nov 2026". Dates the BS converter cannot handle are shown in AD. */
+export function fmtDate(value: string | null | undefined): string {
+  if (!value) return DASH;
+  const style = dateStyle();
+  const ad = adDate(value);
+  if (style === "ad") return ad;
+  const bs = formatBs(value.slice(0, 10), { script: style === "bs_np" ? "np" : "en" });
+  if (!bs) return ad;
+  return style === "both" ? `${bs} (${ad})` : bs;
+}
+
+/** Day and month only, for chart axes: "15 Kar", "१५ कार्तिक" or "1 Nov". */
 export function fmtShortDate(value: string): string {
-  const [y, m, d] = value.slice(0, 10).split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-GB", { day: "numeric", month: "short",
-    timeZone: "UTC" });
+  const style = dateStyle();
+  const bs = style === "ad" ? null : formatBs(value.slice(0, 10), { short: true, script: style === "bs_np" ? "np" : "en" });
+  return bs ?? adDate(value, false);
 }
 
+/** A moment (e.g. when an import ran) as date and local time: "15 Kartik, 10:26". */
 export function fmtDateTime(value: string | null | undefined): string {
   if (!value) return DASH;
-  return new Date(value).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const moment = new Date(value);
+  const time = moment.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const local = `${moment.getFullYear()}-${String(moment.getMonth() + 1).padStart(2, "0")}-${String(moment.getDate()).padStart(2, "0")}`;
+  return `${fmtShortDate(local)}, ${time}`;
 }
 
 /** "critical_stockout_risk" -> "Critical stockout risk" */

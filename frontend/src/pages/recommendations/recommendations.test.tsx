@@ -49,6 +49,14 @@ const lastQuery = (calls: { url: string }[]) =>
   new URL(calls.filter((c) => c.url.startsWith("/api/v1/recommendations?")).at(-1)!.url, "http://x").searchParams;
 
 describe("RecommendationsPage", () => {
+  it("marks products with a festival ahead and puts that advice first", async () => {
+    const note = "Festival ahead: Tihar (Laxmi Puja on 22 Kartik 2083, in 7 days). Around Tihar last time, this item sold 6.2x its normal amount.";
+    mockFetch(routes("manager", { "GET /recommendations": () => ({ body: page([rec({ warnings: [note, "Safety stock sized from x"] })]) }) }));
+    renderLoggedIn(<RecommendationsPage />, "/recommendations");
+    await userEvent.click(await screen.findByRole("button", { name: "Festival ahead" }));
+    expect(await screen.findByText(note)).toBeInTheDocument();
+  });
+
   it("shows the run summary, risk counts and the table", async () => {
     mockFetch(routes());
     renderLoggedIn(<RecommendationsPage />, "/recommendations");

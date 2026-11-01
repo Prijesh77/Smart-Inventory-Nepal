@@ -11,6 +11,7 @@ import { Badge, Button, Card, ErrorMessage, PageHeader, SimulatedTag, Spinner } 
 import { useApi } from "../../hooks/useApi";
 import { useReference } from "../../hooks/useReference";
 import { fmtDate, fmtDecimal, fmtInt, fmtMoney, humanize } from "../../lib/format";
+import { fiscalYear } from "../../lib/nepaliDate";
 import { ProductForm } from "./ProductForm";
 import { CLASS_TONE } from "./ProductsPage";
 
@@ -25,6 +26,10 @@ export function ProductDetailPage() {
     // First ask for the default window to learn the last sales date, then the chosen length.
     const latest = await api.get<SalesHistory>(`/products/${id}/sales`, undefined, signal);
     if (days === "90") return latest;
+    if (days === "fy") {                       // Nepali fiscal year (from 1 Shrawan) up to the last sales day
+      const fy = fiscalYear(latest.end);
+      if (fy) return api.get<SalesHistory>(`/products/${id}/sales`, { start: fy.start, end: latest.end }, signal);
+    }
     const end = new Date(`${latest.end}T00:00:00Z`);
     const start = new Date(end.getTime() - (Number(days) - 1) * 86_400_000).toISOString().slice(0, 10);
     return api.get<SalesHistory>(`/products/${id}/sales`, { start, end: latest.end }, signal);
@@ -74,6 +79,7 @@ export function ProductDetailPage() {
                 <option value="30">Last 30 days</option>
                 <option value="90">Last 90 days</option>
                 <option value="365">Last 365 days</option>
+                <option value="fy">This fiscal year (from 1 Shrawan)</option>
               </FilterSelect>}>
           {history.error && <ErrorMessage message={history.error} onRetry={history.reload} />}
           {history.loading && !h && <Spinner label="Loading sales…" />}

@@ -11,6 +11,14 @@ Safety stock uses the forecast model's MEASURED past errors (Phase 4 finding):
      Clearly labelled as an estimate, and replaced by measured errors once there is
      enough history (about 5 weeks with the moving average).
   5. Otherwise: "insufficient data" (no recommendation is invented).
+
+Festival ahead: when a festival's build-up starts within 3 weeks, last year's
+same festival is looked up in the item's own sales. If the item sold clearly more
+then (>= 1.3x its normal amount), the recommendation says so, and compares the
+forecast for the festival days with what last time's pattern implies: if the forecast
+falls short (always with the moving average, often with a forest that has seen only
+one such festival), it estimates the extra units.
+The suggested quantity itself is not changed: the shop decides.
 """
 
 from __future__ import annotations
@@ -32,11 +40,16 @@ from app.models.enums import ReviewStatus, RiskCategory, RunStatus
 from app.services import inventory
 from app.services.forecast_engine import ForecastContext, forecast_matrix, load_context, min_history_days
 from app.services.forecasting import latest_completed_run
+from app.services.bs_calendar import to_bs
+from ml.calendar.festivals import previous, upcoming
 from ml.inventory import formulas as f
 from ml.inventory.recommend import ItemState, PolicySettings, insufficient, recommend
 
 logger = logging.getLogger("app.recommendations")
 ERROR_ORIGINS = 16
+FESTIVAL_LOOKAHEAD_DAYS = 21          # warn when a festival build-up starts within 3 weeks
+FESTIVAL_MIN_UPLIFT = 1.3             # ... and the item sold at least 30% more around it last time
+FESTIVAL_BASELINE_DAYS = 28           # "normal" = the 4 weeks before last year's build-up
 MIN_SALES_DAYS_FOR_ESTIMATE = 14     # fallback 4: days of the item's own sales needed
 SALES_SIGMA_WINDOW = 56              # fallback 4 uses at most the last 8 weeks
 POLICY_FIELDS = {fld.name for fld in fields(PolicySettings)}
@@ -96,6 +109,51 @@ def error_sigmas(ctx: ForecastContext, model_name: str, origin, protection: np.n
     period_sigma = [f.period_sigma_from_errors(np.array(e)) for e in period_err]
     daily_sigma = [float(np.sqrt(np.mean(np.square(e)))) if len(e) >= 14 else None for e in daily_err]
     return period_sigma, daily_sigma
+
+
+def festival_note(ctx: ForecastContext, i: int, origin, forecast: np.ndarray, protection_days: int,
+                  model_name: str) -> str | None:
+    """'Festival ahead' advice for item row i, from its own sales around last year's same festival."""
+    best = None
+    for fest in upcoming(origin, FESTIVAL_LOOKAHEAD_DAYS):
+        last = previous(fest)
+        if last is None:
+            continue
+        start, end = (ctx.d_num(d) for d in last.window)
+        if start - FESTIVAL_BASELINE_DAYS < 1 or end >= ctx.d_num(origin):
+            continue                                           # last year's festival is not in this shop's history
+        sales = ctx.panel.sales[i]
+        window, normal = sales[start - 1: end], sales[start - 1 - FESTIVAL_BASELINE_DAYS: start - 1]
+        if np.isnan(window).sum() > len(window) / 2 or np.isnan(normal).all():
+            continue
+        base = float(np.nanmean(normal))
+        uplift = float(np.nanmean(window)) / base if base > 0 else None
+        if uplift is None or uplift < FESTIVAL_MIN_UPLIFT or (best and uplift <= best[1]):
+            continue
+        best = (fest, uplift, last)
+    if best is None:
+        return None
+    fest, uplift, last = best
+    days = (fest.main - origin).days
+    when = f"in {days} days" if days > 0 else "now"
+    text = (f"Festival ahead: {fest.name} ({fest.main_label} on {to_bs(fest.main).label}, {when}). Around "
+            f"{last.name} last time, this item sold {uplift:.1f}x its normal amount.")
+    # Compare what the forecast expects on the festival days inside the protection period with what last
+    # time's pattern implies. Works for any model: a forest that learned the rise shows little or no gap.
+    first, last_day = (ctx.d_num(d) - ctx.d_num(origin) for d in fest.window)
+    lo, hi = max(first, 0), min(last_day + 1, protection_days)
+    if hi <= lo:
+        return text + " It falls after this order would arrive, so plan for it in the next order."
+    o = ctx.d_num(min(origin, fest.window[0]))
+    normal_now = float(np.nanmean(ctx.panel.sales[i, max(o - 1 - FESTIVAL_BASELINE_DAYS, 0): o - 1]))
+    forecast_days = float(forecast[lo:hi].sum())
+    implied = normal_now * uplift * (hi - lo)
+    if np.isnan(implied) or implied - forecast_days < 1:
+        return text + " The forecast already expects this rise."
+    why = " (the moving average does not know festivals)" if model_name == "moving_avg_28" else ""
+    return text + (f" The forecast{why} expects about {forecast_days:.0f} units on those days; last time's pattern "
+                   f"suggests about {implied:.0f}. Consider about {round(implied - forecast_days)} more units than "
+                   f"suggested.")
 
 
 def sales_sigmas(ctx: ForecastContext, origin) -> list[tuple[float, int] | None]:
@@ -179,7 +237,10 @@ def _compute(db: Session, run: RecommendationRun) -> int:
                 method = (f"an ESTIMATE: day-to-day variation of the last {days} days of sales (little history "
                           f"yet; measured forecast errors replace it after about 5 weeks of sales)")
             rec = recommend(state, forecasts[product.id], sigma, policy, period_sigma=period_sigma[i])
-        records.append(_to_row(run.id, product.id, rec, method))
+        note = (festival_note(ctx, i, forecast_run.origin_date, forecasts[product.id],
+                              lead_time + policy.review_period_days, forecast_run.model_name)
+                if i is not None and product.id in forecasts and lead_time is not None else None)
+        records.append(_to_row(run.id, product.id, rec, method, note))
     db.add_all(records)
     db.flush()
     return len(records)
@@ -191,8 +252,9 @@ def _num(value: float | None, places: int = 3) -> Decimal | None:
     return Decimal(str(round(float(value), places)))
 
 
-def _to_row(run_id: int, product_id: int, rec, sigma_method: str | None) -> ReorderRecommendation:
-    warnings = list(rec.warnings)
+def _to_row(run_id: int, product_id: int, rec, sigma_method: str | None,
+            festival: str | None = None) -> ReorderRecommendation:
+    warnings = ([festival] if festival else []) + list(rec.warnings)       # festival first: most useful
     if sigma_method:
         warnings.append(f"Safety stock sized from {sigma_method}")
     return ReorderRecommendation(

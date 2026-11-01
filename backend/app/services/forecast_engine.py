@@ -4,9 +4,8 @@ Rebuilds, from the database, the same item x day table that the models were
 trained on (ml/features/build.py), then produces daily forecasts.
 
 Days after the last sales day are added as "future" rows:
-  - calendar facts (weekday, month, SNAP, events, closures) come from
-    calendar_days when present, otherwise weekday/month are derived from the
-    date and SNAP/events are assumed absent;
+  - weekday and month come from the date, Nepali festival features from
+    ml/calendar/festivals.py, and closures from calendar_days (open if not listed);
   - the price is assumed to stay at the last known price (no planned
     price changes are known to the app). Both assumptions are recorded on
     every forecast run.
@@ -14,6 +13,7 @@ Days after the last sales day are added as "future" rows:
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import date, timedelta
 from functools import lru_cache
@@ -28,7 +28,8 @@ from sqlalchemy.orm import Session
 from app.core.config import PROJECT_ROOT
 from app.db.tenancy import current_shop_id
 from app.models import CalendarDay, Category, DailySales, Product
-from ml.features.build import MIN_HISTORY_DAYS, Panel, build_rows, make_panel
+from ml.calendar.festivals import FESTIVAL_FEATURES, festival_features
+from ml.features.build import FEATURES, MIN_HISTORY_DAYS, Panel, build_rows, make_panel
 from ml.models.baselines import moving_average
 from ml.models.forest import predict
 
@@ -41,7 +42,7 @@ MODELS = {
 }
 ASSUMPTIONS = [
     "Prices after the last sales day are assumed unchanged.",
-    "Calendar facts after the stored calendar are derived from the date (no SNAP or events).",
+    "Festival dates come from the Nepali festival calendar (ml/calendar/nepal_festivals.json).",
     "Forecasts are of recorded sales, which can be lower than true demand during stockouts.",
 ]
 
@@ -63,11 +64,22 @@ def model_file(shop_id: int) -> Path:
     return MODEL_DIR / f"shop_{shop_id}_random_forest.joblib"
 
 
+def model_is_current(path: Path) -> bool:
+    """True if the saved forest was trained with today's feature list (e.g. not before festival features)."""
+    meta = path.with_suffix(".json")
+    if not path.exists() or not meta.exists():
+        return False
+    return json.loads(meta.read_text(encoding="utf-8")).get("features") == FEATURES
+
+
 def load_rf_model(path: Path):
     if not path.exists():
         raise ForecastUnavailable(
             "This shop's Random Forest has not been trained yet. Use the 28-day moving average, or train it "
             "with: python backend/scripts/train_model.py")
+    if not model_is_current(path):
+        raise ForecastUnavailable("This shop's Random Forest was trained before the Nepali festival features "
+                                  "were added; retrain it (Forecasting page, 'Retrain model').")
     return _load_file(path, path.stat().st_mtime)
 
 
@@ -133,11 +145,12 @@ def load_context(db: Session, through: date) -> ForecastContext:
         "sales_date": all_days,
         "wday": [m5_wday(d) for d in all_days],
         "month": [d.month for d in all_days],
-        "snap": [int(stored[d].snap) if d in stored else 0 for d in all_days],
-        "event_type_1": [stored[d].event_type if d in stored else None for d in all_days],
-        "is_store_open": [stored[d].is_store_open if d in stored else not (d.month == 12 and d.day == 25)
-                          for d in all_days],
+        # Open unless the calendar says closed (e.g. Vijaya Dashami in the demo shop).
+        "is_store_open": [stored[d].is_store_open if d in stored else True for d in all_days],
     })
+    festival = festival_features(all_days)
+    for column in FESTIVAL_FEATURES:
+        cal[column] = festival[column].to_numpy()
     daily = daily.merge(cal, on="sales_date", how="left")
     daily["is_available"] = daily["is_available"] & daily["is_store_open"]
     daily["d_num"] = [(d - first).days + 1 for d in daily["sales_date"]]

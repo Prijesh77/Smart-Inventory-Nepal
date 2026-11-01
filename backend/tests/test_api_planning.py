@@ -86,8 +86,15 @@ def test_auto_uses_the_moving_average_until_the_shop_has_a_trained_forest(planni
     assert response.status_code == 202 and response.json()["model_name"] == "moving_avg_28"
     with api.app.state.make_session() as s:
         from app.services.forecasting import choose_model
+        import json
+        from ml.features.build import FEATURES
         empty_model_folder.mkdir()
         (empty_model_folder / "shop_1_random_forest.joblib").write_bytes(b"trained")
+        meta = empty_model_folder / "shop_1_random_forest.json"
+        meta.write_text(json.dumps({"features": FEATURES[:-1] + ["snap"]}))        # trained with old features
+        model, reason = choose_model(s, "auto")
+        assert model == "moving_avg_28" and "needs retraining" in reason
+        meta.write_text(json.dumps({"features": FEATURES}))
         assert choose_model(s, "auto")[0] == "random_forest_v1"
         assert choose_model(s, "moving_avg_28") == ("moving_avg_28", None)
 

@@ -15,7 +15,7 @@ How daily demand is generated (seeded, so the same inputs give the same data):
     days, in small or large, variable quantities;
   - a few short out-of-stock spells per item (recorded as 0 units, not
     available), and one price rise for some items on 1 Magh (mid-January).
-Festival dates are approximate and only for the demo; the shop is closed on Vijaya Dashami.
+Festival dates are the real ones from ml/calendar/nepal_festivals.json; the shop is closed on Vijaya Dashami.
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ from app.models import (
     CalendarDay, Category, DailySales, InventoryBalance, InventoryTransaction, Product, Supplier,
 )
 from app.models.enums import TransactionType
+from ml.calendar.festivals import festivals
 from app.services.shops import create_shop
 
 DEMO_SHOP_NAME = "Demo Kirana Pasal (synthetic data)"
@@ -129,30 +130,13 @@ PRODUCTS = [
 ]
 del P
 
-# Approximate festival dates (demo only): (festival, first day of the build-up, main day, last day).
-FESTIVALS = [
-    ("dashain", date(2024, 9, 29), date(2024, 10, 12), date(2024, 10, 16)),
-    ("tihar", date(2024, 10, 24), date(2024, 11, 1), date(2024, 11, 3)),
-    ("dashain", date(2025, 9, 15), date(2025, 10, 2), date(2025, 10, 6)),
-    ("tihar", date(2025, 10, 13), date(2025, 10, 21), date(2025, 10, 23)),
-    ("dashain", date(2026, 10, 4), date(2026, 10, 21), date(2026, 10, 25)),
-    ("tihar", date(2026, 10, 31), date(2026, 11, 8), date(2026, 11, 11)),
-]
-# Calendar rows: (day, event name, event type, shop open?)
-EVENTS = [
-    (date(2024, 10, 3), "Ghatasthapana (approx.)", "Religious", True),
-    (date(2024, 10, 12), "Vijaya Dashami (approx.)", "Religious", False),
-    (date(2024, 11, 1), "Laxmi Puja (approx.)", "Religious", True),
-    (date(2024, 11, 3), "Bhai Tika (approx.)", "Religious", True),
-    (date(2025, 9, 22), "Ghatasthapana (approx.)", "Religious", True),
-    (date(2025, 10, 2), "Vijaya Dashami (approx.)", "Religious", False),
-    (date(2025, 10, 21), "Laxmi Puja (approx.)", "Religious", True),
-    (date(2025, 10, 23), "Bhai Tika (approx.)", "Religious", True),
-    (date(2026, 10, 11), "Ghatasthapana (approx.)", "Religious", True),
-    (date(2026, 10, 21), "Vijaya Dashami (approx.)", "Religious", False),
-    (date(2026, 11, 8), "Laxmi Puja (approx.)", "Religious", True),
-    (date(2026, 11, 11), "Bhai Tika (approx.)", "Religious", True),
-]
+# Festivals come from the same calendar the forecasts use (ml/calendar/nepal_festivals.json), so the demo's
+# festival peaks fall exactly where the model expects them: (festival, build-up start, main day, last day).
+FESTIVALS = [(f.key, f.window[0], f.main, f.window[1]) for f in festivals() if f.key in ("dashain", "tihar")]
+# Calendar rows: (day, event name, event type, shop open?). The shop closes on Vijaya Dashami.
+EVENTS = sorted({(f.main, f.main_label, "Festival", f.key != "dashain") for f in festivals()}
+                | {(f.start, "Ghatasthapana", "Festival", True) for f in festivals() if f.key == "dashain" and f.start}
+                | {(f.end, "Bhai Tika", "Festival", True) for f in festivals() if f.key == "tihar" and f.end})
 PRICE_RISE_DAYS = [date(2025, 1, 14), date(2026, 1, 15)]       # about 1 Magh each year
 WEEKDAY_EFFECT = [1.0, 0.95, 0.95, 0.95, 1.0, 1.15, 1.25]      # Sunday .. Saturday
 GROWTH_PER_YEAR = 0.08

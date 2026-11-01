@@ -1,7 +1,8 @@
-"""Categories and suppliers: the lists for filters and forms, and adding or editing them (manager or admin)."""
+"""Categories and suppliers (lists for filters and forms; adding/editing for managers), and the festival calendar."""
 
 from __future__ import annotations
 
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -15,6 +16,7 @@ from app.models import Category, Supplier, User
 from app.models.enums import UserRole
 from app.schemas.products import CategoryCreate, CategoryOut, SupplierCreate, SupplierOut, SupplierUpdate
 from app.services.imports import category_code
+from ml.calendar.festivals import DATA_FILE as FESTIVAL_FILE
 
 router = APIRouter(tags=["reference data"])
 Manager = Annotated[User, Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER))]
@@ -62,3 +64,10 @@ def update_supplier(supplier_id: int, data: SupplierUpdate, db: DbSession, _: Ma
         setattr(supplier, key, value)
     db.commit()
     return supplier
+
+
+@router.get("/festivals", summary="The Nepali festival dates the forecasts use (shared by all shops)")
+def list_festivals() -> dict:
+    """From ml/calendar/nepal_festivals.json: BS and AD dates, sources, and which dates still need checking."""
+    data = json.loads(FESTIVAL_FILE.read_text(encoding="utf-8"))
+    return {"covers": data["covers"], "festivals": data["festivals"]}
