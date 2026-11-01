@@ -1,12 +1,13 @@
 /**
  * Browser end-to-end test of the whole system: real Edge browser -> real frontend
- * -> real API -> real PostgreSQL (the separate inventory_e2e database, freshly
- * seeded with the 267 M5 products by e2e_setup.py).
+ * -> real API -> real PostgreSQL (the separate <main database>_e2e database, freshly
+ * loaded by e2e_setup.py with the synthetic demo shop of 43 products, plus a second
+ * shop that must never see the demo shop's data).
  */
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
-type Role = "admin" | "manager" | "viewer";
+type Role = "admin" | "manager" | "viewer" | "other_shop";
 type Account = { email: string; password: string };
 let cached: Record<Role, Account> | null = null;
 
@@ -46,7 +47,8 @@ test("rejects a wrong password and protects pages", async ({ page }) => {
 test("manager: forecast -> recommendations -> approve -> order -> receive -> stock updated", async ({ page }) => {
   test.setTimeout(240_000);
   await login(page, "manager");
-  await expect(page.getByText("267", { exact: true }).first()).toBeVisible();      // seeded products
+  await expect(page.getByText("43", { exact: true }).first()).toBeVisible();       // the demo shop's products
+  await expect(page.getByRole("region", { name: "Shop" })).toContainText("Demo Kirana Pasal");
   await expect(page.getByText("No recommendations yet").first()).toBeVisible();
 
   // 1. Forecast and recommendations from the overview (background jobs)
@@ -109,18 +111,20 @@ test("manager: stock adjustment needs a reason and is logged", async ({ page }) 
   await expect(page.getByRole("status")).toContainText(`${sku} -1 (adjustment)`);
 });
 
-test("manager: an invalid CSV is rejected with row errors", async ({ page }) => {
+test("manager: an invalid sales file is rejected with row errors", async ({ page }) => {
   await login(page, "manager");
   await page.getByRole("link", { name: "Settings & import" }).click();
-  await page.getByLabel(/CSV file/).setInputFiles({
+  await page.getByRole("button", { name: "4. Sales history" }).click();
+  await page.getByLabel(/Excel or CSV file/).setInputFiles({
     name: "bad.csv", mimeType: "text/csv",
-    buffer: Buffer.from("sku,date,units\nFOODS_1_013,23/05/2016,4\nNOT_A_SKU,2016-05-23,1\n"),
+    buffer: Buffer.from("sku,date,units\nNOODLES-70G,23/05/2026,4\nNOT_A_SKU,2083-07-01,1\nNOODLES-70G,2083-07-31,2\n"),
   });
   await page.getByRole("button", { name: "Check file" }).click();
   const alert = page.getByRole("alert");
   await expect(alert).toContainText("Nothing will be imported");
   await expect(alert).toContainText("is not YYYY-MM-DD");
   await expect(alert).toContainText("Unknown SKU 'NOT_A_SKU'");
+  await expect(alert).toContainText("not a real BS date");                       // Kartik 2083 has 30 days
   await expect(page.getByRole("button", { name: /^Import \d+ rows/ })).toHaveCount(0);
 });
 
@@ -135,6 +139,19 @@ test("viewer: can read everything but change nothing", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Add product" })).toHaveCount(0);
   await page.getByRole("link", { name: "Settings & import" }).click();
   await expect(page.getByText("Only managers and admins can import data.")).toBeVisible();
+});
+
+test("another shop sees only its own data", async ({ page }) => {
+  await login(page, "other_shop");
+  await expect(page.getByRole("region", { name: "Shop" })).toContainText("E2E Second Shop");
+  await page.getByRole("link", { name: "Products" }).click();
+  await expect(page.getByRole("link", { name: "ONLY-IN-SHOP-B" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "NOODLES-70G" })).toHaveCount(0);     // a demo-shop product
+  await page.getByRole("link", { name: "Purchase orders" }).click();
+  await expect(page.getByText("No purchase orders yet")).toBeVisible();            // the demo shop's order is not here
+  // Opening a demo-shop product by its address is refused, not shown.
+  await page.goto("/products/1");
+  await expect(page.getByRole("alert")).toContainText(/not found/i);
 });
 
 /** On-hand stock for one SKU, read from the Inventory page. */

@@ -26,17 +26,11 @@ CREDENTIALS_FILE = DEMO_DIR / "credentials.json"
 MODEL_DIR = DEMO_DIR / "models"
 
 os.environ["DATABASE_URL"] = f"sqlite:///{DB_FILE.as_posix()}"   # overrides .env for this process only
+os.environ["MODEL_DIR"] = str(MODEL_DIR)       # its own models: this demo and the main database both have a shop 1
 sys.path[:0] = [str(ROOT), str(ROOT / "backend")]
 
 
-def use_demo_model_folder() -> None:
-    """Keep this demo's trained models apart from the main database's: both have a shop 1."""
-    import app.services.forecast_engine as engine
-    engine.MODEL_DIR = MODEL_DIR
-
-
 def setup() -> None:
-    use_demo_model_folder()
     from sqlalchemy.orm import Session
 
     import app.models  # noqa: F401  (registers every table)
@@ -75,7 +69,6 @@ def setup() -> None:
 def serve(port: int = 8000) -> None:
     import uvicorn
 
-    use_demo_model_folder()
 
     if not DB_FILE.exists():
         raise SystemExit("Run 'demo_sqlite.py setup' first.")

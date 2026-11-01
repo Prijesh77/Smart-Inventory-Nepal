@@ -33,4 +33,6 @@ Thumbs.db
 
 # Local demo database and its random demo-admin password (backend/scripts/demo_sqlite.py)
 data/demo/
+# Browser-test models (backend/scripts/e2e_common.py)
+data/e2e/
 models/shop_*_random_forest.json

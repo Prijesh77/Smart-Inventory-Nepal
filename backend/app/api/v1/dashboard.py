@@ -30,3 +30,8 @@ def weekly_trend(db: DbSession, weeks: int = Query(26, ge=4, le=260), category: 
 @router.get("/analytics/categories", summary="Sales, stock and days of cover per category")
 def categories(db: DbSession, days: int = Query(28, ge=7, le=365)) -> list[dict]:
     return service.category_performance(db, days)
+
+
+@router.get("/analytics/slow-movers", summary="Stock that has not sold for `days` days, and the money tied up in it")
+def slow_movers(db: DbSession, days: int = Query(60, ge=7, le=365)) -> dict:
+    return service.slow_movers(db, days)

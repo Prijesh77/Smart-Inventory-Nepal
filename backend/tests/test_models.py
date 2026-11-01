@@ -30,7 +30,7 @@ def make_product(db, sku: str = "FOODS_3_001", **overrides) -> Product:
 
 
 def test_all_tables_created():
-    assert len(Base.metadata.tables) == 19       # 18 + shops
+    assert len(Base.metadata.tables) == 18       # 18 at the start, + shops, - simulation_runs
 
 
 def test_duplicate_sku_rejected(db):

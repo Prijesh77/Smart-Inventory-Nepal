@@ -1,1 +1,1 @@
-"""Forecasting, inventory and simulation code, independent of the web app."""
+"""Forecasting and reorder engine (features, models, festival calendar, formulas), independent of the web app."""

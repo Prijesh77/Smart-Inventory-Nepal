@@ -4,7 +4,7 @@ import { defineConfig } from "@playwright/test";
  * Browser end-to-end tests. Run with:  npm run e2e
  *
  * - Uses the Microsoft Edge already installed on Windows (no browser download).
- * - Starts its OWN API (port 8001, database inventory_e2e) and frontend (port 5174),
+ * - Starts its OWN API (port 8001, database <main database>_e2e, models in data/e2e) and frontend (port 5174),
  *   so the main app and database are never touched.
  * - Tests run one after another because they share one database.
  */

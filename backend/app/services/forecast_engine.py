@@ -14,6 +14,7 @@ Days after the last sales day are added as "future" rows:
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from datetime import date, timedelta
 from functools import lru_cache
@@ -34,8 +35,9 @@ from ml.models.baselines import moving_average
 from ml.models.forest import predict
 
 # One model per shop, trained on that shop's own sales by backend/scripts/train_model.py (or seed.py);
-# never on M5 data.
-MODEL_DIR = PROJECT_ROOT / "models"
+# never on M5 data. MODEL_DIR (environment) gives a separate folder to a second database, such as the
+# SQLite demo or the browser-test database, whose shop numbers would otherwise clash with the main one's.
+MODEL_DIR = Path(os.environ.get("MODEL_DIR") or PROJECT_ROOT / "models")
 MODELS = {
     "random_forest_v1": "Random Forest (trained on this shop's sales)",
     "moving_avg_28": "28-day moving average (baseline)",

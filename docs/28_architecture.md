@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-    user([Store manager / viewer<br/>web browser])
+    user([Shop owner / manager / viewer<br/>web browser])
 
     subgraph web["Frontend (React + TypeScript, Vite / nginx)"]
         pages["9 pages<br/>Overview, Products, Inventory,<br/>Forecasting, Reorder, Purchase orders,<br/>Analytics, Settings, Login"]
@@ -13,31 +13,32 @@ flowchart LR
 
     subgraph api["Backend API (FastAPI, /api/v1)"]
         routers["Routers<br/>validation (Pydantic), auth & roles"]
-        services["Services<br/>inventory, forecasting, recommendations,<br/>purchasing, imports, exports, dashboard"]
-        jobs["Background jobs<br/>forecast / recommendation /<br/>simulation runs"]
+        tenancy["Per-shop filter<br/>(app/db/tenancy.py):<br/>every query = the user's shop"]
+        services["Services<br/>inventory, forecasting, recommendations,<br/>purchasing, Excel/CSV imports, exports,<br/>dashboard, BS calendar"]
+        jobs["Background jobs<br/>forecast / recommendation runs,<br/>model training"]
     end
 
-    subgraph ml["Research package (ml/), shared with experiments"]
-        features["Leakage-safe features"]
-        models["Baselines + Random Forest<br/>(models/*.joblib)"]
+    subgraph ml["Engine package (ml/), independent of the web app"]
+        features["Leakage-safe features<br/>+ Nepali festival calendar"]
+        models["Moving average + each shop's<br/>Random Forest (models/shop_id)"]
         engine["Reorder engine<br/>safety stock, reorder point,<br/>order quantity, risk, explanation"]
-        sim["Inventory simulator"]
     end
 
-    db[("PostgreSQL<br/>18 tables, Alembic migrations")]
-    files[["Research files<br/>M5 data, synthetic settings,<br/>experiment results"]]
+    db[("PostgreSQL<br/>shops + shop-owned tables,<br/>Alembic migrations")]
 
     user -- HTTPS --> pages --> client -- "REST + JWT" --> routers --> services
+    routers --> tenancy --> db
     services --> jobs
     services <--> db
     jobs --> features --> models
     jobs --> engine
-    jobs --> sim
-    sim --> files
-    services -. seed.py .-> files
 ```
 
-**The key design decision:** the API does **not** re-implement any formula. Forecasting, safety stock, reorder points, risk rules and the simulation live in one tested Python package (`ml/`). The research experiments and the web app both call this package, so the numbers in the report and in the app come from the same code.
+**The key design decisions:**
+
+- **The API does not re-implement any formula.** Forecasting, safety stock, reorder points and risk rules live in one tested Python package (`ml/`), first validated in the capstone research and now used directly on each shop's own data.
+- **Shops are kept apart in one place.** A session filter adds "this shop only" to every query, and refuses a query with no shop chosen, so no page or service can forget it ([10_database_design.md](10_database_design.md), section 1a).
+- **Dates are stored in AD and shown in Bikram Sambat.** Conversion uses one table on both sides (backend and browser), so they never disagree.
 
 ## 2. Layers and responsibilities
 
@@ -49,7 +50,7 @@ flowchart LR
 | Schemas | `backend/app/schemas` | Validate input and shape output (Pydantic) | Touch the database |
 | Services | `backend/app/services` | Business rules and transactions (e.g. stock only changes through `apply_movement`) | Know about HTTP |
 | Models | `backend/app/models` | Tables, keys, constraints (SQLAlchemy) | — |
-| Research / engine | `ml/` | Features, models, metrics, reorder formulas, simulation | Depend on the web app |
+| Engine | `ml/` | Features, festival calendar, models, metrics, reorder formulas | Depend on the web app |
 
 ## 3. Main flow: from sales to a received order
 
@@ -91,13 +92,13 @@ flowchart LR
         nginx["web<br/>nginx: static React files<br/>+ proxy /api"] -- "http://api:8000" --> apic["api<br/>FastAPI + uvicorn<br/>(runs migrations on start)"]
         apic -- "db:5432" --> pg[("db<br/>PostgreSQL 16<br/>volume pgdata")]
     end
-    host[["Project folder (read-only mounts)<br/>data/, models/, experiments/"]] -.-> apic
+    apic -- "/app/models" --> vol[("volume models<br/>each shop's trained model")]
 ```
 
 - **One public port** (8080). The browser talks only to nginx, which serves the React files and forwards `/api` to the API, so there is no cross-origin set-up.
 - The API container runs `alembic upgrade head` before starting, and runs as a non-root user.
 - **Secrets** come from `.env` (never committed). `JWT_SECRET_KEY` is required; Compose refuses to start without it.
-- **M5 data is mounted, never copied into an image**, because the competition rules do not allow redistribution.
+- **Trained models** are kept in the `models` volume, so retraining is not lost when the image is rebuilt.
 
 ## 5. Security summary
 
@@ -108,10 +109,11 @@ flowchart LR
 | Access | Viewer / manager / admin roles checked by the API on every change (the UI hides controls too, but the API is the authority) |
 | Input | Pydantic validation; database CHECK, UNIQUE and FK constraints; parameterised queries via the ORM |
 | Data integrity | Stock changes only through one audited function, with row locks; all-or-nothing transactions for receipts, imports and orders |
-| Files | CSV import: UTF-8, ≤ 5 MB, every row validated, all-or-nothing. CSV export: formula injection blocked |
+| Files | Excel/CSV import: ≤ 5 MB, every row validated, all-or-nothing. CSV export: formula injection blocked |
+| Shops | Every shop-owned row carries `shop_id`; one session filter limits all queries to the user's shop and fails closed; isolation is tested per endpoint and in the browser |
 | Secrets | `.env` git-ignored; random dev passwords; e2e accounts get new random passwords each run |
 | Known limits | Token in `sessionStorage` (HttpOnly cookie in production); no login rate limiting; HTTPS needed for any real deployment |
 
 ## 6. Database
 
-See the ER diagram in [10_database_design.md](10_database_design.md): 18 tables, including `inventory_balances` (current stock) kept separate from `inventory_transactions` (append-only audit log), forecast/recommendation/simulation **runs** with their settings, and purchase orders with lines.
+See the ER diagram in [10_database_design.md](10_database_design.md): 18 tables, including `shops`, `inventory_balances` (current stock) kept separate from `inventory_transactions` (append-only audit log), forecast/recommendation **runs** with their settings, and purchase orders with lines.

@@ -2,8 +2,9 @@
 
 Cells that start with = + - @ (or a tab/carriage return) are prefixed with an
 apostrophe. Without this, a spreadsheet could run them as formulas when the
-file is opened ("CSV injection"). Columns based on simulated inputs carry
-"(simulated)" in their header.
+file is opened ("CSV injection"). In a demo shop, columns based on made-up
+inputs (stock, costs) carry "(simulated)" in their header; a real shop's columns
+are its own records and are not labelled.
 """
 
 from __future__ import annotations
@@ -19,7 +20,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import NotFoundError
-from app.models import Forecast, ForecastRun, Product
+from app.db.tenancy import current_shop_id
+from app.models import Forecast, ForecastRun, Product, Shop
 from app.services import inventory, purchasing, recommendations
 
 FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
@@ -120,4 +122,8 @@ def export(db: Session, dataset: str, run_id: int | None) -> str:
                 "transactions": lambda: transactions_csv(db),
                 "recommendations": lambda: recommendations_csv(db, run_id),
                 "purchase-orders": lambda: purchase_orders_csv(db), "forecast": lambda: forecast_csv(db, run_id)}
-    return builders[dataset]()
+    text = builders[dataset]()
+    if db.get(Shop, current_shop_id(db)).is_demo:
+        return text
+    header, _, body = text.partition("\n")
+    return header.replace(" (simulated)", "") + "\n" + body

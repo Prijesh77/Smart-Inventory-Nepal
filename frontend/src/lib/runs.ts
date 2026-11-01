@@ -4,7 +4,7 @@ import type { RunInfo } from "../api/types";
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Background jobs (forecasts, recommendations, simulations) return 202 at once.
+ * Background jobs (forecasts, recommendations) return 202 at once.
  * Ask for the run's status until it is completed or failed.
  */
 export async function waitForRun(path: string, id: number, intervalMs = 1500, maxWaitMs = 180_000): Promise<RunInfo> {

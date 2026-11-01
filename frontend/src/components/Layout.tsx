@@ -154,7 +154,7 @@ function Brand() {
         <Icon.box className="h-5 w-5" />
       </span>
       <span className="leading-tight">
-        <span className="block text-sm font-semibold text-white">Smart Inventory</span>
+        <span className="block text-sm font-semibold text-white">Smart Inventory Nepal</span>
         <span className="block text-[11px] text-slate-400">Forecast &amp; reorder</span>
       </span>
     </div>

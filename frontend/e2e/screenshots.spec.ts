@@ -1,14 +1,21 @@
 /**
  * Captures screenshots of every page for the README and report:  npm run screenshots
  *
- * Runs against the separate inventory_e2e database (freshly seeded), creates real
- * forecast, recommendation, order and simulation runs through the UI, and saves
+ * Runs against the separate <main database>_e2e database (the synthetic demo shop), creates real
+ * forecast, recommendation and order runs through the UI, and saves
  * full-page PNGs to docs/screenshots/. Tagged @screenshots so `npm run e2e` skips it.
  */
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
 const OUT = "../docs/screenshots";
+
+/** An AD date `days` before yesterday (the demo's last sales day), "YYYY-MM-DD". */
+function adDaysAgo(days: number): string {
+  const day = new Date();
+  day.setDate(day.getDate() - 1 - days);
+  return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+}
 const creds = () => JSON.parse(readFileSync(new URL("./.credentials.json", import.meta.url), "utf-8")).admin as
   { email: string; password: string };
 
@@ -62,11 +69,14 @@ test("capture every page @screenshots", async ({ page }) => {
   await expect(page.getByText(/will not last until a new order/)).toBeVisible();
   await shot(page, "05_inventory_alerts");
 
-  // Forecasting: a back-dated forecast, so actual sales can be compared with the forecast
+  // Forecasting: a forecast started 4 weeks back, so actual sales can be compared with it. The date is
+  // typed with the AD date picker, then the page goes back to BS for the screenshot.
   await page.goto(`/forecasts?product=${productId}`);
-  await page.getByLabel("Start date (optional)").fill("2016-04-25");
+  await page.getByLabel("Show dates as").selectOption("ad");
+  await page.getByLabel("Start date (optional)").fill(adDaysAgo(28));
   await page.getByRole("button", { name: "Create forecast" }).click();
   await expect(page.getByText(/Error on this window/).locator("..")).not.toContainText("Not known yet", { timeout: 120_000 });
+  await page.getByLabel("Show dates as").selectOption("bs");
   await shot(page, "06_forecasting");
 
   // Reorder recommendations: critical items with one explanation open
@@ -98,17 +108,17 @@ test("capture every page @screenshots", async ({ page }) => {
   await page.goto("/purchase-orders");
   await shot(page, "09_purchase_orders", false);
 
-  // Analytics with a simulation run (simulated results, clearly labelled)
+  // Analytics: category performance and slow-moving stock
   await page.goto("/analytics");
-  await page.getByRole("button", { name: "Run simulation" }).click();
-  await expect(page.getByText(/At the same fill rate/).first()).toBeVisible({ timeout: 300_000 });
+  await expect(page.getByRole("heading", { name: "Slow-moving stock" })).toBeVisible();
   await shot(page, "10_analytics");
 
   // Settings: a CSV with mistakes shows row-by-row errors
   await page.goto("/settings");
-  await page.getByLabel(/CSV file/).setInputFiles({
+  await page.getByRole("button", { name: "4. Sales history" }).click();
+  await page.getByLabel(/Excel or CSV file/).setInputFiles({
     name: "sales.csv", mimeType: "text/csv",
-    buffer: Buffer.from("sku,date,units\nFOODS_3_090,2016-05-23,40\nFOODS_3_090,23/05/2016,4\nNOT_A_SKU,2016-05-23,1\n"),
+    buffer: Buffer.from("sku,date,units\nNOODLES-70G,2083-07-14,40\nNOODLES-70G,23/05/2026,4\nNOT_A_SKU,2083-07-14,1\n"),
   });
   await page.getByRole("button", { name: "Check file" }).click();
   await expect(page.getByRole("alert")).toBeVisible();
