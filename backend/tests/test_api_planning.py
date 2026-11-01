@@ -14,7 +14,6 @@ from datetime import date, timedelta
 import pytest
 
 from app.models import CalendarDay, DailySales
-from app.services.forecast_engine import RF_MODEL_FILE
 from tests.conftest import login
 
 AVG = 27 / 28
@@ -76,12 +75,31 @@ def test_forecast_input_rules(planning, api):
     assert planning.get("/api/v1/forecasts/products/1").status_code == 404     # no run yet
 
 
-@pytest.mark.skipif(not RF_MODEL_FILE.exists(), reason="trained model file not present")
-def test_random_forest_run(planning):
+def test_random_forest_needs_the_shops_own_trained_model(planning):
+    # Training and forecasting with a trained forest are tested in test_demo_shop.py.
     run = start_forecast(planning, model_name="random_forest_v1")
-    assert run["status"] == "completed", run["error_message"]
-    values = [p["predicted_units"] for p in planning.get("/api/v1/forecasts/products/1").json()["forecast"]]
-    assert len(values) == 28 and all(v >= 0 for v in values)
+    assert run["status"] == "failed" and "not been trained" in run["error_message"]
+
+
+def test_auto_uses_the_moving_average_until_the_shop_has_a_trained_forest(planning, api, empty_model_folder):
+    response = planning.post("/api/v1/forecasts/runs", json={"horizon_days": 7})          # model_name defaults to auto
+    assert response.status_code == 202 and response.json()["model_name"] == "moving_avg_28"
+    with api.app.state.make_session() as s:
+        from app.services.forecasting import choose_model
+        empty_model_folder.mkdir()
+        (empty_model_folder / "shop_1_random_forest.joblib").write_bytes(b"trained")
+        assert choose_model(s, "auto")[0] == "random_forest_v1"
+        assert choose_model(s, "moving_avg_28") == ("moving_avg_28", None)
+
+        # A forest that was LESS accurate than the moving average on the held-back days is not used.
+        from app.models import ModelEvaluation
+        from app.models.enums import EvaluationPeriod
+        for name, wape in [("random_forest_v1", "0.61"), ("moving_avg_28", "0.48")]:
+            s.add(ModelEvaluation(model_name=name, model_version="v", period=EvaluationPeriod.TEST, horizon_days=28,
+                                  demand_class="all", n_observations=100, wape=wape))
+        s.flush()
+        model, reason = choose_model(s, "auto")
+        assert model == "moving_avg_28" and "more accurate" in reason and "48% vs 61%" in reason
 
 
 # ---------- recommendations ----------

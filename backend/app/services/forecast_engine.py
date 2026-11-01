@@ -26,14 +26,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import PROJECT_ROOT
+from app.db.tenancy import current_shop_id
 from app.models import CalendarDay, Category, DailySales, Product
 from ml.features.build import MIN_HISTORY_DAYS, Panel, build_rows, make_panel
 from ml.models.baselines import moving_average
 from ml.models.forest import predict
 
-RF_MODEL_FILE = PROJECT_ROOT / "models" / "random_forest_v1_final.joblib"
+# One model per shop, trained on that shop's own sales by backend/scripts/train_model.py (or seed.py);
+# never on M5 data.
+MODEL_DIR = PROJECT_ROOT / "models"
 MODELS = {
-    "random_forest_v1": "Random Forest (fitted on train + validation, Phase 3)",
+    "random_forest_v1": "Random Forest (trained on this shop's sales)",
     "moving_avg_28": "28-day moving average (baseline)",
 }
 ASSUMPTIONS = [
@@ -43,15 +46,34 @@ ASSUMPTIONS = [
 ]
 
 
+# Least sales history before a forecast's first day. The forest's features look back 91 days; the moving
+# average works from two weeks, so a new shop gets forecasts (and reorder suggestions) early.
+MIN_MA_HISTORY_DAYS = 14
+
+
+def min_history_days(model_name: str) -> int:
+    return MIN_HISTORY_DAYS if model_name == "random_forest_v1" else MIN_MA_HISTORY_DAYS
+
+
 class ForecastUnavailable(Exception):
     pass
 
 
-@lru_cache
-def load_rf_model(path: Path = RF_MODEL_FILE):
+def model_file(shop_id: int) -> Path:
+    return MODEL_DIR / f"shop_{shop_id}_random_forest.joblib"
+
+
+def load_rf_model(path: Path):
     if not path.exists():
         raise ForecastUnavailable(
-            f"Model file {path.name} not found. Run: python -m ml.experiments.run_random_forest --period test")
+            "This shop's Random Forest has not been trained yet. Use the 28-day moving average, or train it "
+            "with: python backend/scripts/train_model.py")
+    return _load_file(path, path.stat().st_mtime)
+
+
+@lru_cache(maxsize=32)
+def _load_file(path: Path, _modified: float):
+    """Cached per file and modification time, so a retrained model is picked up without a restart."""
     return joblib.load(path)
 
 
@@ -62,6 +84,7 @@ def m5_wday(day: date) -> int:
 
 @dataclass
 class ForecastContext:
+    shop_id: int
     panel: Panel
     product_ids: np.ndarray          # aligned with panel.item_ids
     first_date: date
@@ -121,22 +144,24 @@ def load_context(db: Session, through: date) -> ForecastContext:
 
     panel = make_panel(daily, last_day=len(all_days))
     ids = daily.drop_duplicates("item_id").set_index("item_id")["product_id"]
-    return ForecastContext(panel=panel, product_ids=ids.reindex(panel.item_ids).to_numpy(),
+    return ForecastContext(shop_id=current_shop_id(db), panel=panel, product_ids=ids.reindex(panel.item_ids).to_numpy(),
                            first_date=first, last_sales_date=last, open_day=cal["is_store_open"].to_numpy(bool))
 
 
 def forecast_matrix(ctx: ForecastContext, model_name: str, origin: date, horizon: int) -> np.ndarray:
     """Daily forecasts (items x horizon) from `origin`, using only sales before `origin`."""
     origin_d = ctx.d_num(origin)
-    if origin_d - 1 < MIN_HISTORY_DAYS:
-        raise ForecastUnavailable(f"Need at least {MIN_HISTORY_DAYS} days of history before {origin}")
+    needed = min_history_days(model_name)
+    if origin_d - 1 < needed:
+        raise ForecastUnavailable(f"Need at least {needed} days of sales history before {origin}; "
+                                  f"there are {max(origin_d - 1, 0)}")
     if origin > ctx.last_sales_date + timedelta(days=1):
         raise ForecastUnavailable(f"Origin {origin} is after the day following the last sales day")
     if model_name == "moving_avg_28":
         values = moving_average(ctx.panel.sales[:, : origin_d - 1], horizon, 28)
     elif model_name == "random_forest_v1":
         rows = build_rows(ctx.panel, [origin_d], horizon)
-        values = predict(load_rf_model(), rows).reshape(len(ctx.panel.item_ids), horizon)
+        values = predict(load_rf_model(model_file(ctx.shop_id)), rows).reshape(len(ctx.panel.item_ids), horizon)
     else:
         raise ForecastUnavailable(f"Unknown model '{model_name}'")
     closed = ~ctx.open_day[origin_d - 1: origin_d - 1 + horizon]

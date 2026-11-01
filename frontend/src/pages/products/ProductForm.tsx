@@ -4,7 +4,6 @@ import { api, ApiError } from "../../api/client";
 import type { Category, Product, ProductInput, Supplier } from "../../api/types";
 import { SelectField, TextField } from "../../components/fields";
 import { Button, ErrorMessage } from "../../components/ui";
-import { currencySymbol, inputToMoney, moneyToInput } from "../../lib/currency";
 
 interface FormValues {
   sku: string;
@@ -36,8 +35,8 @@ export function validate(v: FormValues, isNew: boolean): Errors {
   }
   if (!v.name.trim()) e.name = "Name is required";
   if (!v.category_code) e.category_code = "Choose a category";
-  if (!MONEY.test(v.unit_price.trim())) e.unit_price = "Enter a price like 4.20 (0 or more, up to 2 decimals)";
-  if (v.unit_cost.trim() && !MONEY.test(v.unit_cost.trim())) e.unit_cost = "Enter a cost like 2.75, or leave empty";
+  if (!MONEY.test(v.unit_price.trim())) e.unit_price = "Enter a price in rupees like 120 or 45.50 (0 or more, up to 2 decimals)";
+  if (v.unit_cost.trim() && !MONEY.test(v.unit_cost.trim())) e.unit_cost = "Enter a cost in rupees like 98.50, or leave empty";
   if (v.lead_time_days.trim() && (!WHOLE.test(v.lead_time_days) || +v.lead_time_days < 1 || +v.lead_time_days > 365))
     e.lead_time_days = "Whole days from 1 to 365, or leave empty to use the supplier's";
   if (!WHOLE.test(v.min_order_qty) || +v.min_order_qty < 1) e.min_order_qty = "Whole number, at least 1";
@@ -52,8 +51,8 @@ export function toInput(v: FormValues, isNew: boolean): ProductInput {
     category_code: v.category_code,
     department: v.department.trim() || null,
     supplier_id: v.supplier_id ? Number(v.supplier_id) : null,
-    unit_price: inputToMoney(v.unit_price),
-    unit_cost: inputToMoney(v.unit_cost) || null,
+    unit_price: v.unit_price.trim(),
+    unit_cost: v.unit_cost.trim() || null,
     lead_time_days: v.lead_time_days.trim() ? Number(v.lead_time_days) : null,
     min_order_qty: Number(v.min_order_qty),
     pack_size: Number(v.pack_size),
@@ -63,8 +62,8 @@ export function toInput(v: FormValues, isNew: boolean): ProductInput {
 function initialValues(p?: Product): FormValues {
   return {
     sku: p?.sku ?? "", name: p?.name ?? "", category_code: p?.category.code ?? "", department: p?.department ?? "",
-    supplier_id: p?.supplier ? String(p.supplier.id) : "", unit_price: moneyToInput(p?.unit_price),
-    unit_cost: moneyToInput(p?.unit_cost), lead_time_days: p?.lead_time_days ? String(p.lead_time_days) : "",
+    supplier_id: p?.supplier ? String(p.supplier.id) : "", unit_price: String(p?.unit_price ?? ""),
+    unit_cost: String(p?.unit_cost ?? ""), lead_time_days: p?.lead_time_days ? String(p.lead_time_days) : "",
     min_order_qty: String(p?.min_order_qty ?? 1), pack_size: String(p?.pack_size ?? 1), is_active: p?.is_active ?? true,
   };
 }
@@ -109,9 +108,16 @@ export function ProductForm({ product, categories, suppliers, onSaved, onCancel 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-4">
       {serverError && <ErrorMessage message={serverError} />}
+      {isNew && (categories.length === 0 || suppliers.length === 0) && (
+        <p role="note" className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+          {categories.length === 0 ? "This shop has no categories yet. " : "This shop has no suppliers yet. "}
+          Add them in <strong>Settings &amp; import → Suppliers and categories</strong>, or import many products at once
+          from Excel there.
+        </p>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField id="sku" label="SKU" value={values.sku} onChange={set("sku")} error={errors.sku}
-                   disabled={!isNew} hint={isNew ? "Saved in capitals, e.g. FOODS_3_101" : "The SKU cannot change after creation"} />
+                   disabled={!isNew} hint={isNew ? "Saved in capitals, e.g. RICE-BASMATI-1KG" : "The SKU cannot change after creation"} />
         <TextField id="name" label="Name" value={values.name} onChange={set("name")} error={errors.name} />
         <SelectField id="category" label="Category" value={values.category_code} onChange={set("category_code")}
                      error={errors.category_code}>
@@ -126,9 +132,9 @@ export function ProductForm({ product, categories, suppliers, onSaved, onCancel 
         <TextField id="lead_time" label="Lead time override (days)" inputMode="numeric" value={values.lead_time_days}
                    onChange={set("lead_time_days")} error={errors.lead_time_days}
                    hint={supplier ? `Empty = supplier's ${supplier.lead_time_days} days` : "Empty = supplier's lead time"} />
-        <TextField id="price" label={`Unit price (${currencySymbol()})`} inputMode="decimal" value={values.unit_price}
+        <TextField id="price" label="Unit price (Rs)" inputMode="decimal" value={values.unit_price}
                    onChange={set("unit_price")} error={errors.unit_price} />
-        <TextField id="cost" label={`Unit cost (${currencySymbol()}, optional)`} inputMode="decimal" value={values.unit_cost}
+        <TextField id="cost" label="Unit cost (Rs, optional)" inputMode="decimal" value={values.unit_cost}
                    onChange={set("unit_cost")} error={errors.unit_cost} hint="Needed for order-cost estimates" />
         <TextField id="moq" label="Minimum order quantity" inputMode="numeric" value={values.min_order_qty}
                    onChange={set("min_order_qty")} error={errors.min_order_qty} />

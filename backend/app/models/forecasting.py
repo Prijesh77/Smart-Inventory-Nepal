@@ -9,11 +9,11 @@ from typing import Any
 from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, Quantity, string_enum
+from app.db.base import Base, Quantity, ShopOwned, string_enum
 from app.models.enums import EvaluationPeriod, RunStatus
 
 
-class ForecastRun(Base):
+class ForecastRun(ShopOwned, Base):
     __tablename__ = "forecast_runs"
     __table_args__ = (CheckConstraint("horizon_days BETWEEN 1 AND 90", name="horizon_range"),)
 
@@ -32,7 +32,7 @@ class ForecastRun(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
-class Forecast(Base):
+class Forecast(ShopOwned, Base):
     __tablename__ = "forecasts"
     __table_args__ = (
         CheckConstraint("predicted_units >= 0", name="prediction_non_negative"),
@@ -48,12 +48,12 @@ class Forecast(Base):
     predicted_units: Mapped[Decimal] = mapped_column(Quantity)
 
 
-class ModelEvaluation(Base):
+class ModelEvaluation(ShopOwned, Base):
     """Backtest scores (from Phase 3) shown on the Forecasting page."""
 
     __tablename__ = "model_evaluations"
     __table_args__ = (
-        UniqueConstraint("model_name", "model_version", "period", "horizon_days", "demand_class",
+        UniqueConstraint("shop_id", "model_name", "model_version", "period", "horizon_days", "demand_class",
                          name="uq_model_evaluations_key"),
     )
 

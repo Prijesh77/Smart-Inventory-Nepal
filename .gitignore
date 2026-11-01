@@ -30,3 +30,7 @@ frontend/e2e-report/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local demo database and its random demo-admin password (backend/scripts/demo_sqlite.py)
+data/demo/
+models/shop_*_random_forest.json

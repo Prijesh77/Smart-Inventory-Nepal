@@ -27,7 +27,7 @@ class PolicySettings:
 
     service_level: float = 0.95        # target chance of no stockout per protection period
     review_period_days: int = 7        # how often each item is checked
-    ordering_cost: float = 10.0        # fixed cost per order line
+    ordering_cost: float = 200.0       # fixed cost per order line (NPR)
     holding_cost_rate: float = 0.25    # yearly holding cost as a share of unit cost
     min_cycle_days: int = 7            # order at least ~one review period of demand ...
     max_cycle_days: int = 28           # ... and at most ~four weeks, whatever EOQ says

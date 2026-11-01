@@ -18,10 +18,10 @@ export async function waitForRun(path: string, id: number, intervalMs = 1500, ma
   }
 }
 
-/** Forecast all products (Random Forest, 28 days), then create recommendations from that forecast. */
+/** Forecast all products (28 days, the shop's best available model), then create recommendations from that forecast. */
 export async function runPlanning(onStep: (step: string) => void, intervalMs?: number): Promise<void> {
   onStep("Forecasting demand for every product…");
-  const forecast = await api.post<RunInfo>("/forecasts/runs", { model_name: "random_forest_v1", horizon_days: 28 });
+  const forecast = await api.post<RunInfo>("/forecasts/runs", { model_name: "auto", horizon_days: 28 });
   await waitForRun("/forecasts/runs", forecast.id, intervalMs);
   onStep("Calculating reorder recommendations…");
   const recs = await api.post<RunInfo>("/recommendations/runs", { forecast_run_id: forecast.id });

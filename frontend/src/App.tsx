@@ -2,7 +2,6 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { AuthProvider } from "./auth/AuthContext";
-import { CurrencyProvider } from "./auth/CurrencyContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
 import { Spinner } from "./components/ui";
@@ -51,11 +50,9 @@ export function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <CurrencyProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </CurrencyProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
     </AuthProvider>
   );
 }

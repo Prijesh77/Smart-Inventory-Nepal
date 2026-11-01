@@ -15,6 +15,21 @@ Code: [backend/app/models/](../backend/app/models/). Migration: [backend/alembic
 | **Portable status fields** | Statuses are `VARCHAR` + `CHECK` (SQLAlchemy `Enum(native_enum=False)`), easier to migrate than PostgreSQL enum types |
 | **Timestamps** | `created_at` / `updated_at` with time zone, set by the database |
 
+## 1a. Shops (multi-tenancy)
+
+Each business using the app is a **shop**. Its products, stock, sales, orders, forecasts, recommendations, settings and users are private to it.
+
+| Rule | How |
+|---|---|
+| Every shop-owned table has `shop_id` (FK to `shops`, indexed) | All tables except `shops` and `calendar_days` (dates and festivals are shared facts) |
+| Queries see only the current shop | One SQLAlchemy session filter ([backend/app/db/tenancy.py](../backend/app/db/tenancy.py)) adds `shop_id = <the user's shop>` to every select, update, delete and `Session.get`, including joins. Another shop's ids are "not found" |
+| Fail closed | A query on shop data with no shop chosen is refused, never answered with every shop's rows |
+| New rows | Get the current shop's id automatically; a row for another shop is refused |
+| Uniqueness per shop | `(shop_id, sku)`, `(shop_id, code)` for categories and suppliers, `(shop_id, po_number)`; PO numbers count per shop. Emails stay unique everywhere, because the email decides the shop at login |
+| Forecast models | One file per shop, `models/shop_<id>_random_forest.joblib`, trained on that shop's sales |
+
+Migration `7d2e4b9a1c30_shops` adds this to an existing database and puts any existing rows into one shop called "My shop". Tests: [backend/tests/test_shop_isolation.py](../backend/tests/test_shop_isolation.py).
+
 ## 2. ER diagram
 
 ```mermaid

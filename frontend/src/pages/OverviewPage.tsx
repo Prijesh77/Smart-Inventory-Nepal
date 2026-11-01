@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { api, ApiError } from "../api/client";
 import type { DashboardSummary, RiskCategory, StockStatus, TransactionRow } from "../api/types";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth, useIsDemoShop } from "../auth/AuthContext";
 import { CategoryBars } from "../components/charts/CategoryBars";
 import { SalesTrendChart } from "../components/charts/SalesTrendChart";
 import { StatCard } from "../components/StatCard";
@@ -19,6 +19,7 @@ const RISK_ORDER: RiskCategory[] = ["critical_stockout_risk", "reorder_soon", "h
 
 export function OverviewPage({ pollMs }: { pollMs?: number }) {
   const { can } = useAuth();
+  const demo = useIsDemoShop();
   const { data, error, loading, reload } = useApi((signal) => api.get<DashboardSummary>("/dashboard/summary", undefined, signal));
   const [planning, setPlanning] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
@@ -70,7 +71,7 @@ export function OverviewPage({ pollMs }: { pollMs?: number }) {
                   detail={data.products_without_cost ? `${data.products_without_cost} products have no cost` : "Stock × unit cost"} />
         <StatCard label="Products to reorder" value={rec ? fmtInt(rec.products_to_reorder) : "—"} icon="cart"
                   tone={rec?.products_to_reorder ? "warning" : "default"}
-                  detail={rec ? `Estimated order cost ${fmtMoney(rec.estimated_order_cost)} (simulated)` : "No recommendations yet"} />
+                  detail={rec ? `Estimated order cost ${fmtMoney(rec.estimated_order_cost)}${demo ? " (simulated)" : ""}` : "No recommendations yet"} />
         <StatCard label="Critical stockout risk" value={rec ? fmtInt(rec.critical) : "—"} icon="alert"
                   tone={rec?.critical ? "critical" : "default"}
                   detail={rec ? `${fmtInt(rec.excess)} products with excess stock` : "Run recommendations to see risks"} />

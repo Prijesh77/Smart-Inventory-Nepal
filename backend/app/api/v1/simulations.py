@@ -47,7 +47,7 @@ def start(data: SimulationCreate, background: BackgroundTasks, db: DbSession, us
     params = data.model_dump(exclude={"name"})
     params["service_levels"] = sorted(set(params["service_levels"]))
     run = service.create(db, name=data.name, params=params, user=user)
-    background.add_task(service.execute, factory, run.id)
+    background.add_task(service.execute, factory, run.shop_id, run.id)
     return run
 
 

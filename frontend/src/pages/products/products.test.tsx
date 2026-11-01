@@ -43,7 +43,7 @@ describe("ProductsPage", () => {
     mockFetch(routes());
     renderLoggedIn(<ProductsPage />, "/products");
     const row = (await screen.findByRole("link", { name: "FOODS_1_013" })).closest("tr")!;
-    expect(within(row).getByText("$1.50")).toBeInTheDocument();
+    expect(within(row).getByText("Rs 1.50")).toBeInTheDocument();
     expect(within(row).getByText("93")).toBeInTheDocument();
     expect(within(row).getByText("5 d")).toBeInTheDocument();
     expect(within(row).getByText("Lumpy")).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe("ProductsPage", () => {
     await userEvent.type(within(dialog).getByLabelText("SKU"), "foods_1_013");
     await userEvent.type(within(dialog).getByLabelText("Name"), "Duplicate");
     await userEvent.selectOptions(within(dialog).getByLabelText("Category"), "FOODS");
-    await userEvent.type(within(dialog).getByLabelText("Unit price ($)"), "2.50");
+    await userEvent.type(within(dialog).getByLabelText("Unit price (Rs)"), "2.50");
     await userEvent.click(within(dialog).getByRole("button", { name: "Create product" }));
     expect(await within(dialog).findByText(/already exists/)).toBeInTheDocument();
     expect(within(dialog).getByLabelText("SKU")).toHaveAttribute("aria-invalid", "true");
@@ -108,7 +108,7 @@ describe("ProductsPage", () => {
     await userEvent.type(within(dialog).getByLabelText("SKU"), "new_1");
     await userEvent.type(within(dialog).getByLabelText("Name"), "New item");
     await userEvent.selectOptions(within(dialog).getByLabelText("Category"), "FOODS");
-    await userEvent.type(within(dialog).getByLabelText("Unit price ($)"), "3");
+    await userEvent.type(within(dialog).getByLabelText("Unit price (Rs)"), "3");
     await userEvent.click(within(dialog).getByRole("button", { name: "Create product" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Product NEW_1 created");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

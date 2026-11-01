@@ -11,11 +11,11 @@ from datetime import datetime
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, BigIntId, string_enum
+from app.db.base import Base, BigIntId, ShopOwned, string_enum
 from app.models.enums import TransactionType
 
 
-class InventoryBalance(Base):
+class InventoryBalance(ShopOwned, Base):
     __tablename__ = "inventory_balances"
     __table_args__ = (
         CheckConstraint("on_hand >= 0", name="on_hand_non_negative"),
@@ -30,7 +30,7 @@ class InventoryBalance(Base):
     )
 
 
-class InventoryTransaction(Base):
+class InventoryTransaction(ShopOwned, Base):
     __tablename__ = "inventory_transactions"
     __table_args__ = (
         CheckConstraint("quantity <> 0", name="quantity_non_zero"),

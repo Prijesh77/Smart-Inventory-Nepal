@@ -64,7 +64,7 @@ export function NewRunForm({ defaults, onDone, onCancel, pollMs }: {
       </div>
       <p className="text-xs text-slate-500">
         The forecast must cover the lead time plus the review period (e.g. 14 + 7 = 21 days), otherwise those items get
-        "insufficient data". Ordering and holding costs come from Settings (simulated values).
+        "insufficient data". Ordering and holding costs are the assumptions set in Settings.
       </p>
       <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
         {status && <Spinner label={status} />}

@@ -12,8 +12,9 @@ from datetime import date, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.db.tenancy import current_shop_id
 from app.models import (
-    Category, DailySales, Forecast, InventoryBalance, Product, PurchaseOrder, PurchaseOrderItem, RecommendationRun,
+    Category, DailySales, Forecast, InventoryBalance, Product, PurchaseOrder, PurchaseOrderItem, RecommendationRun, Shop,
 )
 from app.models.enums import PurchaseOrderStatus, RunStatus
 from app.services import inventory, recommendations
@@ -101,7 +102,8 @@ def summary(db: Session) -> dict:
         "purchase_orders": {"open": int(open_orders[0]), "open_order_value": round(float(open_orders[1]), 2),
                             "drafts": int(drafts or 0)},
         "recent_activity": recent,
-        "simulated_fields": SIMULATED_FIELDS,
+        # Only the demo shop's figures are made up; a real shop's are its own records.
+        "simulated_fields": SIMULATED_FIELDS if db.get(Shop, current_shop_id(db)).is_demo else [],
     }
 
 

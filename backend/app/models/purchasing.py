@@ -8,15 +8,16 @@ from decimal import Decimal
 from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin, string_enum
+from app.db.base import Base, ShopOwned, TimestampMixin, string_enum
 from app.models.enums import PurchaseOrderStatus
 
 
-class PurchaseOrder(TimestampMixin, Base):
+class PurchaseOrder(ShopOwned, TimestampMixin, Base):
     __tablename__ = "purchase_orders"
+    __table_args__ = (UniqueConstraint("shop_id", "po_number", name="uq_purchase_orders_shop_po_number"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    po_number: Mapped[str] = mapped_column(String(30), unique=True)
+    po_number: Mapped[str] = mapped_column(String(30))     # PO-000001, numbered per shop
     supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"))
     status: Mapped[PurchaseOrderStatus] = mapped_column(
         string_enum(PurchaseOrderStatus, "po_status"), default=PurchaseOrderStatus.DRAFT, index=True
@@ -32,7 +33,7 @@ class PurchaseOrder(TimestampMixin, Base):
     )
 
 
-class PurchaseOrderItem(Base):
+class PurchaseOrderItem(ShopOwned, Base):
     __tablename__ = "purchase_order_items"
     __table_args__ = (
         CheckConstraint("quantity_ordered > 0", name="ordered_positive"),

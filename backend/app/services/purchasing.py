@@ -43,12 +43,13 @@ def _load(db: Session, po_id: int, lock: bool = False) -> PurchaseOrder:
 
 
 def _new_po(db: Session, supplier_id: int, user: User, notes: str | None, expected: date | None) -> PurchaseOrder:
-    # A temporary unique number, replaced by PO-000123 once the database has assigned the id.
+    # A temporary unique number, replaced by the shop's next number (PO-000001, PO-000002, ...) once saved.
+    # Numbers count this shop's orders only, so they never reveal how many orders other shops have.
     po = PurchaseOrder(po_number=f"TMP-{uuid.uuid4().hex[:20]}", supplier_id=supplier_id, status=Status.DRAFT,
                        notes=notes, expected_date=expected, created_by=user.id)
     db.add(po)
     db.flush()
-    po.po_number = f"PO-{po.id:06d}"
+    po.po_number = f"PO-{db.scalar(select(func.count()).select_from(PurchaseOrder)):06d}"
     return po
 
 

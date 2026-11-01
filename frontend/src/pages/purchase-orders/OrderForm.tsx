@@ -5,8 +5,7 @@ import type { PurchaseOrder, Supplier } from "../../api/types";
 import { SelectField, TextField } from "../../components/fields";
 import { ProductPicker } from "../../components/ProductPicker";
 import { Button, ErrorMessage } from "../../components/ui";
-import { currencySymbol, inputToMoney, moneyToInput } from "../../lib/currency";
-import { fmtLocalMoney } from "../../lib/format";
+import { fmtMoney } from "../../lib/format";
 
 export interface DraftLine {
   product_id: number;
@@ -27,7 +26,7 @@ export function lineErrors(lines: DraftLine[]): string | null {
 }
 
 export function linesBody(lines: DraftLine[]) {
-  return lines.map((l) => ({ product_id: l.product_id, quantity: Number(l.quantity), unit_cost: inputToMoney(l.unit_cost) || null }));
+  return lines.map((l) => ({ product_id: l.product_id, quantity: Number(l.quantity), unit_cost: l.unit_cost.trim() || null }));
 }
 
 /** Line total in the currency the costs were typed in. */
@@ -46,7 +45,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
   const [notes, setNotes] = useState(order?.notes ?? "");
   const [expected, setExpected] = useState(order?.expected_date ?? "");
   const [lines, setLines] = useState<DraftLine[]>(() => order?.lines.map((l) => ({
-    product_id: l.product_id, sku: l.sku, name: l.name, quantity: String(l.quantity_ordered), unit_cost: moneyToInput(l.unit_cost),
+    product_id: l.product_id, sku: l.sku, name: l.name, quantity: String(l.quantity_ordered), unit_cost: String(l.unit_cost ?? ""),
   })) ?? []);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -89,7 +88,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
       {supplierId && (
         <ProductPicker label="Add a product from this supplier" selected={null} supplierId={Number(supplierId)}
                        onSelect={(p) => setLines((all) => all.some((l) => l.product_id === p.id) ? all
-                         : [...all, { product_id: p.id, sku: p.sku, name: p.name, quantity: "1", unit_cost: moneyToInput(p.unit_cost) }])} />
+                         : [...all, { product_id: p.id, sku: p.sku, name: p.name, quantity: "1", unit_cost: String(p.unit_cost ?? "") }])} />
       )}
       {lines.length > 0 && (
         <table className="min-w-full text-sm">
@@ -97,7 +96,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
             <tr>
               <th scope="col" className="py-2 pr-3 font-medium">Product</th>
               <th scope="col" className="py-2 pr-3 font-medium">Quantity</th>
-              <th scope="col" className="py-2 pr-3 font-medium">Unit cost ({currencySymbol()})</th>
+              <th scope="col" className="py-2 pr-3 font-medium">Unit cost (Rs)</th>
               <th scope="col" className="py-2 pr-3 text-right font-medium">Line total</th>
               <th scope="col"><span className="sr-only">Remove</span></th>
             </tr>
@@ -116,7 +115,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
                          onChange={(e) => setLine(i, { unit_cost: e.target.value.trim() })}
                          className="w-24 rounded-md border border-slate-300 px-2 py-1" />
                 </td>
-                <td className="py-2 pr-3 text-right tabular-nums">{fmtLocalMoney(lineTotal(l))}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(lineTotal(l))}</td>
                 <td className="py-2 text-right">
                   <Button variant="ghost" onClick={() => setLines((all) => all.filter((_, j) => j !== i))}
                           aria-label={`Remove ${l.sku}`}>✕</Button>
@@ -127,7 +126,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
           <tfoot>
             <tr>
               <td colSpan={3} className="pt-2 text-right text-sm text-slate-500">Total</td>
-              <td className="pt-2 text-right font-semibold tabular-nums">{fmtLocalMoney(total)}</td>
+              <td className="pt-2 text-right font-semibold tabular-nums">{fmtMoney(total)}</td>
             </tr>
           </tfoot>
         </table>

@@ -7,7 +7,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, Enum, Integer, MetaData, Numeric, func
+from sqlalchemy import JSON, BigInteger, DateTime, Enum, ForeignKey, Integer, MetaData, Numeric, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -47,3 +47,13 @@ class TimestampMixin:
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class ShopOwned:
+    """A row that belongs to one shop (tenant).
+
+    Every query on these tables is automatically limited to the current
+    shop, and new rows get the current shop's id (app/db/tenancy.py).
+    """
+
+    shop_id: Mapped[int] = mapped_column(ForeignKey("shops.id", ondelete="CASCADE"), index=True)

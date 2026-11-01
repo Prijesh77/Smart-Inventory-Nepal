@@ -8,7 +8,6 @@ import { TextField } from "../../components/fields";
 import { Button, EmptyState, ErrorMessage, SimulatedTag, Spinner } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { AXIS, GRID, SERIES } from "../../lib/colors";
-import { currencySymbol, inputToMoney, moneyToInput } from "../../lib/currency";
 import { fmtDateTime, fmtInt, fmtMoney, fmtPct } from "../../lib/format";
 import { waitForRun } from "../../lib/runs";
 
@@ -115,7 +114,7 @@ function Comparisons({ run }: { run: SimulationRun }) {
 
 function RunForm({ onDone, pollMs }: { onDone: (run: SimulationRun) => void; pollMs?: number }) {
   const [levels, setLevels] = useState<number[]>([0.8, 0.9, 0.95, 0.98]);
-  const [ordering, setOrdering] = useState(() => moneyToInput(10));
+  const [ordering, setOrdering] = useState(() => "10");
   const [holding, setHolding] = useState("25");
   const [uncertain, setUncertain] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -123,7 +122,7 @@ function RunForm({ onDone, pollMs }: { onDone: (run: SimulationRun) => void; pol
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    const oc = ordering.trim() === "" ? NaN : Number(inputToMoney(ordering));     // dollars, like the API
+    const oc = ordering.trim() === "" ? NaN : Number(ordering);
     const hr = Number(holding);
     if (!levels.length) return setError("Choose at least one service level");
     if (!(oc >= 0 && oc <= 1000)) return setError(`Ordering cost must be between ${fmtMoney(0)} and ${fmtMoney(1000)}`);
@@ -158,7 +157,7 @@ function RunForm({ onDone, pollMs }: { onDone: (run: SimulationRun) => void; pol
         </div>
       </fieldset>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <TextField id="sim-ordering" label={`Ordering cost per order (${currencySymbol()})`} inputMode="decimal" value={ordering} onChange={(e) => setOrdering(e.target.value)} />
+        <TextField id="sim-ordering" label={`Ordering cost per order (Rs)`} inputMode="decimal" value={ordering} onChange={(e) => setOrdering(e.target.value)} />
         <TextField id="sim-holding" label="Holding cost (% of unit cost per year)" inputMode="decimal" value={holding} onChange={(e) => setHolding(e.target.value)} />
       </div>
       <label className="flex items-center gap-2 text-sm text-slate-700">

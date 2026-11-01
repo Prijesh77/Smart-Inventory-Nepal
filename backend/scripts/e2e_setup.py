@@ -44,15 +44,20 @@ def main() -> int:
             print(f"{name} failed:\n{result.stdout[-1500:]}\n{result.stderr[-1500:]}")
             return 1
 
+    from sqlalchemy import select
     from sqlalchemy.orm import Session
 
     from app.db.session import get_engine
+    from app.db.tenancy import all_shops, use_shop
+    from app.models import Shop
     from app.models.enums import UserRole
     from app.schemas.auth import UserCreate
     from app.services.users import create_user
 
     accounts = {}
     with Session(get_engine()) as db:
+        with all_shops(db):                              # the demo shop that seed.py just created
+            use_shop(db, db.scalar(select(Shop.id).where(Shop.is_demo.is_(True)).order_by(Shop.id)))
         for role in (UserRole.ADMIN, UserRole.MANAGER, UserRole.VIEWER):
             password = secrets.token_urlsafe(18)
             email = f"e2e-{role.value}@test.local"

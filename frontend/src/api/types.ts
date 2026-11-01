@@ -3,6 +3,12 @@
 
 export type Role = "admin" | "manager" | "viewer";
 
+export interface Shop {
+  id: number;
+  name: string;
+  is_demo: boolean;           // true = synthetic demo data
+}
+
 export interface User {
   id: number;
   email: string;
@@ -10,6 +16,7 @@ export interface User {
   role: Role;
   is_active: boolean;
   created_at: string;
+  shop: Shop;                 // every user belongs to exactly one shop and sees only its data
 }
 
 export interface TokenResponse {
@@ -95,7 +102,7 @@ export interface StockItem {
 
 export type ManualMovement = "adjustment" | "sale" | "return";
 
-export type ForecastModel = "random_forest_v1" | "moving_avg_28";
+export type ForecastModel = "auto" | "random_forest_v1" | "moving_avg_28";
 
 export interface ForecastRun {
   id: number;
@@ -104,7 +111,7 @@ export interface ForecastRun {
   origin_date: string;
   horizon_days: number;
   status: RunStatus;
-  params: { assumptions?: string[]; history_ends?: string } | null;
+  params: { assumptions?: string[]; history_ends?: string; model_choice?: string } | null;
   metrics: { products?: number; total_units?: number; test_wape_28d?: number; test_bias_pct_28d?: number } | null;
   error_message: string | null;
   created_at: string;
@@ -274,7 +281,24 @@ export interface ImportError {
   message: string;
 }
 
+export type ImportType = "suppliers" | "products" | "opening_stock" | "sales";
+
+/** GET /forecasts/model: the shop's own Random Forest and what "auto" forecasts use. */
+export interface ModelStatus {
+  trained: boolean;
+  trained_at: string | null;
+  history_days: number;
+  needed_days: number;
+  can_train: boolean;
+  training: boolean;
+  last_error: string | null;
+  holdout_wape: Partial<Record<"random_forest_v1" | "moving_avg_28", number>>;
+  auto_uses: string;
+  auto_reason: string | null;
+}
+
 export interface ImportPreview {
+  import_type?: ImportType;
   rows_total: number;
   rows_valid: number;
   rows_invalid: number;
@@ -282,7 +306,7 @@ export interface ImportPreview {
   would_replace: number;
   errors: ImportError[];
   errors_truncated: boolean;
-  preview: { sku: string; sales_date: string; units: number; unit_price: string | null }[];
+  preview: Record<string, string | number | boolean | null>[];   // first valid rows; columns depend on the import type
   can_import: boolean;
 }
 
@@ -294,7 +318,8 @@ export interface ImportJob {
   rows_total: number;
   rows_valid: number;
   rows_invalid: number;
-  errors: { errors?: ImportError[]; added?: number; replaced?: number; truncated?: boolean } | null;
+  errors: { errors?: ImportError[]; added?: number; replaced?: number; truncated?: boolean; categories_added?: number;
+            units?: number } | null;
   created_at: string;
 }
 

@@ -8,11 +8,11 @@ from typing import Any
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, string_enum
+from app.db.base import Base, ShopOwned, string_enum
 from app.models.enums import RunStatus
 
 
-class SimulationRun(Base):
+class SimulationRun(ShopOwned, Base):
     """Inventory simulations started from the app. Results are SIMULATED by definition."""
 
     __tablename__ = "simulation_runs"
@@ -29,7 +29,7 @@ class SimulationRun(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
-class ImportJob(Base):
+class ImportJob(ShopOwned, Base):
     __tablename__ = "import_jobs"
     __table_args__ = (
         CheckConstraint("rows_valid + rows_invalid <= rows_total", name="row_counts_consistent"),
@@ -47,11 +47,12 @@ class ImportJob(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-class AppSetting(Base):
+class AppSetting(ShopOwned, Base):
     """Key-value settings such as default service level, horizons and cost assumptions."""
 
     __tablename__ = "app_settings"
 
+    shop_id: Mapped[int] = mapped_column(ForeignKey("shops.id", ondelete="CASCADE"), primary_key=True)
     key: Mapped[str] = mapped_column(String(80), primary_key=True)
     value: Mapped[dict[str, Any]]
     updated_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"))

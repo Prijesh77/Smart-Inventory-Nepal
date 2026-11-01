@@ -19,6 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.errors import NotFoundError
+from app.db.tenancy import shop_session
 from app.models import SimulationRun, User
 from app.models.enums import RunStatus
 
@@ -44,14 +45,14 @@ def _clean(value):
     return value
 
 
-def execute(session_factory: sessionmaker[Session], run_id: int) -> None:
+def execute(session_factory: sessionmaker[Session], shop_id: int, run_id: int) -> None:
     # Imported here: loading the research stack is only needed when a simulation actually runs.
     from ml.data.inspect_m5 import Report
     from ml.evaluation.inventory_compare import matched_difference
     from ml.experiments.run_simulation import POLICIES, prepare, run_policy, summarize
     from ml.inventory.simulation import CostSettings
 
-    with session_factory() as db:
+    with shop_session(session_factory, shop_id) as db:
         run = db.get(SimulationRun, run_id)
         run.status = RunStatus.RUNNING
         db.commit()

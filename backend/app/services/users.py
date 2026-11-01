@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.core.security import DUMMY_HASH, hash_password, verify_password
+from app.db.tenancy import all_shops
 from app.models import User
 from app.models.enums import UserRole
 from app.schemas.auth import UserCreate, UserUpdate
@@ -18,7 +19,8 @@ def authenticate(db: Session, email: str, password: str) -> User | None:
     The password is always hashed (against a dummy hash if the email is
     unknown), so response time does not reveal which emails exist.
     """
-    user = db.scalar(select(User).where(User.email == email.strip().lower()))
+    with all_shops(db):                     # the email decides which shop the user belongs to
+        user = db.scalar(select(User).where(User.email == email.strip().lower()))
     valid = verify_password(password, user.hashed_password if user else DUMMY_HASH)
     if user is None or not valid or not user.is_active:
         return None
@@ -26,7 +28,10 @@ def authenticate(db: Session, email: str, password: str) -> User | None:
 
 
 def create_user(db: Session, data: UserCreate) -> User:
-    if db.scalar(select(User.id).where(User.email == data.email)) is not None:
+    """A user in the session's current shop. Emails are unique across all shops."""
+    with all_shops(db):
+        taken = db.scalar(select(User.id).where(User.email == data.email)) is not None
+    if taken:
         raise ConflictError(f"A user with email '{data.email}' already exists")
     user = User(email=data.email, full_name=data.full_name.strip(), role=data.role,
                 hashed_password=hash_password(data.password))

@@ -28,6 +28,51 @@ class SupplierOut(BaseModel):
     contact_email: str | None = None
 
 
+CodeStr = Annotated[str, Field(min_length=1, max_length=30, pattern=r"^[A-Za-z0-9_\-]+$",
+                               description="Letters, digits, '_' or '-'. Stored in upper case.")]
+
+
+class CategoryCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    code: CodeStr | None = Field(default=None, description="Leave empty to make one from the name")
+
+    @field_validator("name")
+    @classmethod
+    def strip_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("name cannot be blank")
+        return value.strip()
+
+
+class SupplierCreate(BaseModel):
+    code: CodeStr
+    name: str = Field(min_length=1, max_length=120)
+    lead_time_days: int = Field(ge=1, le=365, description="Days from ordering to delivery")
+    lead_time_sd_days: Decimal = Field(default=Decimal("0"), ge=0, le=365, decimal_places=2)
+    contact_email: str | None = Field(default=None, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+    @field_validator("code", mode="before")
+    @classmethod
+    def normalise_code(cls, value: object) -> object:
+        return value.strip().upper() if isinstance(value, str) else value
+
+    @field_validator("name")
+    @classmethod
+    def strip_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("name cannot be blank")
+        return value.strip()
+
+
+class SupplierUpdate(BaseModel):
+    """Only the fields sent are changed. The code cannot change (orders refer to it)."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    lead_time_days: int | None = Field(default=None, ge=1, le=365)
+    lead_time_sd_days: Decimal | None = Field(default=None, ge=0, le=365, decimal_places=2)
+    contact_email: str | None = Field(default=None, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
 class ProductCreate(BaseModel):
     sku: SkuStr
     name: str = Field(min_length=1, max_length=200)

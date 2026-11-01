@@ -7,10 +7,21 @@ import { FilterSelect } from "../../components/fields";
 import { EmptyState, ErrorMessage, SimulatedTag, Spinner } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { AXIS, GRID, SERIES } from "../../lib/colors";
-import { fmtDate, fmtDecimal, fmtInt, fmtMoney, fmtShortDate } from "../../lib/format";
+import { fmtDate, fmtDecimal, fmtInt, fmtMoney, fmtShortDate, humanize } from "../../lib/format";
 
 /** One fixed colour per category, so a category keeps its colour on every chart. */
-export const CATEGORY_COLOR: Record<string, string> = { FOODS: SERIES.blue, HOBBIES: SERIES.orange, HOUSEHOLD: SERIES.green };
+export const CATEGORY_COLOR: Record<string, string> = {
+  GRAINS: SERIES.blue, OIL_SPICE: SERIES.orange, SNACKS: SERIES.green, DRINKS: SERIES.sky, HOUSEHOLD: SERIES.pink,
+  PERSONAL: SERIES.gray,
+};
+const OTHER_COLORS = Object.values(SERIES);
+
+/** Demo categories have fixed colours; other codes get a colour from their letters, the same on every chart. */
+export function categoryColor(code: string): string {
+  if (CATEGORY_COLOR[code]) return CATEGORY_COLOR[code];
+  const sum = [...code].reduce((total, ch) => total + ch.charCodeAt(0), 0);
+  return OTHER_COLORS[sum % OTHER_COLORS.length];
+}
 
 export function CategoryTable() {
   const [days, setDays] = useState("28");
@@ -47,7 +58,7 @@ export function CategoryTable() {
               {data.map((c) => (
                 <tr key={c.category}>
                   <th scope="row" className="py-2 pr-4 text-left font-medium">
-                    <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLOR[c.category] ?? SERIES.gray }} aria-hidden />
+                    <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: categoryColor(c.category) }} aria-hidden />
                     {c.name}
                   </th>
                   <td className="py-2 pr-4 text-right tabular-nums">{fmtInt(c.products)}</td>
@@ -112,12 +123,12 @@ export function WeeklyTrend() {
               <Tooltip labelFormatter={(d) => `Week of ${fmtDate(String(d))}`} formatter={(v, n) => [fmtInt(Number(v)), n]} />
               <Legend verticalAlign="top" align="right" height={28} wrapperStyle={{ fontSize: 12 }} />
               {categories.map((c) => (
-                <Line key={c} type="monotone" dataKey={c} name={c.charAt(0) + c.slice(1).toLowerCase()}
-                      stroke={CATEGORY_COLOR[c] ?? SERIES.gray} strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line key={c} type="monotone" dataKey={c} name={humanize(c.toLowerCase())}
+                      stroke={categoryColor(c)} strokeWidth={2} dot={false} isAnimationActive={false} />
               ))}
             </LineChart>
           </ResponsiveContainer>
-          <p className="mt-1 text-xs text-slate-500">Real M5 sales for the sampled products. The last, incomplete week is not shown.</p>
+          <p className="mt-1 text-xs text-slate-500">Units sold per week. The last, incomplete week is not shown.</p>
         </div>
       )}
     </>

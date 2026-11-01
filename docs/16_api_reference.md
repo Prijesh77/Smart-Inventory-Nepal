@@ -21,10 +21,11 @@ Base path `/api/v1`. **Reads** need any login (viewer, manager or admin). **Chan
 | Forecasts | `POST/GET /forecasts/runs` · `GET /forecasts/runs/{id}` · `GET /forecasts/products/{id}` · `GET /forecasts/evaluations` | [14](14_forecast_and_recommendation_api.md) |
 | Recommendations | `POST/GET /recommendations/runs` · `GET /recommendations/runs/{id}` · `GET /recommendations` · `PATCH /recommendations/{id}` | [14](14_forecast_and_recommendation_api.md) |
 | Purchase orders | `GET/POST /purchase-orders` · `POST /purchase-orders/from-recommendations` · `GET/PATCH /purchase-orders/{id}` · `POST …/{id}/submit` · `/receive` · `/cancel` | [15](15_purchase_orders_api.md) |
-| Import | `POST /imports/sales/preview` · `POST /imports/sales` · `GET /imports/jobs` | below |
+| Import | `GET /imports/types` · `GET /imports/templates/{type}.xlsx` · `POST /imports/{type}/preview` · `POST /imports/{type}` (*manager*) · `GET /imports/jobs` | below |
+| Suppliers, categories | `GET /suppliers` · `POST /suppliers` · `PATCH /suppliers/{id}` · `GET /categories` · `POST /categories` (*manager* for changes) | |
 | Export | `GET /exports/{products, inventory, transactions, recommendations, purchase-orders, forecast}.csv` | below |
 | Simulations | `POST/GET /simulations` · `GET /simulations/{id}` | below |
-| Settings | `GET /settings/policy` · `PUT /settings/policy` (*admin*) · `GET /settings/currency` · `PUT /settings/currency` (*admin*) | below |
+| Settings | `GET /settings/policy` · `PUT /settings/policy` (*admin*) | below |
 
 ## Dashboard and analytics
 
@@ -40,7 +41,20 @@ Analytics: daily units and revenue (store, category or product), weekly units pe
 
 Real data: 267 products, 15,368 units ($30,235 simulated value), 14,103 units sold in the last 28 days ($44,687). Computed in about 0.13 s.
 
-## Sales CSV import
+## Imports from Excel or CSV (onboarding a shop)
+
+`{type}` is one of `suppliers`, `products`, `opening_stock`, `sales`. A new shop imports them in that order. Files can be Excel `.xlsx` (first sheet) or UTF-8 CSV, with one header row; column names are matched ignoring case. `GET /imports/templates/{type}.xlsx` gives a template with the right columns, two example rows and an Instructions sheet.
+
+| Type | Columns (required in bold) | What happens |
+|---|---|---|
+| suppliers | **code**, **name**, **lead_time_days**, lead_time_sd_days, contact_email | New codes added, existing ones updated |
+| products | **sku**, **name**, **category**, supplier_code, **unit_price**, unit_cost, pack_size, min_order_qty, lead_time_days | New SKUs added with 0 stock, existing ones updated; a new category name creates the category; supplier codes must exist |
+| opening_stock | **sku**, **quantity** | An `initial` stock movement per product; refused for products that already have stock movements (use an adjustment) |
+| sales | **sku**, **date**, **units**, unit_price | As below |
+
+Every type uses the same two steps and the same all-or-nothing rule as the sales import below. Amounts are in rupees (up to 2 decimals; `1,250.50` is accepted).
+
+## Sales import
 
 1. `POST /imports/sales/preview` (multipart: `file`, plus optional `sku_column`, `date_column`, `units_column`, `price_column`). Returns totals, valid/invalid counts, how many rows would be **added** vs **replaced**, row-numbered errors (up to 200), and the first 20 valid rows.
 2. `POST /imports/sales`: imports **all rows or none**. If any row is invalid → **422** and nothing is written, but the job is still recorded as `failed` with its errors.
@@ -73,7 +87,7 @@ Six datasets. Every file:
 
 `GET /settings/policy` returns the defaults used by new recommendation runs: service level, review period, ordering cost, holding rate, order-size limits, excess threshold and forecast horizons. `PUT` (*admin*) validates them, e.g. max cycle ≥ min cycle.
 
-`GET /settings/currency` returns the rupee exchange rate used for display: `npr_per_usd`, `rate_date`, `rate_source`. The default is the Nepal Rastra Bank selling rate published for 29 Oct 2026: Rs 152.66 = $1. `PUT` (*admin*) replaces it; the rate must be above 0. Every amount in the API stays in **US dollars**, the M5 data's currency. The frontend converts to rupees only for display, and converts typed rupee amounts back to dollars (to the cent) before sending them.
+Every amount in the API (prices, costs, order values, the ordering-cost setting) is in **Nepalese rupees**. There is no currency conversion.
 
 ## Changes in this step
 

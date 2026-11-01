@@ -182,8 +182,7 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
               </div>
             )}
             <p className="mt-3 text-xs text-slate-500">
-              Quantities, costs and stock are based on <span className="text-violet-700">simulated</span> stock, costs and
-              lead times; forecasts use real M5 sales. "Stockout chance" is a model estimate, not an observed rate.
+              In the demo shop, sales, stock, costs and lead times are <span className="text-violet-700">synthetic</span>. "Stockout chance" is a model estimate, not an observed rate.
               Nothing is ordered from suppliers automatically.
             </p>
           </Card>

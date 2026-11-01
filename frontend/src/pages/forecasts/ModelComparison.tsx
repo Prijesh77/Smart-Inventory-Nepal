@@ -55,7 +55,7 @@ export function ModelComparison() {
           <table className="min-w-full text-sm">
             <caption className="mb-2 text-left text-xs text-slate-500">
               WAPE = total absolute error ÷ total actual sales (lower is better). Bias = over (+) or under (−) forecasting.
-              Best WAPE per column is marked ★. Backtests on 267 real M5 items.
+              Best WAPE per column is marked ★. Scored on this shop's last 28 days of sales, held back while training.
             </caption>
             <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>

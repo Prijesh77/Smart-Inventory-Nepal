@@ -11,6 +11,7 @@ import { useApi } from "../../hooks/useApi";
 import { fmtDate, fmtDecimal, fmtPct } from "../../lib/format";
 import { ModelComparison } from "./ModelComparison";
 import { MODEL_LABEL, NewRunForm, RunsTable, testScoreText } from "./ForecastRuns";
+import { ShopModelCard } from "./ShopModelCard";
 
 export function ForecastsPage({ pollMs }: { pollMs?: number }) {
   const { can } = useAuth();
@@ -18,6 +19,7 @@ export function ForecastsPage({ pollMs }: { pollMs?: number }) {
   const productId = params.get("product");
   const runParam = params.get("run");
   const [product, setProduct] = useState<{ id: number; sku: string } | null>(null);
+  const [trainedCount, setTrainedCount] = useState(0);     // refreshes the accuracy table after training
 
   const runs = useApi((signal) => api.get<ForecastRun[]>("/forecasts/runs", { limit: 20 }, signal));
   const summary = useApi((signal) => api.get<DashboardSummary>("/dashboard/summary", undefined, signal));
@@ -49,7 +51,7 @@ export function ForecastsPage({ pollMs }: { pollMs?: number }) {
   return (
     <>
       <PageHeader title="Demand forecasting"
-                  description="Actual sales (real M5 data) and predicted demand per product, plus how accurate each model has been." />
+                  description="Actual sales and predicted demand per product, plus how accurate each model has been." />
 
       <Card title="Actual sales vs forecast">
         <div className="mb-4 flex flex-wrap items-end gap-4">
@@ -89,6 +91,7 @@ export function ForecastsPage({ pollMs }: { pollMs?: number }) {
               {f.actual_in_window.length > 0 && " Green = what actually sold during the forecast period (back-dated run)."}
               {" "}<Link to={`/products/${f.product_id}`} className="text-brand-600 hover:underline">Product details</Link>
             </p>
+            {f.run.params?.model_choice && <p className="mt-1 text-xs text-slate-500">{f.run.params.model_choice}</p>}
             {testScoreText(f.run) && <p className="mt-1 text-xs text-slate-500">{testScoreText(f.run)}</p>}
             {f.run.params?.assumptions && (
               <details className="mt-2 text-xs text-slate-500">
@@ -114,8 +117,12 @@ export function ForecastsPage({ pollMs }: { pollMs?: number }) {
         )}
       </div>
 
+      <Card title="This shop's forecast model" className="mt-6">
+        <ShopModelCard canTrain={can("admin", "manager")} onTrained={() => setTrainedCount((n) => n + 1)} />
+      </Card>
+
       <Card title="Model accuracy comparison" className="mt-6">
-        <ModelComparison />
+        <ModelComparison key={trainedCount} />
       </Card>
     </>
   );

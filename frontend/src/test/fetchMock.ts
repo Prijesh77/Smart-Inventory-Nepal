@@ -20,5 +20,5 @@ export function mockFetch(routes: Record<string, Handler>) {
 
 export const TEST_USER = {
   id: 1, email: "manager@test.local", full_name: "Test Manager", role: "manager", is_active: true,
-  created_at: "2026-10-29T00:00:00Z",
+  created_at: "2026-10-29T00:00:00Z", shop: { id: 1, name: "Test Kirana Pasal", is_demo: false },
 };

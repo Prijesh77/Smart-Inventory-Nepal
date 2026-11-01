@@ -10,12 +10,16 @@ from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.errors import AppError, InvalidReferenceError, NotFoundError
+from app.db.tenancy import shop_session
 from app.models import DailySales, Forecast, ForecastRun, ModelEvaluation, Product, User
 from app.models.enums import EvaluationPeriod, RunStatus
-from app.services.forecast_engine import ASSUMPTIONS, MODELS, ForecastUnavailable, forecast_matrix, load_context
+from app.db.tenancy import current_shop_id
+from app.services.forecast_engine import (
+    ASSUMPTIONS, MODELS, ForecastUnavailable, forecast_matrix, load_context, model_file,
+)
 
 logger = logging.getLogger("app.forecasting")
-MODEL_VERSION = {"random_forest_v1": "v1-final", "moving_avg_28": "baseline"}
+MODEL_VERSION = {"random_forest_v1": "shop-v1", "moving_avg_28": "baseline"}
 
 
 def last_sales_date(db: Session) -> date:
@@ -25,7 +29,32 @@ def last_sales_date(db: Session) -> date:
     return last
 
 
+def holdout_wape(db: Session) -> dict[str, float]:
+    """WAPE of each model on the shop's last 28 days, held back when its forest was trained (all items, 28 days)."""
+    rows = db.execute(select(ModelEvaluation.model_name, ModelEvaluation.wape).where(
+        ModelEvaluation.period == EvaluationPeriod.TEST, ModelEvaluation.horizon_days == 28,
+        ModelEvaluation.demand_class == "all", ModelEvaluation.wape.is_not(None))).all()
+    return {name: float(wape) for name, wape in rows}
+
+
+def choose_model(db: Session, model_name: str) -> tuple[str, str | None]:
+    """(model, reason). 'auto' = the shop's own forest if it is trained AND was more accurate than the
+    28-day moving average on the held-back days; otherwise the moving average."""
+    if model_name != "auto":
+        return model_name, None
+    if not model_file(current_shop_id(db)).exists():
+        return "moving_avg_28", "Auto: 28-day moving average, because this shop's Random Forest is not trained yet."
+    wape = holdout_wape(db)
+    rf, ma = wape.get("random_forest_v1"), wape.get("moving_avg_28")
+    if rf is not None and ma is not None and rf > ma:
+        return "moving_avg_28", (f"Auto: 28-day moving average, because it was more accurate than this shop's "
+                                 f"Random Forest on the last 28 days (error {ma:.0%} vs {rf:.0%}).")
+    detail = f" (error {rf:.0%} vs {ma:.0%} for the moving average)" if rf is not None and ma is not None else ""
+    return "random_forest_v1", f"Auto: this shop's Random Forest, the more accurate model on the last 28 days{detail}."
+
+
 def create_run(db: Session, *, model_name: str, horizon_days: int, origin_date: date | None, user: User) -> ForecastRun:
+    model_name, reason = choose_model(db, model_name)
     if model_name not in MODELS:
         raise InvalidReferenceError(f"Unknown model '{model_name}'. Choose from: {', '.join(MODELS)}")
     default_origin = last_sales_date(db) + timedelta(days=1)
@@ -34,16 +63,17 @@ def create_run(db: Session, *, model_name: str, horizon_days: int, origin_date: 
         raise AppError(f"Origin must be on or before {default_origin} (the day after the last sales data)")
     run = ForecastRun(model_name=model_name, model_version=MODEL_VERSION[model_name], origin_date=origin,
                       horizon_days=horizon_days, status=RunStatus.PENDING, created_by=user.id,
-                      params={"assumptions": ASSUMPTIONS, "history_ends": str(origin - timedelta(days=1))})
+                      params={"assumptions": ASSUMPTIONS, "history_ends": str(origin - timedelta(days=1)),
+                              **({"model_choice": reason} if reason else {})})
     db.add(run)
     db.commit()
     db.refresh(run)
     return run
 
 
-def execute_run(session_factory: sessionmaker[Session], run_id: int) -> None:
+def execute_run(session_factory: sessionmaker[Session], shop_id: int, run_id: int) -> None:
     """Background job: compute and store the forecasts, recording success or failure on the run."""
-    with session_factory() as db:
+    with shop_session(session_factory, shop_id) as db:
         run = db.get(ForecastRun, run_id)
         run.status = RunStatus.RUNNING
         db.commit()
@@ -51,7 +81,7 @@ def execute_run(session_factory: sessionmaker[Session], run_id: int) -> None:
             ctx = load_context(db, through=run.origin_date + timedelta(days=run.horizon_days - 1))
             values = forecast_matrix(ctx, run.model_name, run.origin_date, run.horizon_days)
             db.execute(insert(Forecast), [
-                {"forecast_run_id": run.id, "product_id": int(pid), "horizon": h + 1,
+                {"shop_id": shop_id, "forecast_run_id": run.id, "product_id": int(pid), "horizon": h + 1,
                  "forecast_date": run.origin_date + timedelta(days=h),
                  "predicted_units": Decimal(str(round(float(values[i, h]), 3)))}
                 for i, pid in enumerate(ctx.product_ids) for h in range(run.horizon_days)
@@ -73,7 +103,7 @@ def execute_run(session_factory: sessionmaker[Session], run_id: int) -> None:
 
 
 def validation_summary(db: Session, model_name: str) -> dict:
-    """Test-year scores (Phase 3) for this model, all items, 28-day horizon."""
+    """Scores on the last 28 days held back during training, for this model, all items, 28-day horizon."""
     row = db.scalar(select(ModelEvaluation).where(
         ModelEvaluation.model_name == model_name, ModelEvaluation.period == EvaluationPeriod.TEST,
         ModelEvaluation.horizon_days == 28, ModelEvaluation.demand_class == "all"))

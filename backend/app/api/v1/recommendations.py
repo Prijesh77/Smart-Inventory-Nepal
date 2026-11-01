@@ -38,7 +38,7 @@ def start_run(data: RecommendationRunCreate, background: BackgroundTasks, db: Db
               factory: SessionFactory) -> RecommendationRunOut:
     run = service.create_run(db, forecast_run_id=data.forecast_run_id,
                              overrides=data.model_dump(exclude={"forecast_run_id"}), user=user)
-    background.add_task(service.execute_run, factory, run.id)
+    background.add_task(service.execute_run, factory, run.shop_id, run.id)
     return run_out(db, run)
 
 

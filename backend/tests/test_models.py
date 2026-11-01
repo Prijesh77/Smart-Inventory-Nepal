@@ -30,7 +30,7 @@ def make_product(db, sku: str = "FOODS_3_001", **overrides) -> Product:
 
 
 def test_all_tables_created():
-    assert len(Base.metadata.tables) == 18
+    assert len(Base.metadata.tables) == 19       # 18 + shops
 
 
 def test_duplicate_sku_rejected(db):
@@ -72,10 +72,10 @@ def test_zero_quantity_transaction_rejected(db):
 def test_status_check_constraint_exists_in_database(db):
     # Bypass the ORM: the CHECK constraint itself must reject an unknown status.
     product = make_product(db)
-    db.execute(text("INSERT INTO purchase_orders (po_number, supplier_id, status) VALUES ('PO-1', :s, 'draft')"),
+    db.execute(text("INSERT INTO purchase_orders (shop_id, po_number, supplier_id, status) VALUES (1, 'PO-1', :s, 'draft')"),
                {"s": product.supplier_id})
     with pytest.raises(IntegrityError):
-        db.execute(text("INSERT INTO purchase_orders (po_number, supplier_id, status) VALUES ('PO-2', :s, 'shipped')"),
+        db.execute(text("INSERT INTO purchase_orders (shop_id, po_number, supplier_id, status) VALUES (1, 'PO-2', :s, 'shipped')"),
                    {"s": product.supplier_id})
 
 

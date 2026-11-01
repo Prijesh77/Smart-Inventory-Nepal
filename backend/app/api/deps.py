@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.db.session import get_db
+from app.db.tenancy import all_shops, use_shop
 from app.models import User
 from app.models.enums import UserRole
 
@@ -31,16 +32,22 @@ def _unauthorized(detail: str) -> HTTPException:
 
 
 def get_current_user(db: DbSession, token: Annotated[str, Depends(oauth2_scheme)]) -> User:
-    """401 if the token is missing, forged, expired, or the account no longer exists or is inactive."""
+    """401 if the token is missing, forged, expired, or the account no longer exists or is inactive.
+
+    Also limits this request's database session to the user's shop, so every
+    query after this point only sees that shop's data (app/db/tenancy.py).
+    """
     try:
         user_id = int(decode_access_token(token)["sub"])
     except jwt.ExpiredSignatureError:
         raise _unauthorized("Session expired, please log in again") from None
     except (jwt.InvalidTokenError, ValueError, KeyError):
         raise _unauthorized("Invalid authentication token") from None
-    user = db.get(User, user_id)
+    with all_shops(db):
+        user = db.get(User, user_id)
     if user is None or not user.is_active:
         raise _unauthorized("Account not found or inactive")
+    use_shop(db, user.shop_id)
     return user
 
 

@@ -1,6 +1,7 @@
 /** Small shared building blocks so every page looks and behaves the same. */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import { useIsDemoShop } from "../auth/AuthContext";
 import { Icon } from "./Icons";
 
 type Variant = "primary" | "secondary" | "danger" | "ghost";
@@ -95,8 +96,12 @@ export function Badge({ tone = "gray", children }: { tone?: keyof typeof BADGE_T
   );
 }
 
-/** Marks a number or section that depends on simulated inputs (stock, costs, lead times). */
+/**
+ * Marks a number or section that depends on made-up inputs (stock, costs, lead times). Shown only in a demo shop:
+ * a real shop's figures come from its own records.
+ */
 export function SimulatedTag() {
+  if (!useIsDemoShop()) return null;
   return (
     <span title="Based on simulated stock, cost or lead-time data, not real retailer records">
       <Badge tone="purple">Simulated</Badge>
