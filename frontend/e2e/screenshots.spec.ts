@@ -21,6 +21,14 @@ const creds = () => JSON.parse(readFileSync(new URL("./.credentials.json", impor
 
 test.use({ viewport: { width: 1440, height: 900 } });
 
+/** The date style is in the user menu (header): open it if needed, choose, then close it again. */
+async function showDatesAs(page: Page, style: "ad" | "bs") {
+  const menu = page.getByRole("button", { name: /E2E Admin/ });
+  if ((await menu.getAttribute("aria-expanded")) !== "true") await menu.click();
+  await page.getByLabel("Show dates as").selectOption(style);
+  await page.keyboard.press("Escape");
+}
+
 async function shot(page: Page, name: string, fullPage = true) {
   await page.waitForLoadState("networkidle");
   await page.evaluate(() => window.scrollTo(0, 0));  // sticky header and sidebar sit in place
@@ -72,11 +80,11 @@ test("capture every page @screenshots", async ({ page }) => {
   // Forecasting: a forecast started 4 weeks back, so actual sales can be compared with it. The date is
   // typed with the AD date picker, then the page goes back to BS for the screenshot.
   await page.goto(`/forecasts?product=${productId}`);
-  await page.getByLabel("Show dates as").selectOption("ad");
+  await showDatesAs(page, "ad");
   await page.getByLabel("Start date (optional)").fill(adDaysAgo(28));
   await page.getByRole("button", { name: "Create forecast" }).click();
   await expect(page.getByText(/Error on this window/).locator("..")).not.toContainText("Not known yet", { timeout: 120_000 });
-  await page.getByLabel("Show dates as").selectOption("bs");
+  await showDatesAs(page, "bs");
   await shot(page, "06_forecasting");
 
   // Reorder recommendations: critical items with one explanation open

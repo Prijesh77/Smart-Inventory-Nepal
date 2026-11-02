@@ -4,7 +4,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
-import { Spinner } from "./components/ui";
+import { ToastProvider } from "./components/Toast";
+import { Skeleton } from "./components/ui";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFound } from "./pages/Placeholder";
 
@@ -24,7 +25,7 @@ const PurchaseOrderDetailPage = named(() => import("./pages/purchase-orders/Purc
 const AnalyticsPage = named(() => import("./pages/analytics/AnalyticsPage"), "AnalyticsPage");
 const SettingsPage = named(() => import("./pages/settings/SettingsPage"), "SettingsPage");
 
-const page = (element: JSX.Element) => <Suspense fallback={<Spinner label="Loading page…" />}>{element}</Suspense>;
+const page = (element: JSX.Element) => <Suspense fallback={<Skeleton variant="cards" rows={4} label="Loading page…" />}>{element}</Suspense>;
 
 export function AppRoutes() {
   return (
@@ -50,9 +51,11 @@ export function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -6,7 +6,7 @@ import type { Category, Page, StockItem, StockStatus } from "../../api/types";
 import { FilterSelect } from "../../components/fields";
 import { Pagination } from "../../components/Pagination";
 import { SortHeader } from "../../components/SortHeader";
-import { Badge, Button, EmptyState, ErrorMessage, Spinner } from "../../components/ui";
+import { Badge, Button, EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { useDebounce } from "../../hooks/useDebounce";
 import { STOCK_STATUS_STYLE } from "../../lib/colors";
@@ -79,8 +79,8 @@ export function StockTable({ categories, initialSearch, canAdjust, onAdjust, onH
       </div>
 
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Spinner label="Loading stock…" />}
-      {data && data.items.length === 0 && <EmptyState title="No products match these filters" />}
+      {loading && !data && <Skeleton label="Loading stock…" />}
+      {data && data.items.length === 0 && <EmptyState icon="warehouse" title="No products match these filters">Try a different search, or clear the filters.</EmptyState>}
       {data && data.items.length > 0 && (
         <div className={`overflow-x-auto ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
           <table className="min-w-full text-sm">

@@ -48,7 +48,8 @@ describe("date style switch", () => {
   it("is in the header and is remembered in this browser", async () => {
     mockFetch({ "GET /auth/me": () => ({ body: TEST_USER }) });
     renderLoggedIn(<Layout />);
-    const select = await screen.findByLabelText("Show dates as");
+    await userEvent.click(await screen.findByRole("button", { name: /Test Manager/ }));      // the user menu holds it
+    const select = screen.getByLabelText("Show dates as");
     expect(select).toHaveValue("ad");                                    // tests start in AD (test/setup.ts)
     await userEvent.selectOptions(select, "bs_np");
     expect(localStorage.getItem("smart-inventory.date-style")).toBe("bs_np");

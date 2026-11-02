@@ -6,7 +6,8 @@ import type { StockItem, TransactionRow } from "../../api/types";
 import { useAuth } from "../../auth/AuthContext";
 import { Dialog } from "../../components/Dialog";
 import { TabPanel, Tabs } from "../../components/Tabs";
-import { Card, ErrorMessage, PageHeader, SimulatedTag, Spinner } from "../../components/ui";
+import { Card, ErrorMessage, PageHeader, SimulatedTag, Skeleton } from "../../components/ui";
+import { useToast } from "../../components/Toast";
 import { useApi } from "../../hooks/useApi";
 import { useReference } from "../../hooks/useReference";
 import { fmtInt } from "../../lib/format";
@@ -24,7 +25,7 @@ export function InventoryPage() {
   const tab = (params.get("tab") as Tab) || "stock";
   const [adjusting, setAdjusting] = useState<StockItem | null>(null);
   const [historyFor, setHistoryFor] = useState<{ id: number; sku: string } | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const toast = useToast();
   const [refreshKey, setRefreshKey] = useState(0);
   const reference = useReference();
   const alerts = useApi((signal) => api.get<StockItem[]>("/inventory/alerts", undefined, signal), [refreshKey]);
@@ -37,7 +38,7 @@ export function InventoryPage() {
 
   function onSaved(txn: TransactionRow) {
     setAdjusting(null);
-    setNotice(`Recorded: ${txn.sku} ${txn.quantity > 0 ? "+" : ""}${fmtInt(txn.quantity)} (${txn.txn_type}). Stock is now ${fmtInt(txn.balance_after)}.`);
+    toast(`Recorded: ${txn.sku} ${txn.quantity > 0 ? "+" : ""}${fmtInt(txn.quantity)} (${txn.txn_type}). Stock is now ${fmtInt(txn.balance_after)}.`);
     setRefreshKey((k) => k + 1);
   }
 
@@ -49,7 +50,6 @@ export function InventoryPage() {
           Current stock, low-stock alerts and the audit log of every movement. <SimulatedTag />
         </span>}
       />
-      {notice && <p role="status" className="mb-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
 
       <Card>
         <Tabs label="Inventory views" selected={tab} onSelect={selectTab} tabs={[
@@ -67,7 +67,7 @@ export function InventoryPage() {
         {tab === "alerts" && (
           <TabPanel id="alerts">
             {alerts.error && <ErrorMessage message={alerts.error} onRetry={alerts.reload} />}
-            {alerts.loading && !alerts.data && <Spinner label="Loading alerts…" />}
+            {alerts.loading && !alerts.data && <Skeleton label="Loading alerts…" />}
             {alerts.data && <AlertsList alerts={alerts.data} canAdjust={canAdjust} onAdjust={setAdjusting} />}
           </TabPanel>
         )}

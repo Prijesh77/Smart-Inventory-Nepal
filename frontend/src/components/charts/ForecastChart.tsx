@@ -2,7 +2,7 @@ import { CartesianGrid, ComposedChart, Legend, Line, ReferenceArea, ReferenceLin
   XAxis, YAxis } from "recharts";
 
 import type { ProductForecast } from "../../api/types";
-import { AXIS, GRID, SERIES } from "../../lib/colors";
+import { AXIS, GRID, SERIES, TOOLTIP } from "../../lib/colors";
 import { fmtDate, fmtDecimal, fmtShortDate } from "../../lib/format";
 
 export interface ForecastPoint {
@@ -58,7 +58,7 @@ export function ForecastChart({ data }: { data: ProductForecast }) {
           <YAxis allowDecimals={false} width={36} tick={{ fill: AXIS, fontSize: 12 }} axisLine={false} tickLine={false} />
           <ReferenceLine x={origin} stroke="#475569" strokeDasharray="3 3"
                          label={{ value: "Forecast starts", position: "insideTopLeft", fill: "#475569", fontSize: 11 }} />
-          <Tooltip labelFormatter={(d) => fmtDate(String(d))}
+          <Tooltip {...TOOLTIP} labelFormatter={(d) => fmtDate(String(d))}
                    formatter={(v, name) => [v === null || v === undefined ? "—" : fmtDecimal(Number(v)), name]} />
           <Legend verticalAlign="top" align="right" height={28} wrapperStyle={{ fontSize: 12 }} />
           <Line type="linear" dataKey="actual" name="Actual sales" stroke={SERIES.blue} strokeWidth={2}

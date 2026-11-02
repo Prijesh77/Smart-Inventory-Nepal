@@ -6,7 +6,7 @@ import type { DashboardSummary, ForecastRun, ProductForecast } from "../../api/t
 import { useAuth } from "../../auth/AuthContext";
 import { ForecastChart, windowWape } from "../../components/charts/ForecastChart";
 import { ProductPicker } from "../../components/ProductPicker";
-import { Card, EmptyState, ErrorMessage, PageHeader, Spinner } from "../../components/ui";
+import { Card, EmptyState, ErrorMessage, PageHeader, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDate, fmtDecimal, fmtPct } from "../../lib/format";
 import { ModelComparison } from "./ModelComparison";
@@ -64,14 +64,14 @@ export function ForecastsPage({ pollMs }: { pollMs?: number }) {
             </p>
           )}
         </div>
-        {runs.loading && !runs.data && <Spinner label="Loading forecast runs…" />}
+        {runs.loading && !runs.data && <Skeleton label="Loading forecast runs…" />}
         {runs.data && !selectedRun && (
-          <EmptyState title="No completed forecast yet">
+          <EmptyState icon="trend" title="No completed forecast yet">
             {can("admin", "manager") ? "Create one below." : "Ask a manager to create one."}
           </EmptyState>
         )}
         {forecast.error && <ErrorMessage message={forecast.error} onRetry={forecast.reload} />}
-        {forecast.loading && selectedRun && !f && <Spinner label="Loading forecast…" />}
+        {forecast.loading && selectedRun && !f && <Skeleton label="Loading forecast…" />}
         {f && f.forecast.length === 0 && (
           <EmptyState title={`No forecast for ${f.sku} in this run`}>The product may be inactive or have no sales history.</EmptyState>
         )}

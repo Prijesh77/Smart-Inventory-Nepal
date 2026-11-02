@@ -3,7 +3,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../../api/client";
 import type { Category, Supplier } from "../../api/types";
 import { TextField } from "../../components/fields";
-import { Button, EmptyState, ErrorMessage, Spinner } from "../../components/ui";
+import { Button, EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
+import { useToast } from "../../components/Toast";
 import { useReference } from "../../hooks/useReference";
 
 const CODE = /^[A-Za-z0-9_-]+$/;
@@ -32,16 +33,15 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
   const [supplier, setSupplier] = useState<SupplierValues>(EMPTY_SUPPLIER);
   const [supplierErrors, setSupplierErrors] = useState<ReturnType<typeof validateSupplier>>({});
   const [category, setCategory] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  const toast = useToast();
   const [failure, setFailure] = useState<string | null>(null);
 
   useEffect(() => { if (version) reload(); }, [version]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save<T>(request: () => Promise<T>, success: (result: T) => string) {
-    setMessage(null);
     setFailure(null);
     try {
-      setMessage(success(await request()));
+      toast(success(await request()));
       reload();
       return true;
     } catch (err) {
@@ -72,17 +72,16 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
   );
 
   if (error) return <ErrorMessage message={error} onRetry={reload} />;
-  if (loading && !data) return <Spinner />;
+  if (loading && !data) return <Skeleton variant="text" />;
   if (!data) return null;
   return (
     <div className="space-y-6">
-      {message && <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       {failure && <ErrorMessage message={failure} />}
 
       <section aria-labelledby="suppliers-heading" className="space-y-3">
         <h3 id="suppliers-heading" className="text-sm font-semibold text-slate-800">Suppliers ({data.suppliers.length})</h3>
         {data.suppliers.length === 0
-          ? <EmptyState title="No suppliers yet">Add one below, or import the Suppliers sheet.</EmptyState>
+          ? <EmptyState icon="clipboard" title="No suppliers yet">Add one below, or import the Suppliers sheet.</EmptyState>
           : (
             <div className="max-h-56 overflow-y-auto">
               <table className="min-w-full text-sm">
@@ -114,7 +113,7 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
       <section aria-labelledby="categories-heading" className="space-y-3">
         <h3 id="categories-heading" className="text-sm font-semibold text-slate-800">Categories ({data.categories.length})</h3>
         {data.categories.length === 0
-          ? <EmptyState title="No categories yet">Add one below; importing products also creates them.</EmptyState>
+          ? <EmptyState icon="box" title="No categories yet">Add one below; importing products also creates them.</EmptyState>
           : (
             <ul className="flex flex-wrap gap-2">
               {data.categories.map((c) => (

@@ -60,6 +60,24 @@ export const Icon = {
   inbox: (p: IconProps) => (
     <Svg {...p}><path d="M3 13h5l1.5 3h5L16 13h5" /><path d="M5 5h14l2 8v6H3v-6l2-8Z" /></Svg>
   ),
+  check: (p: IconProps) => (
+    <Svg {...p}><circle cx="12" cy="12" r="9" /><path d="m8 12.5 2.7 2.7L16 9.5" /></Svg>
+  ),
+  chevronDown: (p: IconProps) => (
+    <Svg {...p}><path d="m6 9 6 6 6-6" /></Svg>
+  ),
+  arrowRight: (p: IconProps) => (
+    <Svg {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Svg>
+  ),
+  arrowUp: (p: IconProps) => (
+    <Svg {...p}><path d="M12 19V5M6 11l6-6 6 6" /></Svg>
+  ),
+  arrowDown: (p: IconProps) => (
+    <Svg {...p}><path d="M12 5v14M18 13l-6 6-6-6" /></Svg>
+  ),
+  upload: (p: IconProps) => (
+    <Svg {...p}><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" /></Svg>
+  ),
 };
 
 export type IconName = keyof typeof Icon;

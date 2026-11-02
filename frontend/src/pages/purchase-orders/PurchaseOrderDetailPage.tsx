@@ -5,7 +5,7 @@ import { api, ApiError } from "../../api/client";
 import type { PurchaseOrder } from "../../api/types";
 import { useAuth } from "../../auth/AuthContext";
 import { Dialog } from "../../components/Dialog";
-import { Button, Card, ErrorMessage, PageHeader, SimulatedTag, Spinner } from "../../components/ui";
+import { Button, Card, ErrorMessage, Notice, PageHeader, SimulatedTag, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { useReference } from "../../hooks/useReference";
 import { fmtDate, fmtDateTime, fmtInt, fmtMoney } from "../../lib/format";
@@ -25,7 +25,7 @@ export function PurchaseOrderDetailPage() {
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   const po = order && String(order.id) === id ? order : data;
-  if (loading && !po) return <Spinner label="Loading order…" />;
+  if (loading && !po) return <Skeleton variant="text" label="Loading order…" />;
   if (error && !po) return <ErrorMessage message={error} onRetry={reload} />;
   if (!po) return null;
 
@@ -68,12 +68,9 @@ export function PurchaseOrderDetailPage() {
           )}
         />
       </div>
-      {message && (
-        <p role={message.kind === "error" ? "alert" : "status"}
-           className={`mb-4 rounded-md p-3 text-sm ${message.kind === "error" ? "bg-red-50 text-red-800" : "bg-emerald-50 text-emerald-800"}`}>
-          {message.text}
-        </p>
-      )}
+      {message && (message.kind === "error"
+        ? <div className="mb-4"><ErrorMessage message={message.text} /></div>
+        : <Notice className="mb-4">{message.text}</Notice>)}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card title={<span className="flex items-center gap-2">Lines <SimulatedTag /></span>} className="lg:col-span-2">

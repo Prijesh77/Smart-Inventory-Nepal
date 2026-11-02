@@ -38,5 +38,14 @@ export const RISK_STYLE: Record<RiskCategory, { label: string; color: string; to
   insufficient_data: { label: "Insufficient data", color: STATUS.neutral, tone: "gray" },
 };
 
-export const GRID = "#E2E8F0";
+export const GRID = "#EEF2F6";            // soft gridlines: they guide the eye without competing with the data
 export const AXIS = "#64748B";
+
+/** One tooltip look for every chart: white card, rounded, soft shadow. Spread into <Tooltip {...TOOLTIP} />. */
+export const TOOLTIP = {
+  contentStyle: { borderRadius: 10, border: "1px solid #E2E8F0", boxShadow: "0 8px 24px rgb(15 23 42 / 0.08)",
+    padding: "8px 12px", fontSize: 12 },
+  labelStyle: { color: "#0F172A", fontWeight: 600, marginBottom: 4 },
+  itemStyle: { padding: 0 },
+  cursor: { stroke: "#CBD5E1", strokeDasharray: "4 4" },
+};

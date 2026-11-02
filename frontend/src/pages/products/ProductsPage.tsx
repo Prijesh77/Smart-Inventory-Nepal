@@ -8,7 +8,8 @@ import { Dialog } from "../../components/Dialog";
 import { FilterSelect } from "../../components/fields";
 import { Pagination } from "../../components/Pagination";
 import { SortHeader } from "../../components/SortHeader";
-import { Badge, Button, Card, EmptyState, ErrorMessage, PageHeader, Spinner } from "../../components/ui";
+import { Badge, Button, Card, EmptyState, ErrorMessage, PageHeader, Skeleton } from "../../components/ui";
+import { useToast } from "../../components/Toast";
 import { useApi } from "../../hooks/useApi";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useReference } from "../../hooks/useReference";
@@ -26,7 +27,7 @@ export function ProductsPage() {
   const [searchText, setSearchText] = useState(params.get("search") ?? "");
   const search = useDebounce(searchText);
   const [creating, setCreating] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const toast = useToast();
 
   const page = Number(params.get("page") ?? 1);
   const filters = {
@@ -65,7 +66,6 @@ export function ProductsPage() {
         description={`Search, filter and edit products.${demo ? " In this demo shop, unit cost, supplier and lead time are simulated values." : ""}`}
         actions={can("admin", "manager") && <Button onClick={() => setCreating(true)}>Add product</Button>}
       />
-      {notice && <p role="status" className="mb-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
 
       <Card>
         <div className="mb-4 flex flex-wrap gap-3">
@@ -95,8 +95,8 @@ export function ProductsPage() {
         </div>
 
         {error && <ErrorMessage message={error} onRetry={reload} />}
-        {loading && !data && <Spinner label="Loading products…" />}
-        {data && data.items.length === 0 && <EmptyState title="No products match these filters" />}
+        {loading && !data && <Skeleton label="Loading products…" />}
+        {data && data.items.length === 0 && <EmptyState icon="box" title="No products match these filters">Try a different search, or clear the filters.</EmptyState>}
         {data && data.items.length > 0 && (
           <div className={`overflow-x-auto ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
             <table className="min-w-full text-sm">
@@ -152,7 +152,7 @@ export function ProductsPage() {
           onCancel={() => setCreating(false)}
           onSaved={(p) => {
             setCreating(false);
-            setNotice(`Product ${p.sku} created. Stock starts at 0.`);
+            toast(`Product ${p.sku} created. Stock starts at 0.`);
             reload();
           }}
         />

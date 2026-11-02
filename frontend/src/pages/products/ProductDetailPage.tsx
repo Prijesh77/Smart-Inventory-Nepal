@@ -7,7 +7,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { DailySalesChart } from "../../components/charts/DailySalesChart";
 import { Dialog } from "../../components/Dialog";
 import { FilterSelect } from "../../components/fields";
-import { Badge, Button, Card, ErrorMessage, PageHeader, SimulatedTag, Spinner } from "../../components/ui";
+import { Badge, Button, Card, ErrorMessage, PageHeader, SimulatedTag, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { useReference } from "../../hooks/useReference";
 import { fmtDate, fmtDecimal, fmtInt, fmtMoney, humanize } from "../../lib/format";
@@ -35,7 +35,7 @@ export function ProductDetailPage() {
     return api.get<SalesHistory>(`/products/${id}/sales`, { start, end: latest.end }, signal);
   }, [id, days]);
 
-  if (product.loading && !product.data) return <Spinner label="Loading product…" />;
+  if (product.loading && !product.data) return <Skeleton variant="text" label="Loading product…" />;
   if (product.error) return <ErrorMessage message={product.error} onRetry={product.reload} />;
   const p = product.data!;
   const h = history.data;
@@ -82,7 +82,7 @@ export function ProductDetailPage() {
                 <option value="fy">This fiscal year (from 1 Shrawan)</option>
               </FilterSelect>}>
           {history.error && <ErrorMessage message={history.error} onRetry={history.reload} />}
-          {history.loading && !h && <Spinner label="Loading sales…" />}
+          {history.loading && !h && <Skeleton variant="text" label="Loading sales…" />}
           {h && (
             <>
               <div className="mb-3 grid grid-cols-3 gap-3 text-sm">

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../../api/client";
 import type { SlowMovers as SlowMoversData } from "../../api/types";
 import { FilterSelect } from "../../components/fields";
-import { EmptyState, ErrorMessage, Spinner } from "../../components/ui";
+import { EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { DASH, fmtDate, fmtInt, fmtMoney } from "../../lib/format";
 
@@ -28,9 +28,9 @@ export function SlowMovers() {
         </FilterSelect>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Spinner />}
+      {loading && !data && <Skeleton />}
       {data && data.items.length === 0 && (
-        <EmptyState title={`Everything in stock has sold in the last ${days} days`} />
+        <EmptyState icon="check" title={`Everything in stock has sold in the last ${days} days`} />
       )}
       {data && data.items.length > 0 && (
         <>

@@ -1,6 +1,6 @@
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { AXIS } from "../../lib/colors";
+import { AXIS, TOOLTIP } from "../../lib/colors";
 import { fmtInt } from "../../lib/format";
 
 export interface CategoryBar {
@@ -23,7 +23,7 @@ export function CategoryBars({ data, ariaLabel }: { data: CategoryBar[]; ariaLab
           <XAxis type="number" hide />
           <YAxis type="category" dataKey="label" width={150} tick={{ fill: AXIS, fontSize: 12 }}
                  axisLine={false} tickLine={false} />
-          <Tooltip cursor={{ fill: "#F1F5F9" }} formatter={(v) => [fmtInt(Number(v)), "Products"]} />
+          <Tooltip contentStyle={TOOLTIP.contentStyle} labelStyle={TOOLTIP.labelStyle} cursor={{ fill: "#F1F5F9" }} formatter={(v) => [fmtInt(Number(v)), "Products"]} />
           <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20} isAnimationActive={false}>
             {data.map((d) => <Cell key={d.key} fill={d.color} />)}
             <LabelList dataKey="value" position="right" fill="#334155" fontSize={12}

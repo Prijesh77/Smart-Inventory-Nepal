@@ -3,7 +3,7 @@ import { useState } from "react";
 import { api } from "../../api/client";
 import type { Evaluation } from "../../api/types";
 import { FilterSelect } from "../../components/fields";
-import { EmptyState, ErrorMessage, Spinner } from "../../components/ui";
+import { EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtPct, humanize } from "../../lib/format";
 import { MODEL_LABEL } from "./ForecastRuns";
@@ -48,8 +48,8 @@ export function ModelComparison() {
         </FilterSelect>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Spinner label="Loading accuracy results…" />}
-      {data && !rows.length && <EmptyState title="No evaluation results stored" />}
+      {loading && !data && <Skeleton label="Loading accuracy results…" />}
+      {data && !rows.length && <EmptyState icon="chart" title="No accuracy results yet">They appear after this shop&apos;s model is trained (Forecasting page).</EmptyState>}
       {rows.length > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">

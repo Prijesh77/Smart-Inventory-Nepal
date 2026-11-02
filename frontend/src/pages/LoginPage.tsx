@@ -4,7 +4,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { Icon, type IconName } from "../components/Icons";
-import { Button, ErrorMessage } from "../components/ui";
+import { Button, ErrorMessage, Notice } from "../components/ui";
 
 export function LoginPage() {
   const { user, login, notice } = useAuth();
@@ -75,7 +75,7 @@ export function LoginPage() {
             <p className="mt-1.5 text-sm text-slate-500">Sign in to see forecasts and reorder recommendations.</p>
           </div>
           <form onSubmit={onSubmit} className="space-y-5" noValidate>
-            {notice && !error && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{notice}</p>}
+            {notice && !error && <Notice tone="warning">{notice}</Notice>}
             {error && <ErrorMessage message={error} />}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email</label>

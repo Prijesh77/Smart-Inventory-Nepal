@@ -7,7 +7,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { Dialog } from "../../components/Dialog";
 import { FilterSelect } from "../../components/fields";
 import { Pagination } from "../../components/Pagination";
-import { Button, Card, EmptyState, ErrorMessage, PageHeader, SimulatedTag, Spinner } from "../../components/ui";
+import { Button, Card, EmptyState, ErrorMessage, PageHeader, SimulatedTag, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { useReference } from "../../hooks/useReference";
 import { fmtDate, fmtInt, fmtMoney } from "../../lib/format";
@@ -58,9 +58,9 @@ export function PurchaseOrdersPage() {
           <span className="ml-auto flex items-center gap-2 text-xs text-slate-500">Costs <SimulatedTag /></span>
         </div>
         {error && <ErrorMessage message={error} onRetry={reload} />}
-        {loading && !data && <Spinner label="Loading orders…" />}
+        {loading && !data && <Skeleton label="Loading orders…" />}
         {data && data.items.length === 0 && (
-          <EmptyState title="No purchase orders yet">
+          <EmptyState icon="clipboard" title="No purchase orders yet">
             Approve recommendations on the <Link to="/recommendations" className="text-brand-600 hover:underline">Reorder page</Link> and
             create draft orders from them, or start a draft by hand.
           </EmptyState>

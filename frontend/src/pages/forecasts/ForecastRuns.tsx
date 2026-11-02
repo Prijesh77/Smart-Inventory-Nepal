@@ -20,7 +20,7 @@ const STATUS_TONE = { pending: "gray", running: "blue", completed: "green", fail
 
 export function RunsTable({ runs, selectedId, onSelect }:
   { runs: ForecastRun[]; selectedId: number | null; onSelect: (run: ForecastRun) => void }) {
-  if (!runs.length) return <EmptyState title="No forecast runs yet" />;
+  if (!runs.length) return <EmptyState icon="trend" title="No forecast runs yet" />;
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">

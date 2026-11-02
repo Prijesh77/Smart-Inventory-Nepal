@@ -9,7 +9,7 @@ import { CoverCell, StockStatusBadge } from "./StockTable";
 export function AlertsList({ alerts, canAdjust, onAdjust }:
   { alerts: StockItem[]; canAdjust: boolean; onAdjust: (item: StockItem) => void }) {
   if (!alerts.length) {
-    return <EmptyState title="No low-stock alerts">Every product's stock covers its supplier lead time at the recent sales rate.</EmptyState>;
+    return <EmptyState icon="check" title="No low-stock alerts">Every product's stock covers its supplier lead time at the recent sales rate.</EmptyState>;
   }
   return (
     <>

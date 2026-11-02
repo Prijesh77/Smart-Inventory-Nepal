@@ -59,7 +59,7 @@ test("manager: forecast -> recommendations -> approve -> order -> receive -> sto
   expect(reorderCount).toBeGreaterThan(0);
 
   // 2. Reorder page: most urgent first, read the explanation, approve it
-  await page.getByRole("link", { name: "Reorder" }).click();
+  await nav(page, "Reorder");
   await page.getByLabel("Only items to order").check();
   const firstRow = page.locator("tbody tr").first();
   const sku = (await firstRow.locator("a").first().innerText()).trim();
@@ -98,7 +98,7 @@ test("manager: forecast -> recommendations -> approve -> order -> receive -> sto
 
 test("manager: stock adjustment needs a reason and is logged", async ({ page }) => {
   await login(page, "manager");
-  await page.getByRole("link", { name: "Inventory" }).click();
+  await nav(page, "Inventory");
   const row = page.locator("tbody tr").first();
   const sku = (await row.locator("a").first().innerText()).trim();
   await page.getByRole("button", { name: `Adjust stock for ${sku}` }).click();
@@ -113,7 +113,7 @@ test("manager: stock adjustment needs a reason and is logged", async ({ page }) 
 
 test("manager: an invalid sales file is rejected with row errors", async ({ page }) => {
   await login(page, "manager");
-  await page.getByRole("link", { name: "Settings & import" }).click();
+  await nav(page, "Settings & import");
   await page.getByRole("button", { name: "4. Sales history" }).click();
   await page.getByLabel(/Excel or CSV file/).setInputFiles({
     name: "bad.csv", mimeType: "text/csv",
@@ -131,28 +131,33 @@ test("manager: an invalid sales file is rejected with row errors", async ({ page
 test("viewer: can read everything but change nothing", async ({ page }) => {
   await login(page, "viewer");
   await expect(page.getByRole("button", { name: "Run forecast & recommendations" })).toHaveCount(0);
-  await page.getByRole("link", { name: "Reorder" }).click();
+  await nav(page, "Reorder");
   await expect(page.locator("tbody tr").first()).toBeVisible();
   await expect(page.getByRole("button", { name: /^Approve / })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Create draft orders/ })).toHaveCount(0);
-  await page.getByRole("link", { name: "Products" }).click();
+  await nav(page, "Products");
   await expect(page.getByRole("button", { name: "Add product" })).toHaveCount(0);
-  await page.getByRole("link", { name: "Settings & import" }).click();
+  await nav(page, "Settings & import");
   await expect(page.getByText("Only managers and admins can import data.")).toBeVisible();
 });
 
 test("another shop sees only its own data", async ({ page }) => {
   await login(page, "other_shop");
   await expect(page.getByRole("region", { name: "Shop" })).toContainText("E2E Second Shop");
-  await page.getByRole("link", { name: "Products" }).click();
+  await nav(page, "Products");
   await expect(page.getByRole("link", { name: "ONLY-IN-SHOP-B" })).toBeVisible();
   await expect(page.getByRole("link", { name: "NOODLES-70G" })).toHaveCount(0);     // a demo-shop product
-  await page.getByRole("link", { name: "Purchase orders" }).click();
+  await nav(page, "Purchase orders");
   await expect(page.getByText("No purchase orders yet")).toBeVisible();            // the demo shop's order is not here
   // Opening a demo-shop product by its address is refused, not shown.
   await page.goto("/products/1");
   await expect(page.getByRole("alert")).toContainText(/not found/i);
 });
+
+/** Click a page in the sidebar menu (exact name: the Overview cards are links too, e.g. "Products to reorder"). */
+async function nav(page: Page, label: string) {
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: label, exact: true }).click();
+}
 
 /** On-hand stock for one SKU, read from the Inventory page. */
 async function onHand(page: Page, sku: string): Promise<number> {

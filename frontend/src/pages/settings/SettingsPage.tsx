@@ -3,7 +3,8 @@ import { useState } from "react";
 import { api } from "../../api/client";
 import type { ImportJob, PolicyDefaults } from "../../api/types";
 import { useAuth } from "../../auth/AuthContext";
-import { Badge, Card, EmptyState, ErrorMessage, PageHeader, Spinner } from "../../components/ui";
+import { Badge, Card, EmptyState, ErrorMessage, PageHeader, Skeleton } from "../../components/ui";
+import { useToast } from "../../components/Toast";
 import { useApi } from "../../hooks/useApi";
 import { fmtDateTime, fmtInt } from "../../lib/format";
 import { PolicyForm } from "./PolicyForm";
@@ -19,7 +20,7 @@ export function SettingsPage() {
   const isAdmin = can("admin");
   const policy = useApi((signal) => api.get<PolicyDefaults>("/settings/policy", undefined, signal));
   const jobs = useApi((signal) => api.get<ImportJob[]>("/imports/jobs", undefined, signal));
-  const [saved, setSaved] = useState(false);
+  const toast = useToast();
   const [imports, setImports] = useState(0);        // bumps after each import, so the supplier/category lists refresh
 
   return (
@@ -28,11 +29,10 @@ export function SettingsPage() {
                   description="Import your shop's data from Excel, set up suppliers and categories, default reorder settings and (for admins) user accounts." />
       <div className="grid grid-cols-1 gap-6">
         <Card title="Reorder and forecast settings">
-          {saved && <p role="status" className="mb-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">Settings saved. New recommendation runs will use them.</p>}
           {policy.error && <ErrorMessage message={policy.error} onRetry={policy.reload} />}
-          {policy.loading && !policy.data && <Spinner />}
+          {policy.loading && !policy.data && <Skeleton variant="text" />}
           {policy.data && <PolicyForm key={JSON.stringify(policy.data)} policy={policy.data} canEdit={isAdmin}
-                                      onSaved={() => { setSaved(true); policy.reload(); }} />}
+                                      onSaved={() => { toast("Settings saved. New recommendation runs will use them."); policy.reload(); }} />}
         </Card>
 
         <Card title="Import data (Excel or CSV)">
@@ -47,7 +47,7 @@ export function SettingsPage() {
 
         <Card title="Import history">
           {jobs.error && <ErrorMessage message={jobs.error} onRetry={jobs.reload} />}
-          {jobs.data && jobs.data.length === 0 && <EmptyState title="No imports yet" />}
+          {jobs.data && jobs.data.length === 0 && <EmptyState icon="upload" title="No imports yet">Your Excel and CSV imports will be listed here.</EmptyState>}
           {jobs.data && jobs.data.length > 0 && (
             <table className="min-w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
