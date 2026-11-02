@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 
 import { AuthProvider } from "../auth/AuthContext";
+import { ToastProvider } from "../components/Toast";
 import { TEST_USER } from "./fetchMock";
 
 /** Render a page as a logged-in user. Add "GET /auth/me" to the fetch mock via `meRoute(role)`. */
@@ -10,7 +11,9 @@ export function renderLoggedIn(ui: ReactElement, path = "/") {
   sessionStorage.setItem("smart-inventory.token", "test-token");
   return render(
     <AuthProvider>
-      <MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter>
+      </ToastProvider>
     </AuthProvider>,
   );
 }

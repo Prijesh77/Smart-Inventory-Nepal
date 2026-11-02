@@ -7,7 +7,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { Dialog } from "../../components/Dialog";
 import { FilterSelect } from "../../components/fields";
 import { Pagination } from "../../components/Pagination";
-import { Button, Card, EmptyState, ErrorMessage, PageHeader, SimulatedTag, Spinner } from "../../components/ui";
+import { Button, Card, EmptyState, ErrorMessage, Notice, PageHeader, SimulatedTag, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { useDebounce } from "../../hooks/useDebounce";
 import { RISK_STYLE } from "../../lib/colors";
@@ -89,24 +89,25 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
         actions={canReview && <Button onClick={() => setCreatingRun(true)}>New recommendations</Button>}
       />
 
-      {message && (
-        <div role={message.kind === "error" ? "alert" : "status"}
-             className={`mb-4 rounded-md p-3 text-sm ${message.kind === "error" ? "bg-red-50 text-red-800" : "bg-emerald-50 text-emerald-800"}`}>
-          {message.text}{" "}
-          {message.orders?.map((o) => (
-            <Link key={o.id} to={`/purchase-orders/${o.id}`} className="mr-2 font-medium underline">{o.po_number}</Link>
-          ))}
-        </div>
-      )}
+      {message && (message.kind === "error"
+        ? <div className="mb-4"><ErrorMessage message={message.text} /></div>
+        : (
+          <Notice className="mb-4">
+            {message.text}{" "}
+            {message.orders?.map((o) => (
+              <Link key={o.id} to={`/purchase-orders/${o.id}`} className="mr-2 font-medium underline">{o.po_number}</Link>
+            ))}
+          </Notice>
+        ))}
 
       {list.error && !list.data && (
         list.error.includes("No completed recommendation run")
-          ? <EmptyState title="No recommendations yet">
+          ? <EmptyState icon="cart" title="No recommendations yet">
               {canReview ? "Click “New recommendations” (a forecast is needed first)." : "Ask a manager to create them."}
             </EmptyState>
           : <ErrorMessage message={list.error} onRetry={list.reload} />
       )}
-      {list.loading && !list.data && <Spinner label="Loading recommendations…" />}
+      {list.loading && !list.data && <Skeleton label="Loading recommendations…" />}
 
       {run && (
         <>
@@ -171,7 +172,7 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
                 Only items to order
               </label>
             </div>
-            {list.data && list.data.items.length === 0 && <EmptyState title="No recommendations match these filters" />}
+            {list.data && list.data.items.length === 0 && <EmptyState icon="cart" title="No recommendations match these filters">Try a different search, or clear the filters.</EmptyState>}
             {list.data && list.data.items.length > 0 && (
               <div className={list.loading ? "opacity-60" : ""} aria-busy={list.loading}>
                 <RecommendationTable rows={list.data.items} canReview={canReview} busyId={busyId} onReview={review} />

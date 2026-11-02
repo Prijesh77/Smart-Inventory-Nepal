@@ -4,9 +4,9 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import { api } from "../../api/client";
 import type { CategoryPerformance, WeeklyPoint } from "../../api/types";
 import { FilterSelect } from "../../components/fields";
-import { EmptyState, ErrorMessage, SimulatedTag, Spinner } from "../../components/ui";
+import { EmptyState, ErrorMessage, SimulatedTag, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
-import { AXIS, GRID, SERIES } from "../../lib/colors";
+import { AXIS, GRID, SERIES, TOOLTIP } from "../../lib/colors";
 import { fmtDate, fmtDecimal, fmtInt, fmtMoney, fmtShortDate, humanize } from "../../lib/format";
 
 /** One fixed colour per category, so a category keeps its colour on every chart. */
@@ -38,7 +38,7 @@ export function CategoryTable() {
         <span className="flex items-center gap-2 text-xs text-slate-500">Stock and value <SimulatedTag /></span>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Spinner />}
+      {loading && !data && <Skeleton />}
       {data && (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -110,8 +110,8 @@ export function WeeklyTrend() {
         </FilterSelect>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Spinner />}
-      {data && !rows.length && <EmptyState title="No sales in this period" />}
+      {loading && !data && <Skeleton />}
+      {data && !rows.length && <EmptyState icon="chart" title="No sales in this period" />}
       {rows.length > 0 && (
         <div role="img" aria-label={`Units sold per week by category (${categories.join(", ")}), ${rows.length} weeks`}>
           <ResponsiveContainer width="100%" height={280}>
@@ -120,7 +120,7 @@ export function WeeklyTrend() {
               <XAxis dataKey="week_start" tickFormatter={fmtShortDate} minTickGap={40} tick={{ fill: AXIS, fontSize: 12 }}
                      tickLine={false} axisLine={{ stroke: GRID }} />
               <YAxis width={48} tick={{ fill: AXIS, fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtInt(v)} />
-              <Tooltip labelFormatter={(d) => `Week of ${fmtDate(String(d))}`} formatter={(v, n) => [fmtInt(Number(v)), n]} />
+              <Tooltip {...TOOLTIP} labelFormatter={(d) => `Week of ${fmtDate(String(d))}`} formatter={(v, n) => [fmtInt(Number(v)), n]} />
               <Legend verticalAlign="top" align="right" height={28} wrapperStyle={{ fontSize: 12 }} />
               {categories.map((c) => (
                 <Line key={c} type="monotone" dataKey={c} name={humanize(c.toLowerCase())}

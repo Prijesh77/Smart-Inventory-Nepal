@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { api, ApiError } from "../../api/client";
 import type { ModelStatus } from "../../api/types";
-import { Button, ErrorMessage, Spinner } from "../../components/ui";
+import { Button, ErrorMessage, Skeleton, Spinner } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDateTime, fmtInt, fmtPct } from "../../lib/format";
 import { MODEL_LABEL } from "./ForecastRuns";
@@ -41,7 +41,7 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
   }
 
   if (error) return <ErrorMessage message={error} onRetry={reload} />;
-  if (loading && !data) return <Spinner />;
+  if (loading && !data) return <Skeleton variant="text" />;
   if (!data) return null;
   const rf = data.holdout_wape.random_forest_v1;
   const ma = data.holdout_wape.moving_avg_28;

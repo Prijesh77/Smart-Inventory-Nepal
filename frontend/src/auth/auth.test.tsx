@@ -86,7 +86,8 @@ describe("login flow", () => {
     sessionStorage.setItem("smart-inventory.token", "stored");
     mockFetch({ "GET /auth/me": () => ({ body: TEST_USER }) });
     renderApp("/");
-    await userEvent.click(await screen.findByRole("button", { name: "Log out" }));
+    await userEvent.click(await screen.findByRole("button", { name: /Test Manager/ }));      // open the user menu
+    await userEvent.click(screen.getByRole("button", { name: "Log out" }));
     expect(await screen.findByLabelText("Email")).toBeInTheDocument();
     expect(sessionStorage.getItem("smart-inventory.token")).toBeNull();
   });

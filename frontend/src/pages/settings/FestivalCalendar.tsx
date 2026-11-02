@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import { Badge, ErrorMessage, Spinner } from "../../components/ui";
+import { Badge, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDate } from "../../lib/format";
 
@@ -13,7 +13,7 @@ interface FestivalCalendarData { covers: { from: string; to: string }; festivals
 export function FestivalCalendar() {
   const { data, error, loading, reload } = useApi((signal) => api.get<FestivalCalendarData>("/festivals", undefined, signal));
   if (error) return <ErrorMessage message={error} onRetry={reload} />;
-  if (loading && !data) return <Spinner />;
+  if (loading && !data) return <Skeleton variant="text" />;
   if (!data) return null;
   const toCheck = data.festivals.filter((f) => f.check);
   return (

@@ -4,7 +4,7 @@ import { api } from "../../api/client";
 import type { Page, TransactionRow } from "../../api/types";
 import { FilterSelect } from "../../components/fields";
 import { Pagination } from "../../components/Pagination";
-import { Badge, Button, EmptyState, ErrorMessage, Spinner } from "../../components/ui";
+import { Badge, Button, EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDateTime, fmtInt, humanize } from "../../lib/format";
 
@@ -39,8 +39,8 @@ export function MovementsTable({ product, onClearProduct, refreshKey }:
       </div>
 
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Spinner label="Loading movements…" />}
-      {data && data.items.length === 0 && <EmptyState title="No stock movements match" />}
+      {loading && !data && <Skeleton label="Loading movements…" />}
+      {data && data.items.length === 0 && <EmptyState icon="clipboard" title="No stock movements match">Try a different search, or clear the filters.</EmptyState>}
       {data && data.items.length > 0 && (
         <div className={`overflow-x-auto ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
           <table className="min-w-full text-sm">

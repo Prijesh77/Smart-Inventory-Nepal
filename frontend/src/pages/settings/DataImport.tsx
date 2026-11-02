@@ -4,6 +4,7 @@ import { api, ApiError, downloadFile } from "../../api/client";
 import type { ImportJob, ImportPreview, ImportType } from "../../api/types";
 import { TextField } from "../../components/fields";
 import { Button, ErrorMessage, Spinner } from "../../components/ui";
+import { useToast } from "../../components/Toast";
 import { DASH, fmtDate, fmtInt, fmtMoney, humanize } from "../../lib/format";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -51,13 +52,12 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [busy, setBusy] = useState<"check" | "import" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const toast = useToast();
   const step = IMPORT_STEPS.find((s) => s.type === type)!;
   const form = (f: File) => buildForm(f, type === "sales" ? mapping : undefined);
 
   function reset() {
     setPreview(null);
-    setDone(null);
     setError(null);
   }
 
@@ -107,7 +107,7 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
       const job = await api.upload<ImportJob>(`/imports/${type}`, form(file));
       const counts = job.errors ?? {};
       const extra = counts.categories_added ? `, ${fmtInt(counts.categories_added)} new categories` : "";
-      setDone(`Imported ${file.name}: ${fmtInt(counts.added ?? 0)} added, ${fmtInt(counts.replaced ?? 0)} ${type === "sales" ? "replaced" : "updated"}${extra}.`);
+      toast(`Imported ${file.name}: ${fmtInt(counts.added ?? 0)} added, ${fmtInt(counts.replaced ?? 0)} ${type === "sales" ? "replaced" : "updated"}${extra}.`);
       setPreview(null);
       setFile(null);
       onImported(job);
@@ -156,7 +156,6 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
         </details>
       )}
       {error && <ErrorMessage message={error} />}
-      {done && <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{done}</p>}
       <div className="flex items-center gap-3">
         <Button onClick={check} disabled={!file || busy !== null}>{busy === "check" ? "Checking…" : "Check file"}</Button>
         {busy && <Spinner label={busy === "check" ? "Checking every row…" : "Importing…"} />}

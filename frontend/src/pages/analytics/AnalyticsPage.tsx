@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { ApiError, downloadFile } from "../../api/client";
+import { useToast } from "../../components/Toast";
 import { Button, Card, ErrorMessage, PageHeader } from "../../components/ui";
 import { ModelComparison } from "../forecasts/ModelComparison";
 import { CategoryTable, WeeklyTrend } from "./CategorySection";
@@ -17,16 +18,17 @@ export const EXPORTS = [
 
 function Exports() {
   const [busy, setBusy] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   async function download(dataset: string) {
     setBusy(dataset);
-    setMessage(null);
+    setError(null);
     try {
       const name = await downloadFile(`/exports/${dataset}.csv`, `${dataset}.csv`);
-      setMessage({ kind: "ok", text: `Downloaded ${name}` });
+      toast(`Downloaded ${name}`);
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : "Download failed" });
+      setError(err instanceof ApiError ? err.message : "Download failed");
     } finally {
       setBusy(null);
     }
@@ -41,8 +43,7 @@ function Exports() {
           </Button>
         ))}
       </div>
-      {message?.kind === "ok" && <p role="status" className="mt-3 text-sm text-emerald-700">{message.text}</p>}
-      {message?.kind === "error" && <div className="mt-3"><ErrorMessage message={message.text} /></div>}
+      {error && <div className="mt-3"><ErrorMessage message={error} /></div>}
       <p className="mt-3 text-xs text-slate-500">
         CSV files open in Excel. Text cells are protected so a spreadsheet cannot run them as formulas.
       </p>

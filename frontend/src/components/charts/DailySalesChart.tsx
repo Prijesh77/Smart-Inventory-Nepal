@@ -10,7 +10,7 @@ function TooltipBody({ active, payload }: { active?: boolean; payload?: { payloa
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
-    <div className="rounded-md bg-white px-3 py-2 text-xs shadow ring-1 ring-slate-200">
+    <div className="rounded-[10px] border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg shadow-slate-900/5">
       <p className="font-medium text-slate-800">{fmtDate(p.sales_date)}</p>
       <p>{p.is_available ? `${fmtInt(p.units)} units sold` : "Not on sale / store closed"}</p>
       {p.unit_price && <p className="text-slate-500">Price {fmtMoney(p.unit_price)}</p>}

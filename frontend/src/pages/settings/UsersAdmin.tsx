@@ -4,7 +4,7 @@ import { api, ApiError } from "../../api/client";
 import type { Role, User } from "../../api/types";
 import { useAuth } from "../../auth/AuthContext";
 import { SelectField, TextField } from "../../components/fields";
-import { Badge, Button, ErrorMessage, Spinner } from "../../components/ui";
+import { Badge, Button, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDate } from "../../lib/format";
 
@@ -59,7 +59,7 @@ export function UsersAdmin() {
         </p>
       )}
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Spinner />}
+      {loading && !data && <Skeleton />}
       {data && (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
