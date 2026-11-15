@@ -4,19 +4,20 @@ import type { StockItem } from "../../api/types";
 import { Button, EmptyState } from "../../components/ui";
 import { fmtDecimal, fmtInt } from "../../lib/format";
 import { CoverCell, StockStatusBadge } from "./StockTable";
+import { t } from "../../lib/i18n";
 
 /** Out-of-stock and low products, most urgent first (order comes from the API). */
 export function AlertsList({ alerts, canAdjust, onAdjust }:
   { alerts: StockItem[]; canAdjust: boolean; onAdjust: (item: StockItem) => void }) {
   if (!alerts.length) {
-    return <EmptyState icon="check" title="No low-stock alerts">Every product's stock covers its supplier lead time at the recent sales rate.</EmptyState>;
+    return <EmptyState icon="check" title={t("No low-stock alerts")}>{t("Every product's stock covers its supplier lead time at the recent sales rate.")}</EmptyState>;
   }
   return (
     <>
       <p className="mb-3 text-sm text-slate-500">
         Rule: an item is <strong>low</strong> when its stock position (on hand + on order) will not last until a new order
         could arrive, at the average sales rate of the last 28 days. For forecast-based advice see{" "}
-        <Link to="/recommendations" className="text-brand-600 hover:underline">Reorder recommendations</Link>.
+        <Link to="/recommendations" className="text-brand-600 hover:underline">{t("Reorder recommendations")}</Link>.
       </p>
       <ul className="divide-y divide-slate-100">
         {alerts.map((a) => (
@@ -32,7 +33,7 @@ export function AlertsList({ alerts, canAdjust, onAdjust }:
                 cover <CoverCell item={a} /> vs lead time {a.lead_time_days ?? "—"} d
               </p>
             </div>
-            {canAdjust && <Button variant="secondary" onClick={() => onAdjust(a)}>Adjust stock</Button>}
+            {canAdjust && <Button variant="secondary" onClick={() => onAdjust(a)}>{t("Adjust stock")}</Button>}
           </li>
         ))}
       </ul>

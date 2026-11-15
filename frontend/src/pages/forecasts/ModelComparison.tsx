@@ -7,6 +7,7 @@ import { EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtPct, humanize } from "../../lib/format";
 import { MODEL_LABEL } from "./ForecastRuns";
+import { t } from "../../lib/i18n";
 
 const CLASSES = ["all", "smooth", "erratic", "intermittent", "lumpy"];
 const MODEL_ORDER = ["random_forest_v1", "moving_avg_28", "moving_avg_7", "seasonal_naive_7"];
@@ -37,19 +38,19 @@ export function ModelComparison() {
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <FilterSelect label="Evaluation period" value={period} onChange={(v) => setPeriod(v as "test" | "validation")}>
-          <option value="test">Test year (final, untouched during development)</option>
-          <option value="validation">Validation period (used to choose the model)</option>
+        <FilterSelect label={t("Evaluation period")} value={period} onChange={(v) => setPeriod(v as "test" | "validation")}>
+          <option value="test">{t("Test year (final, untouched during development)")}</option>
+          <option value="validation">{t("Validation period (used to choose the model)")}</option>
         </FilterSelect>
-        <FilterSelect label="Horizon" value={horizon} onChange={setHorizon}>
-          <option value="7">Days 1–7</option>
-          <option value="14">Days 1–14</option>
-          <option value="28">Days 1–28</option>
+        <FilterSelect label={t("Horizon")} value={horizon} onChange={setHorizon}>
+          <option value="7">{t("Days 1–7")}</option>
+          <option value="14">{t("Days 1–14")}</option>
+          <option value="28">{t("Days 1–28")}</option>
         </FilterSelect>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Skeleton label="Loading accuracy results…" />}
-      {data && !rows.length && <EmptyState icon="chart" title="No accuracy results yet">They appear after this shop&apos;s model is trained (Forecasting page).</EmptyState>}
+      {loading && !data && <Skeleton label={t("Loading accuracy results…")} />}
+      {data && !rows.length && <EmptyState icon="chart" title={t("No accuracy results yet")}>{t("They appear after this shop's model is trained (Forecasting page).")}</EmptyState>}
       {rows.length > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -59,8 +60,8 @@ export function ModelComparison() {
             </caption>
             <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th scope="col" className="py-2 pr-4 font-medium">Model</th>
-                {CLASSES.map((c) => <th key={c} scope="col" className="py-2 pr-4 text-right font-medium">{c === "all" ? "All items" : humanize(c)}</th>)}
+                <th scope="col" className="py-2 pr-4 font-medium">{t("Model")}</th>
+                {CLASSES.map((c) => <th key={c} scope="col" className="py-2 pr-4 text-right font-medium">{c === "all" ? t("All items") : t(humanize(c))}</th>)}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -72,7 +73,7 @@ export function ModelComparison() {
                     const isBest = best[c]?.includes(m);
                     return (
                       <td key={c} className={`py-2 pr-4 text-right tabular-nums ${isBest ? "font-semibold text-emerald-700" : ""}`}>
-                        {r ? <>{isBest && <span aria-label="best">★ </span>}{fmtPct(r.wape)}
+                        {r ? <>{isBest && <span aria-label={t("best")}>★ </span>}{fmtPct(r.wape)}
                           <span className="block text-xs font-normal text-slate-500">bias {fmtPct(r.bias_pct, true)}</span></> : "—"}
                       </td>
                     );

@@ -6,6 +6,7 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
 import { ToastProvider } from "./components/Toast";
 import { Skeleton } from "./components/ui";
+import { t } from "./lib/i18n";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFound } from "./pages/Placeholder";
 
@@ -18,6 +19,7 @@ const OverviewPage = named(() => import("./pages/OverviewPage"), "OverviewPage")
 const ProductsPage = named(() => import("./pages/products/ProductsPage"), "ProductsPage");
 const ProductDetailPage = named(() => import("./pages/products/ProductDetailPage"), "ProductDetailPage");
 const InventoryPage = named(() => import("./pages/inventory/InventoryPage"), "InventoryPage");
+const SalesPage = named(() => import("./pages/sales/SalesPage"), "SalesPage");
 const ForecastsPage = named(() => import("./pages/forecasts/ForecastsPage"), "ForecastsPage");
 const RecommendationsPage = named(() => import("./pages/recommendations/RecommendationsPage"), "RecommendationsPage");
 const PurchaseOrdersPage = named(() => import("./pages/purchase-orders/PurchaseOrdersPage"), "PurchaseOrdersPage");
@@ -25,7 +27,7 @@ const PurchaseOrderDetailPage = named(() => import("./pages/purchase-orders/Purc
 const AnalyticsPage = named(() => import("./pages/analytics/AnalyticsPage"), "AnalyticsPage");
 const SettingsPage = named(() => import("./pages/settings/SettingsPage"), "SettingsPage");
 
-const page = (element: JSX.Element) => <Suspense fallback={<Skeleton variant="cards" rows={4} label="Loading page…" />}>{element}</Suspense>;
+const page = (element: JSX.Element) => <Suspense fallback={<Skeleton variant="cards" rows={4} label={t("Loading page…")} />}>{element}</Suspense>;
 
 export function AppRoutes() {
   return (
@@ -36,6 +38,7 @@ export function AppRoutes() {
         <Route path="/products" element={page(<ProductsPage />)} />
         <Route path="/products/:id" element={page(<ProductDetailPage />)} />
         <Route path="/inventory" element={page(<InventoryPage />)} />
+        <Route path="/sales" element={page(<SalesPage />)} />
         <Route path="/forecasts" element={page(<ForecastsPage />)} />
         <Route path="/recommendations" element={page(<RecommendationsPage />)} />
         <Route path="/purchase-orders" element={page(<PurchaseOrdersPage />)} />

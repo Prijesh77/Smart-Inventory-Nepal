@@ -5,13 +5,14 @@ import type { Recommendation, ReviewStatus } from "../../api/types";
 import { Badge, Button } from "../../components/ui";
 import { RISK_STYLE } from "../../lib/colors";
 import { fmtDecimal, fmtInt, fmtMoney, fmtPct } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 const REVIEW_TONE = { pending: "gray", approved: "green", rejected: "red", ordered: "blue" } as const;
 const REVIEW_LABEL: Record<ReviewStatus, string> = { pending: "To review", approved: "Approved", rejected: "Rejected", ordered: "On a draft order" };
 
 export function RiskBadge({ risk }: { risk: Recommendation["risk_category"] }) {
   const style = RISK_STYLE[risk];
-  return <Badge tone={style.tone}>{style.label}</Badge>;
+  return <Badge tone={style.tone}>{t(style.label)}</Badge>;
 }
 
 export function RecommendationTable({ rows, canReview, busyId, onReview }: {
@@ -33,17 +34,17 @@ export function RecommendationTable({ rows, canReview, busyId, onReview }: {
       <table className="min-w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
           <tr>
-            <th scope="col" className="py-2 pr-3 font-medium">Product</th>
-            <th scope="col" className="py-2 pr-3 font-medium">Risk</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">On hand</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">Position</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium" title="Forecast demand during the supplier lead time">Lead-time demand</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">Reorder point</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">Order qty</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">Lead time</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">Est. cost</th>
-            <th scope="col" className="py-2 pr-3 font-medium">Review</th>
-            <th scope="col" className="py-2 font-medium"><span className="sr-only">Actions</span></th>
+            <th scope="col" className="py-2 pr-3 font-medium">{t("Product")}</th>
+            <th scope="col" className="py-2 pr-3 font-medium">{t("Risk")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("On hand")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Position")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium" title={t("Forecast demand during the supplier lead time")}>{t("Lead-time demand")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Reorder point")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Order qty")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Lead time")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Est. cost")}</th>
+            <th scope="col" className="py-2 pr-3 font-medium">{t("Review")}</th>
+            <th scope="col" className="py-2 font-medium"><span className="sr-only">{t("Actions")}</span></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -59,7 +60,7 @@ export function RecommendationTable({ rows, canReview, busyId, onReview }: {
                     <p className="text-xs text-slate-500">{r.name}</p>
                     {festival && (
                       <button type="button" onClick={() => toggle(r.id)} title={festival} className="mt-1">
-                        <Badge tone="amber">Festival ahead</Badge>
+                        <Badge tone="amber">{t("Festival ahead")}</Badge>
                       </button>
                     )}
                   </td>
@@ -71,22 +72,22 @@ export function RecommendationTable({ rows, canReview, busyId, onReview }: {
                   <td className="py-2 pr-3 text-right font-semibold tabular-nums">{r.suggested_qty > 0 ? fmtInt(r.suggested_qty) : "—"}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{r.lead_time_days ? `${r.lead_time_days} d` : "—"}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{r.suggested_qty > 0 ? fmtMoney(r.estimated_order_cost) : "—"}</td>
-                  <td className="py-2 pr-3"><Badge tone={REVIEW_TONE[r.review_status]}>{REVIEW_LABEL[r.review_status]}</Badge></td>
+                  <td className="py-2 pr-3"><Badge tone={REVIEW_TONE[r.review_status]}>{t(REVIEW_LABEL[r.review_status])}</Badge></td>
                   <td className="whitespace-nowrap py-2 text-right">
                     <Button variant="ghost" aria-expanded={expanded} aria-controls={`why-${r.id}`} onClick={() => toggle(r.id)}>
                       {expanded ? "Hide" : "Why?"}
                     </Button>
                     {canDecide && r.suggested_qty > 0 && r.review_status !== "approved" && (
                       <Button variant="secondary" disabled={busyId === r.id} onClick={() => onReview(r, "approved")}
-                              aria-label={`Approve ${r.sku}`}>Approve</Button>
+                              aria-label={`Approve ${r.sku}`}>{t("Approve")}</Button>
                     )}
                     {canDecide && r.review_status !== "rejected" && r.suggested_qty > 0 && (
                       <Button variant="ghost" disabled={busyId === r.id} onClick={() => onReview(r, "rejected")}
-                              aria-label={`Reject ${r.sku}`}>Reject</Button>
+                              aria-label={`Reject ${r.sku}`}>{t("Reject")}</Button>
                     )}
                     {canDecide && r.review_status !== "pending" && (
                       <Button variant="ghost" disabled={busyId === r.id} onClick={() => onReview(r, "pending")}
-                              aria-label={`Undo decision for ${r.sku}`}>Undo</Button>
+                              aria-label={`Undo decision for ${r.sku}`}>{t("Undo")}</Button>
                     )}
                   </td>
                 </tr>
@@ -108,10 +109,10 @@ export function RecommendationTable({ rows, canReview, busyId, onReview }: {
 
 function Explanation({ rec }: { rec: Recommendation }) {
   const figures: [string, string][] = [
-    ["Safety stock", fmtDecimal(rec.safety_stock)],
-    ["Demand over lead time + review", fmtDecimal(rec.forecast_protection_demand)],
+    [t("Safety stock"), fmtDecimal(rec.safety_stock)],
+    [t("Demand over lead time + review"), fmtDecimal(rec.forecast_protection_demand)],
     ["Order-up-to level", fmtDecimal(rec.order_up_to)],
-    ["Days of cover", rec.days_of_cover ? `${fmtDecimal(rec.days_of_cover)} d` : "—"],
+    [t("Days of cover"), rec.days_of_cover ? `${fmtDecimal(rec.days_of_cover)} d` : "—"],
     ["Stockout chance over lead time (model estimate)", rec.stockout_probability === null ? "—" : fmtPct(rec.stockout_probability)],
   ];
   return (

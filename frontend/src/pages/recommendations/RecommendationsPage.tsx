@@ -15,6 +15,7 @@ import { fmtDateTime, fmtInt, fmtMoney, fmtPct } from "../../lib/format";
 import { createDraftOrders } from "./actions";
 import { NewRunForm } from "./NewRunForm";
 import { RecommendationTable } from "./RecommendationTable";
+import { t } from "../../lib/i18n";
 
 const PAGE_SIZE = 25;
 const RISKS: RiskCategory[] = ["critical_stockout_risk", "reorder_soon", "excess_inventory", "healthy", "insufficient_data"];
@@ -56,7 +57,7 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
       await api.patch(`/recommendations/${rec.id}`, { review_status: status });
       list.reload();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : "Could not save the decision" });
+      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : t("Could not save the decision") });
     } finally {
       setBusyId(null);
     }
@@ -67,12 +68,12 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
     setMessage(null);
     try {
       const orders = await createDraftOrders(runId);
-      if (!orders.length) setMessage({ kind: "error", text: "Approve at least one recommendation first." });
+      if (!orders.length) setMessage({ kind: "error", text: t("Approve at least one recommendation first.") });
       else setMessage({ kind: "ok", orders, text: `Created ${orders.length} draft purchase order(s) with ${fmtInt(
         orders.reduce((s, o) => s + o.lines.length, 0))} line(s). Nothing has been sent to any supplier.` });
       list.reload();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : "Could not create the orders" });
+      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : t("Could not create the orders") });
     } finally {
       setOrdering(false);
     }
@@ -84,9 +85,9 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
   return (
     <>
       <PageHeader
-        title="Reorder recommendations"
-        description="What to order, how much and why, for every product. Approve the ones you agree with, then turn them into draft purchase orders."
-        actions={canReview && <Button onClick={() => setCreatingRun(true)}>New recommendations</Button>}
+        title={t("Reorder recommendations")}
+        description={t("What to order, how much and why, for every product. Approve the ones you agree with, then turn them into draft purchase orders.")}
+        actions={canReview && <Button onClick={() => setCreatingRun(true)}>{t("New recommendations")}</Button>}
       />
 
       {message && (message.kind === "error"
@@ -102,43 +103,43 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
 
       {list.error && !list.data && (
         list.error.includes("No completed recommendation run")
-          ? <EmptyState icon="cart" title="No recommendations yet">
-              {canReview ? "Click “New recommendations” (a forecast is needed first)." : "Ask a manager to create them."}
+          ? <EmptyState icon="cart" title={t("No recommendations yet")}>
+              {canReview ? t("Click “New recommendations” (a forecast is needed first).") : t("Ask a manager to create them.")}
             </EmptyState>
           : <ErrorMessage message={list.error} onRetry={list.reload} />
       )}
-      {list.loading && !list.data && <Skeleton label="Loading recommendations…" />}
+      {list.loading && !list.data && <Skeleton label={t("Loading recommendations…")} />}
 
       {run && (
         <>
           <Card className="mb-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="text-sm text-slate-600">
-                <FilterSelect label="Recommendation run" value={String(run.id)} onChange={(v) => update({ run: v })}>
+                <FilterSelect label={t("Recommendation run")} value={String(run.id)} onChange={(v) => update({ run: v })}>
                   {(runs.data ?? [run]).filter((r) => r.status === "completed").map((r) => (
                     <option key={r.id} value={r.id}>Run #{r.id} · {fmtDateTime(r.created_at)}</option>
                   ))}
                 </FilterSelect>
                 <p className="mt-2">
-                  Forecast run #{run.forecast_run_id} · service level {fmtPct(run.policy_settings.service_level)} ·
-                  review every {run.policy_settings.review_period_days} days
+                  {t("Forecast run #{id} · service level {level} · review every {days} days", {
+                    id: run.forecast_run_id ?? "—", level: fmtPct(run.policy_settings.service_level), days: run.policy_settings.review_period_days })}
                 </p>
               </div>
               <div className="text-right">
-                <p className="flex items-center justify-end gap-2 text-sm text-slate-500">Suggested orders, total <SimulatedTag /></p>
+                <p className="flex items-center justify-end gap-2 text-sm text-slate-500">{t("Suggested orders, total")} <SimulatedTag /></p>
                 <p className="text-2xl font-semibold tabular-nums">{fmtMoney(run.summary?.total_suggested_order_cost ?? 0)}</p>
                 {canReview && (
                   <Button className="mt-2" onClick={() => makeOrders(run.id)} disabled={ordering}>
-                    {ordering ? "Creating…" : "Create draft orders from approved"}
+                    {ordering ? t("Creating…") : t("Create draft orders from approved")}
                   </Button>
                 )}
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter by risk">
-              <RiskChip label="All" count={RISKS.reduce((s, r) => s + (counts[r] ?? 0), 0)} active={!query.risk}
+            <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label={t("Filter by risk")}>
+              <RiskChip label={t("All")} count={RISKS.reduce((s, r) => s + (counts[r] ?? 0), 0)} active={!query.risk}
                         onClick={() => update({ risk: "" })} color="#64748B" />
               {RISKS.map((r) => (
-                <RiskChip key={r} label={RISK_STYLE[r].label} count={counts[r] ?? 0} color={RISK_STYLE[r].color}
+                <RiskChip key={r} label={t(RISK_STYLE[r].label)} count={counts[r] ?? 0} color={RISK_STYLE[r].color}
                           active={query.risk === r} onClick={() => update({ risk: query.risk === r ? "" : r })} />
               ))}
             </div>
@@ -147,32 +148,32 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
           <Card>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <label className="min-w-[12rem] flex-1">
-                <span className="sr-only">Search recommendations</span>
-                <input type="search" placeholder="Search SKU or name…" value={searchText}
+                <span className="sr-only">{t("Search recommendations")}</span>
+                <input type="search" placeholder={t("Search SKU or name…")} value={searchText}
                        onChange={(e) => { setSearchText(e.target.value); update({ search: e.target.value }); }}
                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
               </label>
-              <FilterSelect label="Review status" value={query.review_status} onChange={(v) => update({ review: v })}>
-                <option value="">Any review status</option>
-                <option value="pending">To review</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="ordered">On a draft order</option>
+              <FilterSelect label={t("Review status")} value={query.review_status} onChange={(v) => update({ review: v })}>
+                <option value="">{t("Any review status")}</option>
+                <option value="pending">{t("To review")}</option>
+                <option value="approved">{t("Approved")}</option>
+                <option value="rejected">{t("Rejected")}</option>
+                <option value="ordered">{t("On a draft order")}</option>
               </FilterSelect>
-              <FilterSelect label="Sort by" value={`${query.sort}:${query.order}`}
+              <FilterSelect label={t("Sort by")} value={`${query.sort}:${query.order}`}
                             onChange={(v) => { const [sort, order] = v.split(":"); update({ sort, order }); }}>
-                <option value="risk:asc">Most urgent first</option>
-                <option value="estimated_order_cost:desc">Highest order cost</option>
-                <option value="suggested_qty:desc">Largest quantity</option>
-                <option value="days_of_cover:asc">Least days of cover</option>
+                <option value="risk:asc">{t("Most urgent first")}</option>
+                <option value="estimated_order_cost:desc">{t("Highest order cost")}</option>
+                <option value="suggested_qty:desc">{t("Largest quantity")}</option>
+                <option value="days_of_cover:asc">{t("Least days of cover")}</option>
                 <option value="sku:asc">SKU</option>
               </FilterSelect>
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input type="checkbox" checked={!!query.only_orders} onChange={(e) => update({ orders: e.target.checked ? "1" : "" })} />
-                Only items to order
+                {t("Only items to order")}
               </label>
             </div>
-            {list.data && list.data.items.length === 0 && <EmptyState icon="cart" title="No recommendations match these filters">Try a different search, or clear the filters.</EmptyState>}
+            {list.data && list.data.items.length === 0 && <EmptyState icon="cart" title={t("No recommendations match these filters")}>{t("Try a different search, or clear the filters.")}</EmptyState>}
             {list.data && list.data.items.length > 0 && (
               <div className={list.loading ? "opacity-60" : ""} aria-busy={list.loading}>
                 <RecommendationTable rows={list.data.items} canReview={canReview} busyId={busyId} onReview={review} />
@@ -184,13 +185,13 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
             )}
             <p className="mt-3 text-xs text-slate-500">
               In the demo shop, sales, stock, costs and lead times are <span className="text-violet-700">synthetic</span>. "Stockout chance" is a model estimate, not an observed rate.
-              Nothing is ordered from suppliers automatically.
+              {" "}{t("Nothing is ordered from suppliers automatically.")}
             </p>
           </Card>
         </>
       )}
 
-      <Dialog title="New recommendations" open={creatingRun} onClose={() => setCreatingRun(false)} wide>
+      <Dialog title={t("New recommendations")} open={creatingRun} onClose={() => setCreatingRun(false)} wide>
         <NewRunForm defaults={policy.data} pollMs={pollMs} onCancel={() => setCreatingRun(false)}
                     onDone={(r) => { setCreatingRun(false); runs.reload(); update({ run: String(r.id) }); }} />
       </Dialog>

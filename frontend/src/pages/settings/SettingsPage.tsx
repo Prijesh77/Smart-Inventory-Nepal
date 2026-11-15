@@ -12,6 +12,7 @@ import { CatalogSetup } from "./CatalogSetup";
 import { DataImport, IMPORT_STEPS } from "./DataImport";
 import { FestivalCalendar } from "./FestivalCalendar";
 import { UsersAdmin } from "./UsersAdmin";
+import { t } from "../../lib/i18n";
 
 const JOB_TONE = { pending: "gray", running: "blue", completed: "green", failed: "red" } as const;
 
@@ -25,39 +26,39 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings & data import"
-                  description="Import your shop's data from Excel, set up suppliers and categories, default reorder settings and (for admins) user accounts." />
+      <PageHeader title={t("Settings & data import")}
+                  description={t("Import your shop's data from Excel, set up suppliers and categories, default reorder settings and (for admins) user accounts.")} />
       <div className="grid grid-cols-1 gap-6">
-        <Card title="Reorder and forecast settings">
+        <Card title={t("Reorder and forecast settings")}>
           {policy.error && <ErrorMessage message={policy.error} onRetry={policy.reload} />}
           {policy.loading && !policy.data && <Skeleton variant="text" />}
           {policy.data && <PolicyForm key={JSON.stringify(policy.data)} policy={policy.data} canEdit={isAdmin}
                                       onSaved={() => { toast("Settings saved. New recommendation runs will use them."); policy.reload(); }} />}
         </Card>
 
-        <Card title="Import data (Excel or CSV)">
+        <Card title={t("Import data (Excel or CSV)")}>
           {can("admin", "manager")
             ? <DataImport onImported={() => { jobs.reload(); setImports((n) => n + 1); }} />
-            : <p className="text-sm text-slate-600">Only managers and admins can import data.</p>}
+            : <p className="text-sm text-slate-600">{t("Only managers and admins can import data.")}</p>}
         </Card>
 
-        <Card title="Suppliers and categories">
+        <Card title={t("Suppliers and categories")}>
           <CatalogSetup canEdit={can("admin", "manager")} version={imports} />
         </Card>
 
-        <Card title="Import history">
+        <Card title={t("Import history")}>
           {jobs.error && <ErrorMessage message={jobs.error} onRetry={jobs.reload} />}
-          {jobs.data && jobs.data.length === 0 && <EmptyState icon="upload" title="No imports yet">Your Excel and CSV imports will be listed here.</EmptyState>}
+          {jobs.data && jobs.data.length === 0 && <EmptyState icon="upload" title={t("No imports yet")}>{t("Your Excel and CSV imports will be listed here.")}</EmptyState>}
           {jobs.data && jobs.data.length > 0 && (
             <table className="min-w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th scope="col" className="py-2 pr-3 font-medium">When</th>
-                  <th scope="col" className="py-2 pr-3 font-medium">Type</th>
-                  <th scope="col" className="py-2 pr-3 font-medium">File</th>
-                  <th scope="col" className="py-2 pr-3 font-medium">Result</th>
-                  <th scope="col" className="py-2 pr-3 text-right font-medium">Rows</th>
-                  <th scope="col" className="py-2 font-medium">Details</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("When")}</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("Type")}</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("File")}</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("Result")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Rows")}</th>
+                  <th scope="col" className="py-2 font-medium">{t("Details")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -80,11 +81,11 @@ export function SettingsPage() {
           )}
         </Card>
 
-        <Card title="Festival calendar">
+        <Card title={t("Festival calendar")}>
           <FestivalCalendar />
         </Card>
 
-        {isAdmin && <Card title="User accounts"><UsersAdmin /></Card>}
+        {isAdmin && <Card title={t("User accounts")}><UsersAdmin /></Card>}
       </div>
     </>
   );

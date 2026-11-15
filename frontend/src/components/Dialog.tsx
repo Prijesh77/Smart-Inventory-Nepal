@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { Icon } from "./Icons";
+import { t } from "../lib/i18n";
 
 /** Accessible modal: focus moves inside, Escape closes, the page behind is marked inert. */
 export function Dialog({ title, open, onClose, children, wide = false }:
@@ -29,7 +30,7 @@ export function Dialog({ title, open, onClose, children, wide = false }:
            className={`w-full ${wide ? "max-w-3xl" : "max-w-lg"} rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/5`}>
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <h2 id="dialog-title" className="text-lg font-semibold text-slate-900">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close"
+          <button type="button" onClick={onClose} aria-label={t("Close")}
                   className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"><Icon.close className="h-4 w-4" /></button>
         </div>
         <div className="px-6 py-5">{children}</div>

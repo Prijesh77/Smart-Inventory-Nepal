@@ -4,6 +4,7 @@ import { api, ApiError } from "../../api/client";
 import type { Category, Product, ProductInput, Supplier } from "../../api/types";
 import { SelectField, TextField } from "../../components/fields";
 import { Button, ErrorMessage } from "../../components/ui";
+import { t } from "../../lib/i18n";
 
 interface FormValues {
   sku: string;
@@ -31,14 +32,14 @@ export function validate(v: FormValues, isNew: boolean): Errors {
   if (isNew) {
     if (!v.sku.trim()) e.sku = "SKU is required";
     else if (!SKU.test(v.sku.trim())) e.sku = "Use letters, digits, '_' or '-' only";
-    else if (v.sku.trim().length > 50) e.sku = "At most 50 characters";
+    else if (v.sku.trim().length > 50) e.sku = t("At most 50 characters");
   }
-  if (!v.name.trim()) e.name = "Name is required";
-  if (!v.category_code) e.category_code = "Choose a category";
+  if (!v.name.trim()) e.name = t("Name is required");
+  if (!v.category_code) e.category_code = t("Choose a category");
   if (!MONEY.test(v.unit_price.trim())) e.unit_price = "Enter a price in rupees like 120 or 45.50 (0 or more, up to 2 decimals)";
   if (v.unit_cost.trim() && !MONEY.test(v.unit_cost.trim())) e.unit_cost = "Enter a cost in rupees like 98.50, or leave empty";
   if (v.lead_time_days.trim() && (!WHOLE.test(v.lead_time_days) || +v.lead_time_days < 1 || +v.lead_time_days > 365))
-    e.lead_time_days = "Whole days from 1 to 365, or leave empty to use the supplier's";
+    e.lead_time_days = t("Whole days from 1 to 365, or leave empty to use the supplier's");
   if (!WHOLE.test(v.min_order_qty) || +v.min_order_qty < 1) e.min_order_qty = "Whole number, at least 1";
   if (!WHOLE.test(v.pack_size) || +v.pack_size < 1) e.pack_size = "Whole number, at least 1";
   return e;
@@ -97,7 +98,7 @@ export function ProductForm({ product, categories, suppliers, onSaved, onCancel 
       onSaved(saved);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) setErrors({ sku: err.message });
-      else setServerError(err instanceof ApiError ? err.message : "Could not save the product");
+      else setServerError(err instanceof ApiError ? err.message : t("Could not save the product"));
     } finally {
       setSaving(false);
     }
@@ -110,36 +111,36 @@ export function ProductForm({ product, categories, suppliers, onSaved, onCancel 
       {serverError && <ErrorMessage message={serverError} />}
       {isNew && (categories.length === 0 || suppliers.length === 0) && (
         <p role="note" className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-          {categories.length === 0 ? "This shop has no categories yet. " : "This shop has no suppliers yet. "}
-          Add them in <strong>Settings &amp; import → Suppliers and categories</strong>, or import many products at once
+          {categories.length === 0 ? t("This shop has no categories yet. ") : t("This shop has no suppliers yet. ")}
+          Add them in <strong>{t("Settings & import → Suppliers and categories")}</strong>, or import many products at once
           from Excel there.
         </p>
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <TextField id="sku" label="SKU" value={values.sku} onChange={set("sku")} error={errors.sku}
-                   disabled={!isNew} hint={isNew ? "Saved in capitals, e.g. RICE-BASMATI-1KG" : "The SKU cannot change after creation"} />
-        <TextField id="name" label="Name" value={values.name} onChange={set("name")} error={errors.name} />
-        <SelectField id="category" label="Category" value={values.category_code} onChange={set("category_code")}
+        <TextField id="sku" label={t("SKU")} value={values.sku} onChange={set("sku")} error={errors.sku}
+                   disabled={!isNew} hint={isNew ? t("Saved in capitals, e.g. RICE-BASMATI-1KG") : t("The SKU cannot change after creation")} />
+        <TextField id="name" label={t("Name")} value={values.name} onChange={set("name")} error={errors.name} />
+        <SelectField id="category" label={t("Category")} value={values.category_code} onChange={set("category_code")}
                      error={errors.category_code}>
-          <option value="">Choose…</option>
+          <option value="">{t("Choose…")}</option>
           {categories.map((c) => <option key={c.id} value={c.code}>{c.name}</option>)}
         </SelectField>
-        <TextField id="department" label="Department (optional)" value={values.department} onChange={set("department")} />
-        <SelectField id="supplier" label="Supplier" value={values.supplier_id} onChange={set("supplier_id")}>
-          <option value="">No supplier</option>
+        <TextField id="department" label={t("Department (optional)")} value={values.department} onChange={set("department")} />
+        <SelectField id="supplier" label={t("Supplier")} value={values.supplier_id} onChange={set("supplier_id")}>
+          <option value="">{t("No supplier")}</option>
           {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.lead_time_days}-day lead time)</option>)}
         </SelectField>
-        <TextField id="lead_time" label="Lead time override (days)" inputMode="numeric" value={values.lead_time_days}
+        <TextField id="lead_time" label={t("Lead time override (days)")} inputMode="numeric" value={values.lead_time_days}
                    onChange={set("lead_time_days")} error={errors.lead_time_days}
                    hint={supplier ? `Empty = supplier's ${supplier.lead_time_days} days` : "Empty = supplier's lead time"} />
-        <TextField id="price" label="Unit price (Rs)" inputMode="decimal" value={values.unit_price}
+        <TextField id="price" label={t("Unit price (Rs)")} inputMode="decimal" value={values.unit_price}
                    onChange={set("unit_price")} error={errors.unit_price} />
-        <TextField id="cost" label="Unit cost (Rs, optional)" inputMode="decimal" value={values.unit_cost}
-                   onChange={set("unit_cost")} error={errors.unit_cost} hint="Needed for order-cost estimates" />
-        <TextField id="moq" label="Minimum order quantity" inputMode="numeric" value={values.min_order_qty}
+        <TextField id="cost" label={t("Unit cost (Rs, optional)")} inputMode="decimal" value={values.unit_cost}
+                   onChange={set("unit_cost")} error={errors.unit_cost} hint={t("Needed for order-cost estimates")} />
+        <TextField id="moq" label={t("Minimum order quantity")} inputMode="numeric" value={values.min_order_qty}
                    onChange={set("min_order_qty")} error={errors.min_order_qty} />
-        <TextField id="pack" label="Pack size" inputMode="numeric" value={values.pack_size}
-                   onChange={set("pack_size")} error={errors.pack_size} hint="Orders are rounded up to whole packs" />
+        <TextField id="pack" label={t("Pack size")} inputMode="numeric" value={values.pack_size}
+                   onChange={set("pack_size")} error={errors.pack_size} hint={t("Orders are rounded up to whole packs")} />
       </div>
       {!isNew && (
         <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -149,8 +150,8 @@ export function ProductForm({ product, categories, suppliers, onSaved, onCancel 
         </label>
       )}
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{saving ? "Saving…" : isNew ? "Create product" : "Save changes"}</Button>
+        <Button variant="secondary" onClick={onCancel}>{t("Cancel")}</Button>
+        <Button type="submit" disabled={saving}>{saving ? t("Saving…") : isNew ? t("Create product") : t("Save changes")}</Button>
       </div>
     </form>
   );

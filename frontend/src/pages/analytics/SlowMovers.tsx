@@ -7,6 +7,7 @@ import { FilterSelect } from "../../components/fields";
 import { EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { DASH, fmtDate, fmtInt, fmtMoney } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 /** Stock on the shelf that has not sold for a while, and the money tied up in it (biggest first). */
 export function SlowMovers() {
@@ -21,16 +22,16 @@ export function SlowMovers() {
           Products in stock with no sale in the period: money tied up on the shelf. Consider a discount, a bundle, or
           not reordering them.
         </p>
-        <FilterSelect label="No sale for" value={days} onChange={setDays}>
-          <option value="30">30 days</option>
-          <option value="60">60 days</option>
-          <option value="90">90 days</option>
+        <FilterSelect label={t("No sale for")} value={days} onChange={setDays}>
+          <option value="30">{t("30 days")}</option>
+          <option value="60">{t("60 days")}</option>
+          <option value="90">{t("90 days")}</option>
         </FilterSelect>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
       {loading && !data && <Skeleton />}
       {data && data.items.length === 0 && (
-        <EmptyState icon="check" title={`Everything in stock has sold in the last ${days} days`} />
+        <EmptyState icon="check" title={t("Everything in stock has sold in the last {days} days", { days })} />
       )}
       {data && data.items.length > 0 && (
         <>
@@ -42,11 +43,11 @@ export function SlowMovers() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 bg-white text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th scope="col" className="py-2 pr-3 font-medium">Product</th>
-                  <th scope="col" className="py-2 pr-3 font-medium">Category</th>
-                  <th scope="col" className="py-2 pr-3 text-right font-medium">On hand</th>
-                  <th scope="col" className="py-2 pr-3 text-right font-medium">Value at cost</th>
-                  <th scope="col" className="py-2 font-medium">Last sold</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("Product")}</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("Category")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("On hand")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Value at cost")}</th>
+                  <th scope="col" className="py-2 font-medium">{t("Last sold")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

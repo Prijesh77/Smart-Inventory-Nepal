@@ -14,6 +14,7 @@ import { fmtDate, fmtDecimal, fmtInt, fmtMoney, humanize } from "../../lib/forma
 import { fiscalYear } from "../../lib/nepaliDate";
 import { ProductForm } from "./ProductForm";
 import { CLASS_TONE } from "./ProductsPage";
+import { t } from "../../lib/i18n";
 
 export function ProductDetailPage() {
   const { id } = useParams();
@@ -35,7 +36,7 @@ export function ProductDetailPage() {
     return api.get<SalesHistory>(`/products/${id}/sales`, { start, end: latest.end }, signal);
   }, [id, days]);
 
-  if (product.loading && !product.data) return <Skeleton variant="text" label="Loading product…" />;
+  if (product.loading && !product.data) return <Skeleton variant="text" label={t("Loading product…")} />;
   if (product.error) return <ErrorMessage message={product.error} onRetry={product.reload} />;
   const p = product.data!;
   const h = history.data;
@@ -50,48 +51,48 @@ export function ProductDetailPage() {
           description={<span className="flex flex-wrap items-center gap-2">
             {p.category.name}{p.department && ` · ${p.department}`}
             {p.demand_class && <Badge tone={CLASS_TONE[p.demand_class]}>{humanize(p.demand_class)} demand</Badge>}
-            {!p.is_active && <Badge>Inactive</Badge>}
+            {!p.is_active && <Badge>{t("Inactive")}</Badge>}
           </span>}
-          actions={can("admin", "manager") && <Button onClick={() => setEditing(true)}>Edit product</Button>}
+          actions={can("admin", "manager") && <Button onClick={() => setEditing(true)}>{t("Edit product")}</Button>}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card title={<span className="flex items-center gap-2">Product settings <SimulatedTag /></span>}>
+        <Card title={<span className="flex items-center gap-2">{t("Product settings")} <SimulatedTag /></span>}>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-            <Item label="Price" value={fmtMoney(p.unit_price)} />
-            <Item label="Unit cost" value={fmtMoney(p.unit_cost)} />
-            <Item label="On hand" value={`${fmtInt(p.on_hand)} units`} />
-            <Item label="Supplier" value={p.supplier?.name ?? "—"} />
-            <Item label="Lead time" value={p.effective_lead_time_days ? `${p.effective_lead_time_days} days${p.lead_time_days ? " (override)" : ""}` : "—"} />
-            <Item label="Minimum order" value={fmtInt(p.min_order_qty)} />
-            <Item label="Pack size" value={fmtInt(p.pack_size)} />
-            <Item label="Updated" value={fmtDate(p.updated_at)} />
+            <Item label={t("Price")} value={fmtMoney(p.unit_price)} />
+            <Item label={t("Unit cost")} value={fmtMoney(p.unit_cost)} />
+            <Item label={t("On hand")} value={`${fmtInt(p.on_hand)} units`} />
+            <Item label={t("Supplier")} value={p.supplier?.name ?? "—"} />
+            <Item label={t("Lead time")} value={p.effective_lead_time_days ? `${p.effective_lead_time_days} days${p.lead_time_days ? " (override)" : ""}` : "—"} />
+            <Item label={t("Minimum order")} value={fmtInt(p.min_order_qty)} />
+            <Item label={t("Pack size")} value={fmtInt(p.pack_size)} />
+            <Item label={t("Updated")} value={fmtDate(p.updated_at)} />
           </dl>
           <div className="mt-4 flex gap-3 text-sm">
-            <Link to={`/forecasts?product=${p.id}`} className="text-brand-600 hover:underline">Forecast</Link>
-            <Link to={`/inventory?search=${encodeURIComponent(p.sku)}`} className="text-brand-600 hover:underline">Stock movements</Link>
+            <Link to={`/forecasts?product=${p.id}`} className="text-brand-600 hover:underline">{t("Forecast")}</Link>
+            <Link to={`/inventory?search=${encodeURIComponent(p.sku)}`} className="text-brand-600 hover:underline">{t("Stock movements")}</Link>
           </div>
         </Card>
 
-        <Card className="lg:col-span-2" title="Sales history (actual)"
-              actions={<FilterSelect label="Period" value={days} onChange={setDays}>
-                <option value="30">Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="365">Last 365 days</option>
-                <option value="fy">This fiscal year (from 1 Shrawan)</option>
+        <Card className="lg:col-span-2" title={t("Sales history (actual)")}
+              actions={<FilterSelect label={t("Period")} value={days} onChange={setDays}>
+                <option value="30">{t("Last 30 days")}</option>
+                <option value="90">{t("Last 90 days")}</option>
+                <option value="365">{t("Last 365 days")}</option>
+                <option value="fy">{t("This fiscal year (from 1 Shrawan)")}</option>
               </FilterSelect>}>
           {history.error && <ErrorMessage message={history.error} onRetry={history.reload} />}
-          {history.loading && !h && <Skeleton variant="text" label="Loading sales…" />}
+          {history.loading && !h && <Skeleton variant="text" label={t("Loading sales…")} />}
           {h && (
             <>
               <div className="mb-3 grid grid-cols-3 gap-3 text-sm">
-                <Item label="Units sold" value={fmtInt(h.total_units)} />
-                <Item label="Per available day" value={availableDays ? fmtDecimal(h.total_units / availableDays) : "—"} />
-                <Item label="Days with no sales" value={fmtInt(h.points.filter((x) => x.is_available && x.units === 0).length)} />
+                <Item label={t("Units sold")} value={fmtInt(h.total_units)} />
+                <Item label={t("Per available day")} value={availableDays ? fmtDecimal(h.total_units / availableDays) : "—"} />
+                <Item label={t("Days with no sales")} value={fmtInt(h.points.filter((x) => x.is_available && x.units === 0).length)} />
               </div>
               <DailySalesChart history={h} />
-              <p className="mt-2 text-xs text-slate-500">Grey bars: item not on sale or store closed (not counted as demand).</p>
+              <p className="mt-2 text-xs text-slate-500">{t("Grey bars: item not on sale or store closed (not counted as demand).")}</p>
             </>
           )}
         </Card>

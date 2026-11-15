@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { Icon } from "./Icons";
+import { t } from "../lib/i18n";
 
 /**
  * Short confirmations ("Settings saved", "Imported products.xlsx") that slide in at the bottom-right and
@@ -43,7 +44,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
          className="toast-in pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-lg shadow-slate-900/20 ring-1 ring-white/10">
       <ToneIcon className={`mt-0.5 h-4 w-4 shrink-0 ${toast.tone === "success" ? "text-emerald-400" : "text-brand-300"}`} />
       <p className="min-w-0 flex-1 leading-relaxed">{toast.message}</p>
-      <button type="button" onClick={onClose} aria-label="Dismiss message"
+      <button type="button" onClick={onClose} aria-label={t("Dismiss message")}
               className="-mr-1 rounded p-0.5 text-slate-400 hover:bg-white/10 hover:text-white">
         <Icon.close className="h-4 w-4" />
       </button>

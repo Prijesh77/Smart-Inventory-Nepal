@@ -2,6 +2,7 @@ import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YA
 
 import { AXIS, TOOLTIP } from "../../lib/colors";
 import { fmtInt } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 export interface CategoryBar {
   key: string;
@@ -23,7 +24,7 @@ export function CategoryBars({ data, ariaLabel }: { data: CategoryBar[]; ariaLab
           <XAxis type="number" hide />
           <YAxis type="category" dataKey="label" width={150} tick={{ fill: AXIS, fontSize: 12 }}
                  axisLine={false} tickLine={false} />
-          <Tooltip contentStyle={TOOLTIP.contentStyle} labelStyle={TOOLTIP.labelStyle} cursor={{ fill: "#F1F5F9" }} formatter={(v) => [fmtInt(Number(v)), "Products"]} />
+          <Tooltip contentStyle={TOOLTIP.contentStyle} labelStyle={TOOLTIP.labelStyle} cursor={{ fill: "#F1F5F9" }} formatter={(v) => [fmtInt(Number(v)), t("Products")]} />
           <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20} isAnimationActive={false}>
             {data.map((d) => <Cell key={d.key} fill={d.color} />)}
             <LabelList dataKey="value" position="right" fill="#334155" fontSize={12}

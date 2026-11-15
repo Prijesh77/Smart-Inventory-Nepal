@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import type { Page, Product } from "../api/types";
 import { useApi } from "../hooks/useApi";
 import { useDebounce } from "../hooks/useDebounce";
+import { t } from "../lib/i18n";
 
 /** Type to search products; pick one from the list (arrow keys + Enter, or click). */
 export function ProductPicker({ label, selected, onSelect, supplierId }: {
@@ -37,7 +38,7 @@ export function ProductPicker({ label, selected, onSelect, supplierId }: {
       <input
         id={id} type="search" role="combobox" aria-expanded={open && options.length > 0} aria-controls={`${id}-list`}
         aria-autocomplete="list" autoComplete="off" value={text}
-        placeholder={selected ? `${selected.sku} (type to change)` : "Type a SKU or name…"}
+        placeholder={selected ? t("{sku} (type to change)", { sku: selected.sku }) : t("Type a SKU or name…")}
         onChange={(e) => { setText(e.target.value); setOpen(true); setActive(0); }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, options.length - 1)); }
@@ -48,7 +49,7 @@ export function ProductPicker({ label, selected, onSelect, supplierId }: {
         className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
       />
       {open && options.length > 0 && (
-        <ul id={`${id}-list`} role="listbox" aria-label="Matching products"
+        <ul id={`${id}-list`} role="listbox" aria-label={t("Matching products")}
             className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-slate-200">
           {options.map((p, i) => (
             <li key={p.id} role="option" aria-selected={i === active}

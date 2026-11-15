@@ -5,6 +5,7 @@ import type { ManualMovement, StockItem, TransactionRow } from "../../api/types"
 import { SelectField, TextField } from "../../components/fields";
 import { Button, ErrorMessage } from "../../components/ui";
 import { fmtInt } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 /**
  * Which directions each movement type allows (same rules as the API):
@@ -40,7 +41,7 @@ export function AdjustmentForm({ item, onSaved, onCancel }:
     const found: typeof errors = {};
     if (!/^\d+$/.test(amount) || qty < 1) found.amount = "Enter a whole number of at least 1";
     else if (after < 0) found.amount = `Only ${fmtInt(item.on_hand)} on hand; stock cannot go below 0`;
-    if (reason.trim().length < 3) found.reason = "Explain the change (at least 3 characters); it is kept in the audit log";
+    if (reason.trim().length < 3) found.reason = t("Explain the change (at least 3 characters); it is kept in the audit log");
     setErrors(found);
     setServerError(null);
     if (Object.keys(found).length) return;
@@ -51,7 +52,7 @@ export function AdjustmentForm({ item, onSaved, onCancel }:
       });
       onSaved(txn);
     } catch (err) {
-      setServerError(err instanceof ApiError ? err.message : "Could not record the movement");
+      setServerError(err instanceof ApiError ? err.message : t("Could not record the movement"));
     } finally {
       setSaving(false);
     }
@@ -65,20 +66,20 @@ export function AdjustmentForm({ item, onSaved, onCancel }:
       </p>
       {serverError && <ErrorMessage message={serverError} />}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <SelectField id="txn-type" label="Type" value={type} onChange={(e) => setType(e.target.value as ManualMovement)}>
-          <option value="adjustment">Adjustment (count, damage, loss)</option>
-          <option value="sale">Sale</option>
+        <SelectField id="txn-type" label={t("Type")} value={type} onChange={(e) => setType(e.target.value as ManualMovement)}>
+          <option value="adjustment">{t("Adjustment (count, damage, loss)")}</option>
+          <option value="sale">{t("Sale")}</option>
           <option value="return">Customer return</option>
         </SelectField>
-        <SelectField id="direction" label="Direction" value={effectiveDirection} disabled={allowed.length === 1}
+        <SelectField id="direction" label={t("Direction")} value={effectiveDirection} disabled={allowed.length === 1}
                      onChange={(e) => setDirection(e.target.value as "add" | "remove")}>
-          {allowed.map((d) => <option key={d} value={d}>{d === "add" ? "Add to stock" : "Remove from stock"}</option>)}
+          {allowed.map((d) => <option key={d} value={d}>{d === "add" ? t("Add to stock") : t("Remove from stock")}</option>)}
         </SelectField>
-        <TextField id="amount" label="Units" inputMode="numeric" value={amount} error={errors.amount}
+        <TextField id="amount" label={t("Units")} inputMode="numeric" value={amount} error={errors.amount}
                    onChange={(e) => setAmount(e.target.value.trim())} />
       </div>
-      <TextField id="reason" label="Reason" value={reason} error={errors.reason} maxLength={500}
-                 placeholder="e.g. Weekly count found 3 damaged boxes" onChange={(e) => setReason(e.target.value)} />
+      <TextField id="reason" label={t("Reason")} value={reason} error={errors.reason} maxLength={500}
+                 placeholder={t("e.g. Weekly count found 3 damaged boxes")} onChange={(e) => setReason(e.target.value)} />
       {qty > 0 && (
         <p className={`rounded-md p-3 text-sm ${after < 0 ? "bg-red-50 text-red-800" : "bg-slate-50 text-slate-700"}`}
            aria-live="polite">
@@ -87,8 +88,8 @@ export function AdjustmentForm({ item, onSaved, onCancel }:
         </p>
       )}
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Record movement"}</Button>
+        <Button variant="secondary" onClick={onCancel}>{t("Cancel")}</Button>
+        <Button type="submit" disabled={saving}>{saving ? t("Saving…") : t("Record movement")}</Button>
       </div>
     </form>
   );

@@ -6,6 +6,7 @@ import { TextField } from "../../components/fields";
 import { Button, ErrorMessage, Spinner } from "../../components/ui";
 import { useToast } from "../../components/Toast";
 import { DASH, fmtDate, fmtInt, fmtMoney, humanize } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -65,7 +66,7 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
     reset();
     if (f && f.size > MAX_BYTES) {
       setFile(null);
-      setError("The file is larger than 5 MB; split it into smaller files");
+      setError(t("The file is larger than 5 MB; split it into smaller files"));
       return;
     }
     setFile(f);
@@ -82,7 +83,7 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
     try {
       await downloadFile(`/imports/templates/${type}.xlsx`, `${type}_template.xlsx`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The template could not be downloaded");
+      setError(err instanceof ApiError ? err.message : t("The template could not be downloaded"));
     }
   }
 
@@ -93,7 +94,7 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
     try {
       setPreview(await api.upload<ImportPreview>(`/imports/${type}/preview`, form(file)));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The file could not be checked");
+      setError(err instanceof ApiError ? err.message : t("The file could not be checked"));
     } finally {
       setBusy(null);
     }
@@ -112,33 +113,33 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
       setFile(null);
       onImported(job);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The import failed; nothing was saved");
+      setError(err instanceof ApiError ? err.message : t("The import failed; nothing was saved"));
     } finally {
       setBusy(null);
     }
   }
 
   const columns = preview?.preview.length ? Object.keys(preview.preview[0]) : [];
-  const replaceLabel = type === "sales" ? "Would replace existing days" : "Would update existing";
+  const replaceLabel = type === "sales" ? t("Would replace existing days") : t("Would update existing");
 
   return (
     <div className="space-y-4">
-      <div role="group" aria-label="What to import" className="flex flex-wrap gap-2">
+      <div role="group" aria-label={t("What to import")} className="flex flex-wrap gap-2">
         {IMPORT_STEPS.map((s, i) => (
           <button key={s.type} type="button" aria-pressed={type === s.type} onClick={() => pick(s.type)}
                   className={`rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-inset ${type === s.type
                     ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50"}`}>
-            {i + 1}. {s.label}
+            {i + 1}. {t(s.label)}
           </button>
         ))}
       </div>
       <p className="text-sm text-slate-600">
-        {step.hint}{" "}
-        <button type="button" onClick={template} className="text-brand-600 underline">Download the Excel template</button>
+        {t(step.hint)}{" "}
+        <button type="button" onClick={template} className="text-brand-600 underline">{t("Download the Excel template")}</button>
         {" "}(example rows and an Instructions sheet). A new shop imports in the order 1 to 4.
       </p>
       <div>
-        <label htmlFor="import-file" className="block text-sm font-medium text-slate-700">Excel or CSV file (up to 5 MB)</label>
+        <label htmlFor="import-file" className="block text-sm font-medium text-slate-700">{t("Excel or CSV file (up to 5 MB)")}</label>
         <input id="import-file" key={type} type="file"
                accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                onChange={(e) => choose(e.target.files?.[0] ?? null)}
@@ -146,19 +147,19 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
       </div>
       {type === "sales" && (
         <details>
-          <summary className="cursor-pointer text-sm text-slate-700">Column names in my file are different</summary>
+          <summary className="cursor-pointer text-sm text-slate-700">{t("Column names in my file are different")}</summary>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <TextField id="map-sku" label="SKU column" value={mapping.sku} onChange={(e) => setMapping({ ...mapping, sku: e.target.value })} />
-            <TextField id="map-date" label="Date column" value={mapping.date} onChange={(e) => setMapping({ ...mapping, date: e.target.value })} />
-            <TextField id="map-units" label="Units column" value={mapping.units} onChange={(e) => setMapping({ ...mapping, units: e.target.value })} />
-            <TextField id="map-price" label="Price column (optional)" value={mapping.price} onChange={(e) => setMapping({ ...mapping, price: e.target.value })} />
+            <TextField id="map-sku" label={t("SKU column")} value={mapping.sku} onChange={(e) => setMapping({ ...mapping, sku: e.target.value })} />
+            <TextField id="map-date" label={t("Date column")} value={mapping.date} onChange={(e) => setMapping({ ...mapping, date: e.target.value })} />
+            <TextField id="map-units" label={t("Units column")} value={mapping.units} onChange={(e) => setMapping({ ...mapping, units: e.target.value })} />
+            <TextField id="map-price" label={t("Price column (optional)")} value={mapping.price} onChange={(e) => setMapping({ ...mapping, price: e.target.value })} />
           </div>
         </details>
       )}
       {error && <ErrorMessage message={error} />}
       <div className="flex items-center gap-3">
-        <Button onClick={check} disabled={!file || busy !== null}>{busy === "check" ? "Checking…" : "Check file"}</Button>
-        {busy && <Spinner label={busy === "check" ? "Checking every row…" : "Importing…"} />}
+        <Button onClick={check} disabled={!file || busy !== null}>{busy === "check" ? t("Checking…") : t("Check file")}</Button>
+        {busy && <Spinner label={busy === "check" ? t("Checking every row…") : t("Importing…")} />}
       </div>
 
       {preview && (
@@ -180,7 +181,7 @@ export function DataImport({ onImported }: { onImported: (job: ImportJob) => voi
               <div className="max-h-64 overflow-y-auto">
                 <table className="min-w-full text-sm">
                   <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
-                    <tr><th scope="col" className="py-1 pr-3">Row</th><th scope="col" className="py-1 pr-3">Column</th><th scope="col" className="py-1">Problem</th></tr>
+                    <tr><th scope="col" className="py-1 pr-3">{t("Row")}</th><th scope="col" className="py-1 pr-3">{t("Column")}</th><th scope="col" className="py-1">{t("Problem")}</th></tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {preview.errors.map((e, i) => (

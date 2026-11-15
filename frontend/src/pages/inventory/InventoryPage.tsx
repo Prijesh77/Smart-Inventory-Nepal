@@ -15,6 +15,7 @@ import { AdjustmentForm } from "./AdjustmentForm";
 import { AlertsList } from "./AlertsList";
 import { MovementsTable } from "./MovementsTable";
 import { StockTable } from "./StockTable";
+import { t } from "../../lib/i18n";
 
 type Tab = "stock" | "alerts" | "movements";
 
@@ -45,17 +46,17 @@ export function InventoryPage() {
   return (
     <>
       <PageHeader
-        title="Inventory"
+        title={t("Inventory")}
         description={<span className="flex flex-wrap items-center gap-2">
-          Current stock, low-stock alerts and the audit log of every movement. <SimulatedTag />
+          {t("Current stock, low-stock alerts and the audit log of every movement.")} <SimulatedTag />
         </span>}
       />
 
       <Card>
-        <Tabs label="Inventory views" selected={tab} onSelect={selectTab} tabs={[
-          { id: "stock", label: "Stock levels" },
-          { id: "alerts", label: "Low-stock alerts", count: alerts.data?.length },
-          { id: "movements", label: "Movement history" },
+        <Tabs label={t("Inventory views")} selected={tab} onSelect={selectTab} tabs={[
+          { id: "stock", label: t("Stock levels") },
+          { id: "alerts", label: t("Low-stock alerts"), count: alerts.data?.length },
+          { id: "movements", label: t("Movement history") },
         ]} />
         {tab === "stock" && (
           <TabPanel id="stock">
@@ -67,7 +68,7 @@ export function InventoryPage() {
         {tab === "alerts" && (
           <TabPanel id="alerts">
             {alerts.error && <ErrorMessage message={alerts.error} onRetry={alerts.reload} />}
-            {alerts.loading && !alerts.data && <Skeleton label="Loading alerts…" />}
+            {alerts.loading && !alerts.data && <Skeleton label={t("Loading alerts…")} />}
             {alerts.data && <AlertsList alerts={alerts.data} canAdjust={canAdjust} onAdjust={setAdjusting} />}
           </TabPanel>
         )}
@@ -78,7 +79,7 @@ export function InventoryPage() {
         )}
       </Card>
 
-      <Dialog title="Record a stock movement" open={!!adjusting} onClose={() => setAdjusting(null)}>
+      <Dialog title={t("Record a stock movement")} open={!!adjusting} onClose={() => setAdjusting(null)}>
         {adjusting && <AdjustmentForm item={adjusting} onSaved={onSaved} onCancel={() => setAdjusting(null)} />}
       </Dialog>
     </>

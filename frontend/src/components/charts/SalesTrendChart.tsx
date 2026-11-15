@@ -3,6 +3,7 @@ import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, 
 
 import { AXIS, GRID, SERIES, TOOLTIP } from "../../lib/colors";
 import { fmtDate, fmtInt, fmtShortDate } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 interface Point {
   date: string;
@@ -41,9 +42,9 @@ export function SalesTrendChart({ points }: { points: Point[] }) {
           <Tooltip {...TOOLTIP} labelFormatter={(d) => fmtDate(String(d))}
                    formatter={(v, name) => [v === null ? "—" : fmtInt(Number(v)), name]} />
           <Legend verticalAlign="top" align="right" height={28} iconType="plainline" wrapperStyle={{ fontSize: 12 }} />
-          <Area type="monotone" dataKey="units" name="Units sold (daily)" stroke={SERIES.sky} fill={`url(#${fillId})`}
+          <Area type="monotone" dataKey="units" name={t("Units sold (daily)")} stroke={SERIES.sky} fill={`url(#${fillId})`}
                 fillOpacity={1} strokeWidth={1.5} isAnimationActive={false} />
-          <Line type="monotone" dataKey="avg" name="7-day average" stroke={SERIES.blue} strokeWidth={2.5}
+          <Line type="monotone" dataKey="avg" name={t("7-day average")} stroke={SERIES.blue} strokeWidth={2.5}
                 dot={false} connectNulls={false} isAnimationActive={false} />
         </ComposedChart>
       </ResponsiveContainer>

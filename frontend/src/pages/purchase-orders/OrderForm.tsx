@@ -7,6 +7,7 @@ import { SelectField, TextField } from "../../components/fields";
 import { ProductPicker } from "../../components/ProductPicker";
 import { Button, ErrorMessage } from "../../components/ui";
 import { fmtMoney } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 export interface DraftLine {
   product_id: number;
@@ -18,7 +19,7 @@ export interface DraftLine {
 
 /** Check lines the same way the API does: at least one, quantity a whole number > 0, cost >= 0 with 2 decimals. */
 export function lineErrors(lines: DraftLine[]): string | null {
-  if (!lines.length) return "Add at least one product";
+  if (!lines.length) return t("Add at least one product");
   for (const l of lines) {
     if (!/^\d+$/.test(l.quantity) || Number(l.quantity) < 1) return `${l.sku}: quantity must be a whole number of at least 1`;
     if (l.unit_cost && !/^\d+(\.\d{1,2})?$/.test(l.unit_cost)) return `${l.sku}: unit cost must look like 2.75`;
@@ -57,7 +58,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    const problem = !supplierId ? "Choose a supplier"
+    const problem = !supplierId ? t("Choose a supplier")
       : expected === null ? "The expected delivery date is not a valid date" : lineErrors(lines);
     setError(problem);
     if (problem) return;
@@ -69,7 +70,7 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
         : await api.post<PurchaseOrder>("/purchase-orders", { ...body, supplier_id: Number(supplierId) });
       onSaved(saved);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save the order");
+      setError(err instanceof ApiError ? err.message : t("Could not save the order"));
     } finally {
       setSaving(false);
     }
@@ -79,16 +80,16 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
     <form onSubmit={onSubmit} noValidate className="space-y-4">
       {error && <ErrorMessage message={error} />}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <SelectField id="po-supplier" label="Supplier" value={supplierId} disabled={!!order || lines.length > 0}
+        <SelectField id="po-supplier" label={t("Supplier")} value={supplierId} disabled={!!order || lines.length > 0}
                      onChange={(e) => setSupplierId(e.target.value)}>
-          <option value="">Choose…</option>
+          <option value="">{t("Choose…")}</option>
           {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.lead_time_days}-day lead time)</option>)}
         </SelectField>
-        <DateField id="po-expected" label="Expected delivery (optional)" value={expected ?? ""} onChange={setExpected}
-                   hint="Empty = set from the lead time when submitted" />
+        <DateField id="po-expected" label={t("Expected delivery (optional)")} value={expected ?? ""} onChange={setExpected}
+                   hint={t("Empty = set from the lead time when submitted")} />
       </div>
       {supplierId && (
-        <ProductPicker label="Add a product from this supplier" selected={null} supplierId={Number(supplierId)}
+        <ProductPicker label={t("Add a product from this supplier")} selected={null} supplierId={Number(supplierId)}
                        onSelect={(p) => setLines((all) => all.some((l) => l.product_id === p.id) ? all
                          : [...all, { product_id: p.id, sku: p.sku, name: p.name, quantity: "1", unit_cost: String(p.unit_cost ?? "") }])} />
       )}
@@ -96,11 +97,11 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
         <table className="min-w-full text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th scope="col" className="py-2 pr-3 font-medium">Product</th>
-              <th scope="col" className="py-2 pr-3 font-medium">Quantity</th>
-              <th scope="col" className="py-2 pr-3 font-medium">Unit cost (Rs)</th>
-              <th scope="col" className="py-2 pr-3 text-right font-medium">Line total</th>
-              <th scope="col"><span className="sr-only">Remove</span></th>
+              <th scope="col" className="py-2 pr-3 font-medium">{t("Product")}</th>
+              <th scope="col" className="py-2 pr-3 font-medium">{t("Quantity")}</th>
+              <th scope="col" className="py-2 pr-3 font-medium">{t("Unit cost (Rs)")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Line total")}</th>
+              <th scope="col"><span className="sr-only">{t("Remove")}</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -127,16 +128,16 @@ export function OrderForm({ order, suppliers, onSaved, onCancel }: {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={3} className="pt-2 text-right text-sm text-slate-500">Total</td>
+              <td colSpan={3} className="pt-2 text-right text-sm text-slate-500">{t("Total")}</td>
               <td className="pt-2 text-right font-semibold tabular-nums">{fmtMoney(total)}</td>
             </tr>
           </tfoot>
         </table>
       )}
-      <TextField id="po-notes" label="Notes (optional)" value={notes} maxLength={2000} onChange={(e) => setNotes(e.target.value)} />
+      <TextField id="po-notes" label={t("Notes (optional)")} value={notes} maxLength={2000} onChange={(e) => setNotes(e.target.value)} />
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{saving ? "Saving…" : order ? "Save draft" : "Create draft"}</Button>
+        <Button variant="secondary" onClick={onCancel}>{t("Cancel")}</Button>
+        <Button type="submit" disabled={saving}>{saving ? t("Saving…") : order ? t("Save draft") : t("Create draft")}</Button>
       </div>
     </form>
   );

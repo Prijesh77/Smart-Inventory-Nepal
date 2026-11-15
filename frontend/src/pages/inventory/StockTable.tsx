@@ -11,12 +11,13 @@ import { useApi } from "../../hooks/useApi";
 import { useDebounce } from "../../hooks/useDebounce";
 import { STOCK_STATUS_STYLE } from "../../lib/colors";
 import { fmtDecimal, fmtInt } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 const PAGE_SIZE = 25;
 
 export function StockStatusBadge({ status }: { status: StockStatus }) {
   const style = STOCK_STATUS_STYLE[status];
-  return <Badge tone={style.tone}>{style.label}</Badge>;
+  return <Badge tone={style.tone}>{t(style.label)}</Badge>;
 }
 
 /** Days of cover, highlighted when it is shorter than the supplier lead time. */
@@ -26,7 +27,7 @@ export function CoverCell({ item }: { item: StockItem }) {
   return (
     <span className={short ? "font-medium text-red-700" : ""}>
       {fmtDecimal(item.days_of_cover)} d
-      {short && <span className="sr-only"> (shorter than the lead time)</span>}
+      {short && <span className="sr-only"> {t("(shorter than the lead time)")}</span>}
     </span>
   );
 }
@@ -62,39 +63,39 @@ export function StockTable({ categories, initialSearch, canAdjust, onAdjust, onH
     <>
       <div className="mb-4 flex flex-wrap gap-3">
         <label className="min-w-[14rem] flex-1">
-          <span className="sr-only">Search stock</span>
-          <input type="search" placeholder="Search SKU or name…" value={searchText}
+          <span className="sr-only">{t("Search stock")}</span>
+          <input type="search" placeholder={t("Search SKU or name…")} value={searchText}
                  onChange={(e) => { setSearchText(e.target.value); setPage(1); }}
                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
         </label>
-        <FilterSelect label="Category" value={category} onChange={(v) => { setCategory(v); setPage(1); }}>
-          <option value="">All categories</option>
+        <FilterSelect label={t("Category")} value={category} onChange={(v) => { setCategory(v); setPage(1); }}>
+          <option value="">{t("All categories")}</option>
           {categories.map((c) => <option key={c.id} value={c.code}>{c.name}</option>)}
         </FilterSelect>
-        <FilterSelect label="Stock status" value={status} onChange={(v) => { setStatus(v); setPage(1); }}>
-          <option value="">All statuses</option>
+        <FilterSelect label={t("Stock status")} value={status} onChange={(v) => { setStatus(v); setPage(1); }}>
+          <option value="">{t("All statuses")}</option>
           {(Object.keys(STOCK_STATUS_STYLE) as StockStatus[]).map((s) =>
-            <option key={s} value={s}>{STOCK_STATUS_STYLE[s].label}</option>)}
+            <option key={s} value={s}>{t(STOCK_STATUS_STYLE[s].label)}</option>)}
         </FilterSelect>
       </div>
 
       {error && <ErrorMessage message={error} onRetry={reload} />}
-      {loading && !data && <Skeleton label="Loading stock…" />}
-      {data && data.items.length === 0 && <EmptyState icon="warehouse" title="No products match these filters">Try a different search, or clear the filters.</EmptyState>}
+      {loading && !data && <Skeleton label={t("Loading stock…")} />}
+      {data && data.items.length === 0 && <EmptyState icon="warehouse" title={t("No products match these filters")}>{t("Try a different search, or clear the filters.")}</EmptyState>}
       {data && data.items.length > 0 && (
         <div className={`overflow-x-auto ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
           <table className="min-w-full text-sm">
             <thead className="text-xs text-slate-500">
               <tr>
-                <SortHeader label="SKU" field="sku" sort={sort} order={order} onSort={onSort} />
-                <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">Status</th>
-                <SortHeader label="On hand" field="on_hand" sort={sort} order={order} onSort={onSort} align="right" />
-                <th scope="col" className="py-2 pr-4 text-right font-medium uppercase tracking-wide">On order</th>
-                <SortHeader label="Position" field="inventory_position" sort={sort} order={order} onSort={onSort} align="right" />
-                <SortHeader label="Sales / day" field="avg_daily_sales" sort={sort} order={order} onSort={onSort} align="right" />
-                <SortHeader label="Cover" field="days_of_cover" sort={sort} order={order} onSort={onSort} align="right" />
-                <th scope="col" className="py-2 pr-4 text-right font-medium uppercase tracking-wide">Lead time</th>
-                <th scope="col" className="py-2 text-right font-medium uppercase tracking-wide"><span className="sr-only">Actions</span></th>
+                <SortHeader label={t("SKU")} field="sku" sort={sort} order={order} onSort={onSort} />
+                <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">{t("Status")}</th>
+                <SortHeader label={t("On hand")} field="on_hand" sort={sort} order={order} onSort={onSort} align="right" />
+                <th scope="col" className="py-2 pr-4 text-right font-medium uppercase tracking-wide">{t("On order")}</th>
+                <SortHeader label={t("Position")} field="inventory_position" sort={sort} order={order} onSort={onSort} align="right" />
+                <SortHeader label={t("Sales / day")} field="avg_daily_sales" sort={sort} order={order} onSort={onSort} align="right" />
+                <SortHeader label={t("Cover")} field="days_of_cover" sort={sort} order={order} onSort={onSort} align="right" />
+                <th scope="col" className="py-2 pr-4 text-right font-medium uppercase tracking-wide">{t("Lead time")}</th>
+                <th scope="col" className="py-2 text-right font-medium uppercase tracking-wide"><span className="sr-only">{t("Actions")}</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -112,8 +113,8 @@ export function StockTable({ categories, initialSearch, canAdjust, onAdjust, onH
                   <td className="py-2 pr-4 text-right tabular-nums"><CoverCell item={item} /></td>
                   <td className="py-2 pr-4 text-right tabular-nums">{item.lead_time_days ? `${item.lead_time_days} d` : "—"}</td>
                   <td className="whitespace-nowrap py-2 text-right">
-                    <Button variant="ghost" onClick={() => onHistory(item)} aria-label={`Movements for ${item.sku}`}>History</Button>
-                    {canAdjust && <Button variant="ghost" onClick={() => onAdjust(item)} aria-label={`Adjust stock for ${item.sku}`}>Adjust</Button>}
+                    <Button variant="ghost" onClick={() => onHistory(item)} aria-label={`Movements for ${item.sku}`}>{t("History")}</Button>
+                    {canAdjust && <Button variant="ghost" onClick={() => onAdjust(item)} aria-label={`Adjust stock for ${item.sku}`}>{t("Adjust")}</Button>}
                   </td>
                 </tr>
               ))}

@@ -6,6 +6,7 @@ import { Button, ErrorMessage, Skeleton, Spinner } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDateTime, fmtInt, fmtPct } from "../../lib/format";
 import { MODEL_LABEL } from "./ForecastRuns";
+import { t } from "../../lib/i18n";
 
 /** The shop's own Random Forest: whether it is trained, how accurate it was, and a button to (re)train it. */
 export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
@@ -34,7 +35,7 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
       await api.post("/forecasts/model/train");
       reload();
     } catch (err) {
-      setFailure(err instanceof ApiError ? err.message : "Training could not start");
+      setFailure(err instanceof ApiError ? err.message : t("Training could not start"));
     } finally {
       setStarting(false);
     }
@@ -62,7 +63,7 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
       {data.trained ? (
         <p>
           The Random Forest was trained on this shop&apos;s own sales{data.trained_at ? ` on ${fmtDateTime(data.trained_at)}` : ""}.
-          {rf !== undefined && ma !== undefined && <> On the last 28 days its error was <strong>{fmtPct(rf)}</strong>, against{" "}
+          {rf !== undefined && ma !== undefined && <> {t("On the last 28 days its error was")} <strong>{fmtPct(rf)}</strong>, against{" "}
             <strong>{fmtPct(ma)}</strong> for the 28-day moving average (lower is better).</>}
           {" "}Retrain after importing new sales.
         </p>
@@ -73,7 +74,7 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
             (7 months) of sales; this shop has <strong>{fmtInt(data.history_days)}</strong>. Until then the moving average
             gives forecasts and reorder suggestions.
           </p>
-          <div className="h-2 w-full max-w-md rounded-full bg-slate-100" role="progressbar" aria-label="Sales history for training"
+          <div className="h-2 w-full max-w-md rounded-full bg-slate-100" role="progressbar" aria-label={t("Sales history for training")}
                aria-valuemin={0} aria-valuemax={data.needed_days} aria-valuenow={data.history_days}>
             <div className="h-2 rounded-full bg-brand-500" style={{ width: `${share * 100}%` }} />
           </div>
@@ -84,10 +85,10 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
       {canTrain && (
         <div className="flex items-center gap-3">
           <Button onClick={train} disabled={!data.can_train || training || starting}>
-            {data.trained ? "Retrain model" : "Train model"}
+            {data.trained ? t("Retrain model") : t("Train model")}
           </Button>
-          {training && <Spinner label="Training on this shop's sales… (usually under a minute)" />}
-          {!data.can_train && !training && <span className="text-xs text-slate-500">Needs more sales history first.</span>}
+          {training && <Spinner label={t("Training on this shop's sales… (usually under a minute)")} />}
+          {!data.can_train && !training && <span className="text-xs text-slate-500">{t("Needs more sales history first.")}</span>}
         </div>
       )}
     </div>

@@ -6,6 +6,7 @@ import { Button, Card, ErrorMessage, PageHeader } from "../../components/ui";
 import { ModelComparison } from "../forecasts/ModelComparison";
 import { CategoryTable, WeeklyTrend } from "./CategorySection";
 import { SlowMovers } from "./SlowMovers";
+import { t } from "../../lib/i18n";
 
 export const EXPORTS = [
   { dataset: "products", label: "Products" },
@@ -28,7 +29,7 @@ function Exports() {
       const name = await downloadFile(`/exports/${dataset}.csv`, `${dataset}.csv`);
       toast(`Downloaded ${name}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Download failed");
+      setError(err instanceof ApiError ? err.message : t("Download failed"));
     } finally {
       setBusy(null);
     }
@@ -39,7 +40,7 @@ function Exports() {
       <div className="flex flex-wrap gap-2">
         {EXPORTS.map((e) => (
           <Button key={e.dataset} variant="secondary" disabled={busy !== null} onClick={() => download(e.dataset)}>
-            {busy === e.dataset ? "Preparing…" : `⬇ ${e.label}`}
+            {busy === e.dataset ? t("Preparing…") : `⬇ ${t(e.label)}`}
           </Button>
         ))}
       </div>
@@ -54,14 +55,14 @@ function Exports() {
 export function AnalyticsPage() {
   return (
     <>
-      <PageHeader title="Analytics & reports"
-                  description="Sales trends and category performance, slow-moving stock, forecast accuracy, and CSV reports." />
+      <PageHeader title={t("Analytics & reports")}
+                  description={t("Sales trends and category performance, slow-moving stock, forecast accuracy, and CSV reports.")} />
       <div className="grid grid-cols-1 gap-6">
-        <Card title="Category performance"><CategoryTable /></Card>
-        <Card title="Weekly demand by category"><WeeklyTrend /></Card>
-        <Card title="Forecast accuracy by model and demand pattern"><ModelComparison /></Card>
-        <Card title="Slow-moving stock"><SlowMovers /></Card>
-        <Card title="Download reports (CSV)"><Exports /></Card>
+        <Card title={t("Category performance")}><CategoryTable /></Card>
+        <Card title={t("Weekly demand by category")}><WeeklyTrend /></Card>
+        <Card title={t("Forecast accuracy by model and demand pattern")}><ModelComparison /></Card>
+        <Card title={t("Slow-moving stock")}><SlowMovers /></Card>
+        <Card title={t("Download reports (CSV)")}><Exports /></Card>
       </div>
       <p className="mt-6 text-xs text-slate-500">
         Inventory aging (how long stock has been on the shelf) is not shown: the data has no batch or receipt dates for

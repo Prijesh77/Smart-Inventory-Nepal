@@ -8,6 +8,7 @@ import { EmptyState, ErrorMessage, SimulatedTag, Skeleton } from "../../componen
 import { useApi } from "../../hooks/useApi";
 import { AXIS, GRID, SERIES, TOOLTIP } from "../../lib/colors";
 import { fmtDate, fmtDecimal, fmtInt, fmtMoney, fmtShortDate, humanize } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 /** One fixed colour per category, so a category keeps its colour on every chart. */
 export const CATEGORY_COLOR: Record<string, string> = {
@@ -30,12 +31,12 @@ export function CategoryTable() {
   return (
     <>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <FilterSelect label="Sales period" value={days} onChange={setDays}>
-          <option value="28">Last 28 days</option>
-          <option value="91">Last 13 weeks</option>
-          <option value="364">Last 52 weeks</option>
+        <FilterSelect label={t("Sales period")} value={days} onChange={setDays}>
+          <option value="28">{t("Last 28 days")}</option>
+          <option value="91">{t("Last 13 weeks")}</option>
+          <option value="364">{t("Last 52 weeks")}</option>
         </FilterSelect>
-        <span className="flex items-center gap-2 text-xs text-slate-500">Stock and value <SimulatedTag /></span>
+        <span className="flex items-center gap-2 text-xs text-slate-500">{t("Stock and value")} <SimulatedTag /></span>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
       {loading && !data && <Skeleton />}
@@ -44,14 +45,14 @@ export function CategoryTable() {
           <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th scope="col" className="py-2 pr-4 font-medium">Category</th>
-                <th scope="col" className="py-2 pr-4 text-right font-medium">Products</th>
-                <th scope="col" className="py-2 pr-4 text-right font-medium">Units sold</th>
-                <th scope="col" className="py-2 pr-4 text-right font-medium">Revenue</th>
-                <th scope="col" className="py-2 pr-4 text-right font-medium">Units / day</th>
-                <th scope="col" className="py-2 pr-4 text-right font-medium">On hand</th>
-                <th scope="col" className="py-2 pr-4 text-right font-medium">Stock value</th>
-                <th scope="col" className="py-2 text-right font-medium">Days of cover</th>
+                <th scope="col" className="py-2 pr-4 font-medium">{t("Category")}</th>
+                <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Products")}</th>
+                <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Units sold")}</th>
+                <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Revenue")}</th>
+                <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Units / day")}</th>
+                <th scope="col" className="py-2 pr-4 text-right font-medium">{t("On hand")}</th>
+                <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Stock value")}</th>
+                <th scope="col" className="py-2 text-right font-medium">{t("Days of cover")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -103,15 +104,15 @@ export function WeeklyTrend() {
   return (
     <>
       <div className="mb-3">
-        <FilterSelect label="Weeks shown" value={weeks} onChange={setWeeks}>
-          <option value="26">Last 26 weeks</option>
-          <option value="52">Last 52 weeks</option>
-          <option value="104">Last 2 years</option>
+        <FilterSelect label={t("Weeks shown")} value={weeks} onChange={setWeeks}>
+          <option value="26">{t("Last 26 weeks")}</option>
+          <option value="52">{t("Last 52 weeks")}</option>
+          <option value="104">{t("Last 2 years")}</option>
         </FilterSelect>
       </div>
       {error && <ErrorMessage message={error} onRetry={reload} />}
       {loading && !data && <Skeleton />}
-      {data && !rows.length && <EmptyState icon="chart" title="No sales in this period" />}
+      {data && !rows.length && <EmptyState icon="chart" title={t("No sales in this period")} />}
       {rows.length > 0 && (
         <div role="img" aria-label={`Units sold per week by category (${categories.join(", ")}), ${rows.length} weeks`}>
           <ResponsiveContainer width="100%" height={280}>
@@ -128,7 +129,7 @@ export function WeeklyTrend() {
               ))}
             </LineChart>
           </ResponsiveContainer>
-          <p className="mt-1 text-xs text-slate-500">Units sold per week. The last, incomplete week is not shown.</p>
+          <p className="mt-1 text-xs text-slate-500">{t("Units sold per week. The last, incomplete week is not shown.")}</p>
         </div>
       )}
     </>

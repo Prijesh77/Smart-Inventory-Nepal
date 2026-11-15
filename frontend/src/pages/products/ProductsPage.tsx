@@ -15,6 +15,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { useReference } from "../../hooks/useReference";
 import { fmtInt, fmtMoney, humanize } from "../../lib/format";
 import { ProductForm } from "./ProductForm";
+import { t } from "../../lib/i18n";
 
 const PAGE_SIZE = 25;
 export const CLASS_TONE = { smooth: "green", erratic: "amber", intermittent: "blue", lumpy: "purple" } as const;
@@ -62,54 +63,54 @@ export function ProductsPage() {
   return (
     <>
       <PageHeader
-        title="Products"
+        title={t("Products")}
         description={`Search, filter and edit products.${demo ? " In this demo shop, unit cost, supplier and lead time are simulated values." : ""}`}
-        actions={can("admin", "manager") && <Button onClick={() => setCreating(true)}>Add product</Button>}
+        actions={can("admin", "manager") && <Button onClick={() => setCreating(true)}>{t("Add product")}</Button>}
       />
 
       <Card>
         <div className="mb-4 flex flex-wrap gap-3">
           <label className="min-w-[14rem] flex-1">
-            <span className="sr-only">Search products</span>
-            <input type="search" placeholder="Search SKU or name…" value={searchText}
+            <span className="sr-only">{t("Search products")}</span>
+            <input type="search" placeholder={t("Search SKU or name…")} value={searchText}
                    onChange={(e) => { setSearchText(e.target.value); update({ search: e.target.value }); }}
                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
           </label>
-          <FilterSelect label="Category" value={filters.category} onChange={(v) => update({ category: v })}>
-            <option value="">All categories</option>
+          <FilterSelect label={t("Category")} value={filters.category} onChange={(v) => update({ category: v })}>
+            <option value="">{t("All categories")}</option>
             {reference.data?.categories.map((c) => <option key={c.id} value={c.code}>{c.name}</option>)}
           </FilterSelect>
-          <FilterSelect label="Supplier" value={filters.supplier_id} onChange={(v) => update({ supplier_id: v })}>
-            <option value="">All suppliers</option>
+          <FilterSelect label={t("Supplier")} value={filters.supplier_id} onChange={(v) => update({ supplier_id: v })}>
+            <option value="">{t("All suppliers")}</option>
             {reference.data?.suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </FilterSelect>
-          <FilterSelect label="Demand pattern" value={filters.demand_class} onChange={(v) => update({ demand_class: v })}>
-            <option value="">All demand patterns</option>
-            {Object.keys(CLASS_TONE).map((c) => <option key={c} value={c}>{humanize(c)}</option>)}
+          <FilterSelect label={t("Demand pattern")} value={filters.demand_class} onChange={(v) => update({ demand_class: v })}>
+            <option value="">{t("All demand patterns")}</option>
+            {Object.keys(CLASS_TONE).map((c) => <option key={c} value={c}>{t(humanize(c))}</option>)}
           </FilterSelect>
-          <FilterSelect label="Status" value={filters.is_active} onChange={(v) => update({ is_active: v })}>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-            <option value="all">All</option>
+          <FilterSelect label={t("Status")} value={filters.is_active} onChange={(v) => update({ is_active: v })}>
+            <option value="true">{t("Active")}</option>
+            <option value="false">{t("Inactive")}</option>
+            <option value="all">{t("All")}</option>
           </FilterSelect>
         </div>
 
         {error && <ErrorMessage message={error} onRetry={reload} />}
-        {loading && !data && <Skeleton label="Loading products…" />}
-        {data && data.items.length === 0 && <EmptyState icon="box" title="No products match these filters">Try a different search, or clear the filters.</EmptyState>}
+        {loading && !data && <Skeleton label={t("Loading products…")} />}
+        {data && data.items.length === 0 && <EmptyState icon="box" title={t("No products match these filters")}>{t("Try a different search, or clear the filters.")}</EmptyState>}
         {data && data.items.length > 0 && (
           <div className={`overflow-x-auto ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
             <table className="min-w-full text-sm">
               <thead className="text-xs text-slate-500">
                 <tr>
-                  <SortHeader label="SKU" field="sku" {...filters} onSort={onSort} />
-                  <SortHeader label="Name" field="name" {...filters} onSort={onSort} />
-                  <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">Category</th>
-                  <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">Supplier</th>
-                  <SortHeader label="Price" field="unit_price" {...filters} onSort={onSort} align="right" />
-                  <SortHeader label="On hand" field="on_hand" {...filters} onSort={onSort} align="right" />
-                  <th scope="col" className="py-2 pr-4 text-right font-medium uppercase tracking-wide">Lead time</th>
-                  <th scope="col" className="py-2 text-left font-medium uppercase tracking-wide">Demand</th>
+                  <SortHeader label={t("SKU")} field="sku" {...filters} onSort={onSort} />
+                  <SortHeader label={t("Name")} field="name" {...filters} onSort={onSort} />
+                  <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">{t("Category")}</th>
+                  <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">{t("Supplier")}</th>
+                  <SortHeader label={t("Price")} field="unit_price" {...filters} onSort={onSort} align="right" />
+                  <SortHeader label={t("On hand")} field="on_hand" {...filters} onSort={onSort} align="right" />
+                  <th scope="col" className="py-2 pr-4 text-right font-medium uppercase tracking-wide">{t("Lead time")}</th>
+                  <th scope="col" className="py-2 text-left font-medium uppercase tracking-wide">{t("Demand")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -117,7 +118,7 @@ export function ProductsPage() {
                   <tr key={p.id} className="hover:bg-slate-50">
                     <td className="py-2 pr-4 font-medium">
                       <Link to={`/products/${p.id}`} className="text-brand-600 hover:underline">{p.sku}</Link>
-                      {!p.is_active && <span className="ml-2"><Badge>Inactive</Badge></span>}
+                      {!p.is_active && <span className="ml-2"><Badge>{t("Inactive")}</Badge></span>}
                     </td>
                     <td className="py-2 pr-4">{p.name}</td>
                     <td className="py-2 pr-4 text-slate-600">{p.category.name}</td>
@@ -128,7 +129,7 @@ export function ProductsPage() {
                       {p.effective_lead_time_days ? `${p.effective_lead_time_days} d` : "—"}
                     </td>
                     <td className="py-2">
-                      {p.demand_class ? <Badge tone={CLASS_TONE[p.demand_class]}>{humanize(p.demand_class)}</Badge>
+                      {p.demand_class ? <Badge tone={CLASS_TONE[p.demand_class]}>{t(humanize(p.demand_class))}</Badge>
                         : <span className="text-slate-400">—</span>}
                     </td>
                   </tr>
@@ -145,7 +146,7 @@ export function ProductsPage() {
         )}
       </Card>
 
-      <Dialog title="Add product" open={creating} onClose={() => setCreating(false)} wide>
+      <Dialog title={t("Add product")} open={creating} onClose={() => setCreating(false)} wide>
         <ProductForm
           categories={reference.data?.categories ?? []}
           suppliers={reference.data?.suppliers ?? []}
