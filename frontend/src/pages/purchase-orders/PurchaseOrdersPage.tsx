@@ -13,6 +13,7 @@ import { useReference } from "../../hooks/useReference";
 import { fmtDate, fmtInt, fmtMoney } from "../../lib/format";
 import { OrderForm } from "./OrderForm";
 import { NOT_SENT_NOTE, PO_STATUS, PoStatusBadge } from "./status";
+import { t } from "../../lib/i18n";
 
 const PAGE_SIZE = 25;
 
@@ -41,27 +42,27 @@ export function PurchaseOrdersPage() {
   return (
     <>
       <PageHeader
-        title="Purchase orders"
-        description={NOT_SENT_NOTE}
-        actions={can("admin", "manager") && <Button onClick={() => setCreating(true)}>New draft order</Button>}
+        title={t("Purchase orders")}
+        description={t(NOT_SENT_NOTE)}
+        actions={can("admin", "manager") && <Button onClick={() => setCreating(true)}>{t("New draft order")}</Button>}
       />
       <Card>
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <FilterSelect label="Order status" value={status} onChange={(v) => update("status", v)}>
-            <option value="">All statuses</option>
-            {(Object.keys(PO_STATUS) as PurchaseOrderStatus[]).map((s) => <option key={s} value={s}>{PO_STATUS[s].label}</option>)}
+          <FilterSelect label={t("Order status")} value={status} onChange={(v) => update("status", v)}>
+            <option value="">{t("All statuses")}</option>
+            {(Object.keys(PO_STATUS) as PurchaseOrderStatus[]).map((s) => <option key={s} value={s}>{t(PO_STATUS[s].label)}</option>)}
           </FilterSelect>
-          <FilterSelect label="Supplier" value={supplier} onChange={(v) => update("supplier_id", v)}>
-            <option value="">All suppliers</option>
+          <FilterSelect label={t("Supplier")} value={supplier} onChange={(v) => update("supplier_id", v)}>
+            <option value="">{t("All suppliers")}</option>
             {reference.data?.suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </FilterSelect>
-          <span className="ml-auto flex items-center gap-2 text-xs text-slate-500">Costs <SimulatedTag /></span>
+          <span className="ml-auto flex items-center gap-2 text-xs text-slate-500">{t("Costs")} <SimulatedTag /></span>
         </div>
         {error && <ErrorMessage message={error} onRetry={reload} />}
-        {loading && !data && <Skeleton label="Loading orders…" />}
+        {loading && !data && <Skeleton label={t("Loading orders…")} />}
         {data && data.items.length === 0 && (
-          <EmptyState icon="clipboard" title="No purchase orders yet">
-            Approve recommendations on the <Link to="/recommendations" className="text-brand-600 hover:underline">Reorder page</Link> and
+          <EmptyState icon="clipboard" title={t("No purchase orders yet")}>
+            Approve recommendations on the <Link to="/recommendations" className="text-brand-600 hover:underline">{t("Reorder page")}</Link> and
             create draft orders from them, or start a draft by hand.
           </EmptyState>
         )}
@@ -70,15 +71,15 @@ export function PurchaseOrdersPage() {
             <table className="min-w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th scope="col" className="py-2 pr-4 font-medium">Order</th>
-                  <th scope="col" className="py-2 pr-4 font-medium">Supplier</th>
-                  <th scope="col" className="py-2 pr-4 font-medium">Status</th>
-                  <th scope="col" className="py-2 pr-4 text-right font-medium">Lines</th>
-                  <th scope="col" className="py-2 pr-4 text-right font-medium">Units</th>
-                  <th scope="col" className="py-2 pr-4 text-right font-medium">Received</th>
-                  <th scope="col" className="py-2 pr-4 text-right font-medium">Total</th>
-                  <th scope="col" className="py-2 pr-4 font-medium">Expected</th>
-                  <th scope="col" className="py-2 font-medium">Created</th>
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("Order")}</th>
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("Supplier")}</th>
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("Status")}</th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Lines")}</th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Units")}</th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Received")}</th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Total")}</th>
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("Expected")}</th>
+                  <th scope="col" className="py-2 font-medium">{t("Created")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -106,7 +107,7 @@ export function PurchaseOrdersPage() {
         )}
       </Card>
 
-      <Dialog title="New draft order" open={creating} onClose={() => setCreating(false)} wide>
+      <Dialog title={t("New draft order")} open={creating} onClose={() => setCreating(false)} wide>
         <OrderForm suppliers={reference.data?.suppliers ?? []} onCancel={() => setCreating(false)}
                    onSaved={(po) => navigate(`/purchase-orders/${po.id}`)} />
       </Dialog>

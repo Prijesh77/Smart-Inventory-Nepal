@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { fmtPct } from "../lib/format";
+import { t } from "../lib/i18n";
 import { Icon, type IconName } from "./Icons";
 import { SimulatedTag } from "./ui";
 
@@ -29,32 +30,34 @@ export function StatCard({ label, value, detail, simulated = false, tone = "defa
 }) {
   const ItemIcon = icon ? Icon[icon] : null;
   const primary = size === "primary";
-  const t = TONES[tone];
+  const style = TONES[tone];
   const body = (
     <>
-      {primary && <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${t.accent}`} />}
+      {primary && <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${style.accent}`} />}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
           {ItemIcon && (
-            <span className={`flex shrink-0 items-center justify-center rounded-lg ${primary ? "h-9 w-9" : "h-8 w-8"} ${t.icon}`}>
+            <span className={`flex shrink-0 items-center justify-center rounded-lg ${primary ? "h-9 w-9" : "h-8 w-8"} ${style.icon}`}>
               <ItemIcon className="h-4 w-4" />
             </span>
           )}
-          <p className="text-sm font-medium text-slate-600">{label}</p>
+          <p className="text-sm font-medium leading-snug text-slate-600">{label}</p>
         </div>
-        {simulated && <SimulatedTag />}
+        {/* Big cards have room beside the title; small ones show the label under the figure (below). */}
+        {simulated && primary && <SimulatedTag />}
       </div>
       <div className="mt-3 flex items-baseline gap-2">
         <p data-testid="stat-value"
-           className={`font-semibold leading-none tracking-tight tabular-nums ${primary ? "text-[34px]" : "text-[24px]"} ${t.value}`}>
+           className={`font-semibold leading-none tracking-tight tabular-nums ${primary ? "text-[34px]" : "text-[24px]"} ${style.value}`}>
           {value}
         </p>
         {trend !== undefined && trend !== null && <Trend change={trend} />}
       </div>
       {detail && <p className="mt-2 text-xs leading-relaxed text-slate-500">{detail}</p>}
+      {simulated && !primary && <div className="mt-2"><SimulatedTag /></div>}
       {to && (
         <p className="mt-auto flex items-center gap-1 pt-3 text-xs font-medium text-brand-600 group-hover:text-brand-700">
-          {primary ? "Review" : "Open"}
+          {primary ? t("Review") : t("Open")}
           <Icon.arrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
         </p>
       )}
@@ -76,7 +79,7 @@ function Trend({ change }: { change: number }) {
   const Arrow = up ? Icon.arrowUp : Icon.arrowDown;
   return (
     <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${style}`}
-          title="Compared with the previous 28 days">
+          title={t("Compared with the previous 28 days")}>
       {!flat && <Arrow className="h-3 w-3" />}
       {fmtPct(change, true)}
     </span>

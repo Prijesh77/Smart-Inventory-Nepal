@@ -4,6 +4,7 @@ import { CartesianGrid, ComposedChart, Legend, Line, ReferenceArea, ReferenceLin
 import type { ProductForecast } from "../../api/types";
 import { AXIS, GRID, SERIES, TOOLTIP } from "../../lib/colors";
 import { fmtDate, fmtDecimal, fmtShortDate } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 export interface ForecastPoint {
   date: string;
@@ -57,17 +58,17 @@ export function ForecastChart({ data }: { data: ProductForecast }) {
                  tickLine={false} axisLine={{ stroke: GRID }} />
           <YAxis allowDecimals={false} width={36} tick={{ fill: AXIS, fontSize: 12 }} axisLine={false} tickLine={false} />
           <ReferenceLine x={origin} stroke="#475569" strokeDasharray="3 3"
-                         label={{ value: "Forecast starts", position: "insideTopLeft", fill: "#475569", fontSize: 11 }} />
+                         label={{ value: t("Forecast starts"), position: "insideTopLeft", fill: "#475569", fontSize: 11 }} />
           <Tooltip {...TOOLTIP} labelFormatter={(d) => fmtDate(String(d))}
                    formatter={(v, name) => [v === null || v === undefined ? "—" : fmtDecimal(Number(v)), name]} />
           <Legend verticalAlign="top" align="right" height={28} wrapperStyle={{ fontSize: 12 }} />
-          <Line type="linear" dataKey="actual" name="Actual sales" stroke={SERIES.blue} strokeWidth={2}
+          <Line type="linear" dataKey="actual" name={t("Actual sales")} stroke={SERIES.blue} strokeWidth={2}
                 dot={false} connectNulls={false} isAnimationActive={false} />
           {data.actual_in_window.length > 0 && (
-            <Line type="linear" dataKey="later" name="Actual sales (in forecast window)" stroke={SERIES.green}
+            <Line type="linear" dataKey="later" name={t("Actual sales (in forecast window)")} stroke={SERIES.green}
                   strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
           )}
-          <Line type="monotone" dataKey="forecast" name="Forecast" stroke={SERIES.orange} strokeWidth={2.5}
+          <Line type="monotone" dataKey="forecast" name={t("Forecast")} stroke={SERIES.orange} strokeWidth={2.5}
                 strokeDasharray="6 4" dot={false} isAnimationActive={false} />
         </ComposedChart>
       </ResponsiveContainer>

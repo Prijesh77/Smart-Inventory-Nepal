@@ -6,6 +6,7 @@ import { TextField } from "../../components/fields";
 import { Button, EmptyState, ErrorMessage, Skeleton } from "../../components/ui";
 import { useToast } from "../../components/Toast";
 import { useReference } from "../../hooks/useReference";
+import { t } from "../../lib/i18n";
 
 const CODE = /^[A-Za-z0-9_-]+$/;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -15,9 +16,9 @@ const EMPTY_SUPPLIER: SupplierValues = { code: "", name: "", lead_time_days: "",
 
 export function validateSupplier(v: SupplierValues): Partial<Record<keyof SupplierValues, string>> {
   const e: Partial<Record<keyof SupplierValues, string>> = {};
-  if (!v.code.trim()) e.code = "Code is required";
+  if (!v.code.trim()) e.code = t("Code is required");
   else if (!CODE.test(v.code.trim()) || v.code.trim().length > 30) e.code = "Up to 30 letters, digits, '-' or '_'";
-  if (!v.name.trim()) e.name = "Name is required";
+  if (!v.name.trim()) e.name = t("Name is required");
   const days = Number(v.lead_time_days);
   if (!/^\d+$/.test(v.lead_time_days.trim()) || days < 1 || days > 365) e.lead_time_days = "Whole days, 1 to 365";
   if (v.contact_email.trim() && !EMAIL.test(v.contact_email.trim())) e.contact_email = "Not an email address";
@@ -45,7 +46,7 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
       reload();
       return true;
     } catch (err) {
-      setFailure(err instanceof ApiError ? err.message : "Could not save; please try again");
+      setFailure(err instanceof ApiError ? err.message : t("Could not save; please try again"));
       return false;
     }
   }
@@ -62,7 +63,7 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
 
   async function addCategory(event: FormEvent) {
     event.preventDefault();
-    if (!category.trim()) return setFailure("Enter a category name");
+    if (!category.trim()) return setFailure(t("Enter a category name"));
     if (await save(() => api.post<Category>("/categories", { name: category.trim() }), (c) => `Category ${c.name} added.`)) setCategory("");
   }
 
@@ -81,13 +82,13 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
       <section aria-labelledby="suppliers-heading" className="space-y-3">
         <h3 id="suppliers-heading" className="text-sm font-semibold text-slate-800">Suppliers ({data.suppliers.length})</h3>
         {data.suppliers.length === 0
-          ? <EmptyState icon="clipboard" title="No suppliers yet">Add one below, or import the Suppliers sheet.</EmptyState>
+          ? <EmptyState icon="clipboard" title={t("No suppliers yet")}>{t("Add one below, or import the Suppliers sheet.")}</EmptyState>
           : (
             <div className="max-h-56 overflow-y-auto">
               <table className="min-w-full text-sm">
                 <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
-                  <tr><th scope="col" className="py-1 pr-3 font-medium">Code</th><th scope="col" className="py-1 pr-3 font-medium">Name</th>
-                    <th scope="col" className="py-1 pr-3 text-right font-medium">Lead time</th><th scope="col" className="py-1 font-medium">Email</th></tr>
+                  <tr><th scope="col" className="py-1 pr-3 font-medium">{t("Code")}</th><th scope="col" className="py-1 pr-3 font-medium">{t("Name")}</th>
+                    <th scope="col" className="py-1 pr-3 text-right font-medium">{t("Lead time")}</th><th scope="col" className="py-1 font-medium">{t("Email")}</th></tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {data.suppliers.map((s) => (
@@ -99,13 +100,13 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
             </div>
           )}
         {canEdit && (
-          <form onSubmit={addSupplier} noValidate aria-label="Add supplier"
+          <form onSubmit={addSupplier} noValidate aria-label={t("Add supplier")}
                 className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[1fr_2fr_1fr_2fr_auto]">
             {field("code", "Code", { placeholder: "KTM-GRAIN" })}
             {field("name", "Name")}
-            {field("lead_time_days", "Lead time (days)", { inputMode: "numeric" })}
+            {field("lead_time_days", t("Lead time (days)"), { inputMode: "numeric" })}
             {field("contact_email", "Email (optional)", { type: "email" })}
-            <Button type="submit" className="sm:mt-6">Add supplier</Button>
+            <Button type="submit" className="sm:mt-6">{t("Add supplier")}</Button>
           </form>
         )}
       </section>
@@ -113,7 +114,7 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
       <section aria-labelledby="categories-heading" className="space-y-3">
         <h3 id="categories-heading" className="text-sm font-semibold text-slate-800">Categories ({data.categories.length})</h3>
         {data.categories.length === 0
-          ? <EmptyState icon="box" title="No categories yet">Add one below; importing products also creates them.</EmptyState>
+          ? <EmptyState icon="box" title={t("No categories yet")}>{t("Add one below; importing products also creates them.")}</EmptyState>
           : (
             <ul className="flex flex-wrap gap-2">
               {data.categories.map((c) => (
@@ -122,12 +123,12 @@ export function CatalogSetup({ canEdit, version }: { canEdit: boolean; version: 
             </ul>
           )}
         {canEdit && (
-          <form onSubmit={addCategory} noValidate aria-label="Add category" className="flex items-end gap-3">
+          <form onSubmit={addCategory} noValidate aria-label={t("Add category")} className="flex items-end gap-3">
             <div className="w-64">
-              <TextField id="category-name" label="New category" value={category} placeholder="Cold drinks"
+              <TextField id="category-name" label={t("New category")} value={category} placeholder={t("Cold drinks")}
                          onChange={(e) => setCategory(e.target.value)} />
             </div>
-            <Button type="submit">Add category</Button>
+            <Button type="submit">{t("Add category")}</Button>
           </form>
         )}
       </section>

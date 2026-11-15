@@ -7,6 +7,7 @@ import { SelectField } from "../../components/fields";
 import { Badge, Button, EmptyState, ErrorMessage, Spinner } from "../../components/ui";
 import { fmtDate, fmtDateTime, fmtInt, fmtPct } from "../../lib/format";
 import { waitForRun } from "../../lib/runs";
+import { t } from "../../lib/i18n";
 
 export const MODEL_LABEL: Record<string, string> = {
   random_forest_v1: "Random Forest",
@@ -20,20 +21,20 @@ const STATUS_TONE = { pending: "gray", running: "blue", completed: "green", fail
 
 export function RunsTable({ runs, selectedId, onSelect }:
   { runs: ForecastRun[]; selectedId: number | null; onSelect: (run: ForecastRun) => void }) {
-  if (!runs.length) return <EmptyState icon="trend" title="No forecast runs yet" />;
+  if (!runs.length) return <EmptyState icon="trend" title={t("No forecast runs yet")} />;
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
           <tr>
-            <th scope="col" className="py-2 pr-4 font-medium">Run</th>
-            <th scope="col" className="py-2 pr-4 font-medium">Model</th>
-            <th scope="col" className="py-2 pr-4 font-medium">Forecast from</th>
-            <th scope="col" className="py-2 pr-4 text-right font-medium">Days</th>
-            <th scope="col" className="py-2 pr-4 font-medium">Status</th>
-            <th scope="col" className="py-2 pr-4 text-right font-medium">Units predicted</th>
-            <th scope="col" className="py-2 pr-4 font-medium">Created</th>
-            <th scope="col" className="py-2 font-medium"><span className="sr-only">Show</span></th>
+            <th scope="col" className="py-2 pr-4 font-medium">{t("Run")}</th>
+            <th scope="col" className="py-2 pr-4 font-medium">{t("Model")}</th>
+            <th scope="col" className="py-2 pr-4 font-medium">{t("Forecast from")}</th>
+            <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Days")}</th>
+            <th scope="col" className="py-2 pr-4 font-medium">{t("Status")}</th>
+            <th scope="col" className="py-2 pr-4 text-right font-medium">{t("Units predicted")}</th>
+            <th scope="col" className="py-2 pr-4 font-medium">{t("Created")}</th>
+            <th scope="col" className="py-2 font-medium"><span className="sr-only">{t("Show")}</span></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -53,7 +54,7 @@ export function RunsTable({ runs, selectedId, onSelect }:
               </td>
               <td className="py-2 text-right">
                 {r.status === "completed" && r.id !== selectedId &&
-                  <Button variant="ghost" onClick={() => onSelect(r)}>Show</Button>}
+                  <Button variant="ghost" onClick={() => onSelect(r)}>{t("Show")}</Button>}
               </td>
             </tr>
           ))}
@@ -75,15 +76,15 @@ export function NewRunForm({ lastSalesDate, onDone, pollMs }:
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (origin === null) return setError("The start date is not a valid date");
-    setStatus("Forecasting every product…");
+    if (origin === null) return setError(t("The start date is not a valid date"));
+    setStatus(t("Forecasting every product…"));
     try {
       const run = await api.post<ForecastRun>("/forecasts/runs", {
         model_name: model, horizon_days: Number(horizon), origin_date: origin || null });
       await waitForRun("/forecasts/runs", run.id, pollMs);
       onDone(await api.get<ForecastRun>(`/forecasts/runs/${run.id}`));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The forecast could not be created");
+      setError(err instanceof ApiError ? err.message : t("The forecast could not be created"));
     } finally {
       setStatus(null);
     }
@@ -93,22 +94,22 @@ export function NewRunForm({ lastSalesDate, onDone, pollMs }:
     <form onSubmit={onSubmit} className="space-y-3">
       {error && <ErrorMessage message={error} />}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <SelectField id="model" label="Model" value={model} onChange={(e) => setModel(e.target.value as ForecastModel)}>
-          <option value="auto">Best available (recommended)</option>
-          <option value="random_forest_v1">Random Forest (trained on this shop's sales)</option>
-          <option value="moving_avg_28">28-day moving average (baseline)</option>
+        <SelectField id="model" label={t("Model")} value={model} onChange={(e) => setModel(e.target.value as ForecastModel)}>
+          <option value="auto">{t("Best available (recommended)")}</option>
+          <option value="random_forest_v1">{t("Random Forest (trained on this shop's sales)")}</option>
+          <option value="moving_avg_28">{t("28-day moving average (baseline)")}</option>
         </SelectField>
-        <SelectField id="horizon" label="Forecast length" value={horizon} onChange={(e) => setHorizon(e.target.value)}>
-          <option value="7">7 days</option>
-          <option value="14">14 days</option>
-          <option value="28">28 days</option>
+        <SelectField id="horizon" label={t("Forecast length")} value={horizon} onChange={(e) => setHorizon(e.target.value)}>
+          <option value="7">{t("7 days")}</option>
+          <option value="14">{t("14 days")}</option>
+          <option value="28">{t("28 days")}</option>
         </SelectField>
-        <DateField id="origin" label="Start date (optional)" value={origin ?? ""} max={lastSalesDate ?? undefined}
+        <DateField id="origin" label={t("Start date (optional)")} value={origin ?? ""} max={lastSalesDate ?? undefined}
                    onChange={setOrigin}
-                   hint="Empty = day after the last sales data. An earlier date lets you compare with what really sold." />
+                   hint={t("Empty = day after the last sales data. An earlier date lets you compare with what really sold.")} />
       </div>
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={!!status}>{status ? "Running…" : "Create forecast"}</Button>
+        <Button type="submit" disabled={!!status}>{status ? t("Running…") : t("Create forecast")}</Button>
         {status && <Spinner label={status} />}
       </div>
     </form>

@@ -7,6 +7,7 @@ import { SelectField, TextField } from "../../components/fields";
 import { Badge, Button, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDate } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 const ROLE_HELP: Record<Role, string> = {
   admin: "Everything, including users and settings",
@@ -29,13 +30,13 @@ export function UsersAdmin() {
       setMessage({ kind: "ok", text });
       reload();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : "Could not update the account" });
+      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : t("Could not update the account") });
     }
   }
 
   async function add(event: FormEvent) {
     event.preventDefault();
-    if (form.password.length < 10) return setMessage({ kind: "error", text: "The password needs at least 10 characters" });
+    if (form.password.length < 10) return setMessage({ kind: "error", text: t("The password needs at least 10 characters") });
     setSaving(true);
     setMessage(null);
     try {
@@ -44,7 +45,7 @@ export function UsersAdmin() {
       setForm({ email: "", full_name: "", password: "", role: "viewer" });
       reload();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : "Could not create the account" });
+      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : t("Could not create the account") });
     } finally {
       setSaving(false);
     }
@@ -65,18 +66,18 @@ export function UsersAdmin() {
           <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th scope="col" className="py-2 pr-3 font-medium">Name</th>
-                <th scope="col" className="py-2 pr-3 font-medium">Email</th>
-                <th scope="col" className="py-2 pr-3 font-medium">Role</th>
-                <th scope="col" className="py-2 pr-3 font-medium">Status</th>
-                <th scope="col" className="py-2 pr-3 font-medium">Since</th>
-                <th scope="col" className="py-2 font-medium"><span className="sr-only">Actions</span></th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("Name")}</th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("Email")}</th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("Role")}</th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("Status")}</th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("Since")}</th>
+                <th scope="col" className="py-2 font-medium"><span className="sr-only">{t("Actions")}</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data.map((u) => (
                 <tr key={u.id}>
-                  <td className="py-2 pr-3 font-medium">{u.full_name}{u.id === me?.id && <span className="ml-1 text-xs text-slate-500">(you)</span>}</td>
+                  <td className="py-2 pr-3 font-medium">{u.full_name}{u.id === me?.id && <span className="ml-1 text-xs text-slate-500">{t("(you)")}</span>}</td>
                   <td className="py-2 pr-3">{u.email}</td>
                   <td className="py-2 pr-3">
                     <select aria-label={`Role for ${u.email}`} value={u.role} disabled={u.id === me?.id}
@@ -102,18 +103,18 @@ export function UsersAdmin() {
         </div>
       )}
       <form onSubmit={add} noValidate className="space-y-3 border-t border-slate-100 pt-4">
-        <h3 className="text-sm font-semibold text-slate-800">Add an account</h3>
+        <h3 className="text-sm font-semibold text-slate-800">{t("Add an account")}</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <TextField id="new-name" label="Full name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-          <TextField id="new-email" label="Email" type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <TextField id="new-password" label="First password" type="password" autoComplete="new-password" value={form.password}
-                     hint="At least 10 characters; share it privately" onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          <SelectField id="new-role" label="Role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
+          <TextField id="new-name" label={t("Full name")} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+          <TextField id="new-email" label={t("Email")} type="email" autoComplete="off" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <TextField id="new-password" label={t("First password")} type="password" autoComplete="new-password" value={form.password}
+                     hint={t("At least 10 characters; share it privately")} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <SelectField id="new-role" label={t("Role")} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
             {(Object.keys(ROLE_HELP) as Role[]).map((r) => <option key={r} value={r}>{r}: {ROLE_HELP[r]}</option>)}
           </SelectField>
         </div>
         <div className="flex justify-end">
-          <Button type="submit" disabled={saving || !form.email || !form.full_name}>{saving ? "Adding…" : "Add account"}</Button>
+          <Button type="submit" disabled={saving || !form.email || !form.full_name}>{saving ? t("Adding…") : t("Add account")}</Button>
         </div>
       </form>
     </div>

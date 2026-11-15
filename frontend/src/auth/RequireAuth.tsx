@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 
 import { Spinner } from "../components/ui";
 import { useAuth } from "./AuthContext";
+import { t } from "../lib/i18n";
 
 /** Shows the page only to logged-in users; otherwise sends them to /login and back afterwards. */
 export function RequireAuth({ children }: { children: ReactNode }) {
@@ -11,7 +12,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Spinner label="Checking your login…" />
+        <Spinner label={t("Checking your login…")} />
       </div>
     );
   }

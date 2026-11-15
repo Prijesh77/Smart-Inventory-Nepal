@@ -3,6 +3,7 @@ import { useState } from "react";
 import { fmtDate } from "../lib/format";
 import { bsInputValue, dateStyle, parseBs } from "../lib/nepaliDate";
 import { TextField } from "./fields";
+import { t } from "../lib/i18n";
 
 /**
  * A date the user types in the chosen calendar. `value` and `onChange` always use AD "YYYY-MM-DD", like the API.
@@ -29,7 +30,7 @@ export function DateField({ id, label, value, onChange, max, hint }: {
     }
     const iso = parseBs(next);
     if (!iso) {
-      setError("Not a real BS date; type it like 2083-07-15 (year-month-day)");
+      setError(t("Not a real BS date; type it like 2083-07-15 (year-month-day)"));
       return onChange(null);
     }
     if (max && iso > max) {

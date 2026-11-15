@@ -4,6 +4,7 @@ import { api, ApiError } from "../../api/client";
 import type { PurchaseOrder } from "../../api/types";
 import { Button, ErrorMessage } from "../../components/ui";
 import { fmtInt } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 /** Lines to send: only quantities above 0, each no more than what is still expected. */
 export function receiveLines(order: PurchaseOrder, qty: Record<number, string>): { lines: { item_id: number; quantity: number }[]; error: string | null } {
@@ -37,7 +38,7 @@ export function ReceiveForm({ order, onReceived, onCancel }:
     try {
       onReceived(await api.post<PurchaseOrder>(`/purchase-orders/${order.id}/receive`, { lines }));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not book the delivery");
+      setError(err instanceof ApiError ? err.message : t("Could not book the delivery"));
     } finally {
       setSaving(false);
     }
@@ -53,10 +54,10 @@ export function ReceiveForm({ order, onReceived, onCancel }:
       <table className="min-w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
           <tr>
-            <th scope="col" className="py-2 pr-3 font-medium">Product</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">Ordered</th>
-            <th scope="col" className="py-2 pr-3 text-right font-medium">Already received</th>
-            <th scope="col" className="py-2 font-medium">Received now</th>
+            <th scope="col" className="py-2 pr-3 font-medium">{t("Product")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Ordered")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Already received")}</th>
+            <th scope="col" className="py-2 font-medium">{t("Received now")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -76,8 +77,8 @@ export function ReceiveForm({ order, onReceived, onCancel }:
         </tbody>
       </table>
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{saving ? "Booking…" : "Book delivery"}</Button>
+        <Button variant="secondary" onClick={onCancel}>{t("Cancel")}</Button>
+        <Button type="submit" disabled={saving}>{saving ? t("Booking…") : t("Book delivery")}</Button>
       </div>
     </form>
   );

@@ -2,6 +2,7 @@ import { api } from "../../api/client";
 import { Badge, ErrorMessage, Skeleton } from "../../components/ui";
 import { useApi } from "../../hooks/useApi";
 import { fmtDate } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 export interface FestivalEntry {
   key: string; name: string; nepali: string; bs_year: number; main_label: string; main: string; main_bs: string;
@@ -33,10 +34,10 @@ export function FestivalCalendar() {
         <table className="min-w-full">
           <thead className="sticky top-0 bg-white text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th scope="col" className="py-2 pr-3 font-medium">Festival</th>
-              <th scope="col" className="py-2 pr-3 font-medium">Main day</th>
+              <th scope="col" className="py-2 pr-3 font-medium">{t("Festival")}</th>
+              <th scope="col" className="py-2 pr-3 font-medium">{t("Main day")}</th>
               <th scope="col" className="py-2 pr-3 font-medium">BS</th>
-              <th scope="col" className="py-2 font-medium">Notes and sources</th>
+              <th scope="col" className="py-2 font-medium">{t("Notes and sources")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -49,7 +50,7 @@ export function FestivalCalendar() {
                 <td className="whitespace-nowrap py-2 pr-3 tabular-nums">{fmtDate(f.main)}</td>
                 <td className="whitespace-nowrap py-2 pr-3 font-mono text-xs">{f.main_bs}</td>
                 <td className="py-2 text-xs text-slate-500">
-                  {f.check && <Badge tone="amber">Please check</Badge>} {f.note}
+                  {f.check && <Badge tone="amber">{t("Please check")}</Badge>} {f.note}
                   <details><summary className="cursor-pointer">{f.sources.length} source{f.sources.length > 1 ? "s" : ""}</summary>
                     <ul className="ml-4 list-disc">{f.sources.map((s) => <li key={s}>{s}</li>)}</ul>
                   </details>

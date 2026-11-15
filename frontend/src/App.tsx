@@ -6,6 +6,7 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { Layout } from "./components/Layout";
 import { ToastProvider } from "./components/Toast";
 import { Skeleton } from "./components/ui";
+import { t } from "./lib/i18n";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFound } from "./pages/Placeholder";
 
@@ -26,7 +27,7 @@ const PurchaseOrderDetailPage = named(() => import("./pages/purchase-orders/Purc
 const AnalyticsPage = named(() => import("./pages/analytics/AnalyticsPage"), "AnalyticsPage");
 const SettingsPage = named(() => import("./pages/settings/SettingsPage"), "SettingsPage");
 
-const page = (element: JSX.Element) => <Suspense fallback={<Skeleton variant="cards" rows={4} label="Loading page…" />}>{element}</Suspense>;
+const page = (element: JSX.Element) => <Suspense fallback={<Skeleton variant="cards" rows={4} label={t("Loading page…")} />}>{element}</Suspense>;
 
 export function AppRoutes() {
   return (

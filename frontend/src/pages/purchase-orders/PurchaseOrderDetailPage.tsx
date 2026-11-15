@@ -12,6 +12,7 @@ import { fmtDate, fmtDateTime, fmtInt, fmtMoney } from "../../lib/format";
 import { OrderForm } from "./OrderForm";
 import { ReceiveForm } from "./ReceiveForm";
 import { NOT_SENT_NOTE, PoStatusBadge } from "./status";
+import { t } from "../../lib/i18n";
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams();
@@ -25,7 +26,7 @@ export function PurchaseOrderDetailPage() {
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   const po = order && String(order.id) === id ? order : data;
-  if (loading && !po) return <Skeleton variant="text" label="Loading order…" />;
+  if (loading && !po) return <Skeleton variant="text" label={t("Loading order…")} />;
   if (error && !po) return <ErrorMessage message={error} onRetry={reload} />;
   if (!po) return null;
 
@@ -37,7 +38,7 @@ export function PurchaseOrderDetailPage() {
       setMessage({ kind: "ok", text: success });
       setDialog(null);
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : "The action failed" });
+      setMessage({ kind: "error", text: err instanceof ApiError ? err.message : t("The action failed") });
     } finally {
       setBusy(false);
     }
@@ -56,14 +57,14 @@ export function PurchaseOrderDetailPage() {
           description={<span className="flex flex-wrap items-center gap-2"><PoStatusBadge status={po.status} /> {po.supplier_name}</span>}
           actions={canAct && (
             <>
-              {po.status === "draft" && <Button variant="secondary" onClick={() => setDialog("edit")}>Edit draft</Button>}
+              {po.status === "draft" && <Button variant="secondary" onClick={() => setDialog("edit")}>{t("Edit draft")}</Button>}
               {po.status === "draft" && (
-                <Button disabled={busy} onClick={() => action("submit", "Order marked as submitted. It now counts as stock on order. Nothing was sent to the supplier.")}>
-                  Submit order
+                <Button disabled={busy} onClick={() => action("submit", t("Order marked as submitted. It now counts as stock on order. Nothing was sent to the supplier."))}>
+                  {t("Submit order")}
                 </Button>
               )}
-              {canReceive && <Button onClick={() => setDialog("receive")}>Receive delivery</Button>}
-              {canCancel && <Button variant="danger" onClick={() => setDialog("cancel")}>Cancel order</Button>}
+              {canReceive && <Button onClick={() => setDialog("receive")}>{t("Receive delivery")}</Button>}
+              {canCancel && <Button variant="danger" onClick={() => setDialog("cancel")}>{t("Cancel order")}</Button>}
             </>
           )}
         />
@@ -73,16 +74,16 @@ export function PurchaseOrderDetailPage() {
         : <Notice className="mb-4">{message.text}</Notice>)}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card title={<span className="flex items-center gap-2">Lines <SimulatedTag /></span>} className="lg:col-span-2">
+        <Card title={<span className="flex items-center gap-2">{t("Lines")} <SimulatedTag /></span>} className="lg:col-span-2">
           <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th scope="col" className="py-2 pr-3 font-medium">Product</th>
-                <th scope="col" className="py-2 pr-3 text-right font-medium">Ordered</th>
-                <th scope="col" className="py-2 pr-3 text-right font-medium">Received</th>
-                <th scope="col" className="py-2 pr-3 text-right font-medium">Still expected</th>
-                <th scope="col" className="py-2 pr-3 text-right font-medium">Unit cost</th>
-                <th scope="col" className="py-2 text-right font-medium">Line total</th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("Product")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Ordered")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Received")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Still expected")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Unit cost")}</th>
+                <th scope="col" className="py-2 text-right font-medium">{t("Line total")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -102,7 +103,7 @@ export function PurchaseOrderDetailPage() {
             </tbody>
             <tfoot>
               <tr className="font-semibold">
-                <td className="pt-3">Total</td>
+                <td className="pt-3">{t("Total")}</td>
                 <td className="pt-3 text-right tabular-nums">{fmtInt(po.total_units)}</td>
                 <td className="pt-3 text-right tabular-nums">{fmtInt(received)}</td>
                 <td className="pt-3 text-right tabular-nums">{fmtInt(po.total_units - received)}</td>
@@ -113,22 +114,22 @@ export function PurchaseOrderDetailPage() {
           </table>
         </Card>
 
-        <Card title="Order details">
+        <Card title={t("Order details")}>
           <dl className="space-y-3 text-sm">
-            <Row label="Supplier" value={`${po.supplier_name} (${po.supplier_code})`} />
-            <Row label="Expected delivery" value={fmtDate(po.expected_date)} />
-            <Row label="Created" value={fmtDateTime(po.created_at)} />
-            <Row label="Submitted" value={fmtDateTime(po.submitted_at)} />
-            <Row label="Fully received" value={fmtDateTime(po.received_at)} />
-            {po.notes && <Row label="Notes" value={po.notes} />}
+            <Row label={t("Supplier")} value={`${po.supplier_name} (${po.supplier_code})`} />
+            <Row label={t("Expected delivery")} value={fmtDate(po.expected_date)} />
+            <Row label={t("Created")} value={fmtDateTime(po.created_at)} />
+            <Row label={t("Submitted")} value={fmtDateTime(po.submitted_at)} />
+            <Row label={t("Fully received")} value={fmtDateTime(po.received_at)} />
+            {po.notes && <Row label={t("Notes")} value={po.notes} />}
           </dl>
-          <p className="mt-4 rounded-md bg-slate-50 p-3 text-xs text-slate-600">{NOT_SENT_NOTE}</p>
+          <p className="mt-4 rounded-md bg-slate-50 p-3 text-xs text-slate-600">{t(NOT_SENT_NOTE)}</p>
         </Card>
       </div>
 
       <Dialog title={`Edit ${po.po_number}`} open={dialog === "edit"} onClose={() => setDialog(null)} wide>
         <OrderForm order={po} suppliers={reference.data?.suppliers ?? []} onCancel={() => setDialog(null)}
-                   onSaved={(saved) => { setOrder(saved); setDialog(null); setMessage({ kind: "ok", text: "Draft saved." }); }} />
+                   onSaved={(saved) => { setOrder(saved); setDialog(null); setMessage({ kind: "ok", text: t("Draft saved.") }); }} />
       </Dialog>
       <Dialog title={`Receive ${po.po_number}`} open={dialog === "receive"} onClose={() => setDialog(null)} wide>
         <ReceiveForm order={po} onCancel={() => setDialog(null)}
@@ -136,8 +137,8 @@ export function PurchaseOrderDetailPage() {
                        setOrder(saved);
                        setDialog(null);
                        setMessage({ kind: "ok", text: saved.status === "received"
-                         ? "Delivery booked. The order is fully received and stock has been updated."
-                         : "Partial delivery booked. Stock has been updated; the rest is still expected." });
+                         ? t("Delivery booked. The order is fully received and stock has been updated.")
+                         : t("Partial delivery booked. Stock has been updated; the rest is still expected.") });
                      }} />
       </Dialog>
       <Dialog title={`Cancel ${po.po_number}?`} open={dialog === "cancel"} onClose={() => setDialog(null)}>
@@ -146,8 +147,8 @@ export function PurchaseOrderDetailPage() {
           back to "approved", so they can be ordered again.
         </p>
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setDialog(null)}>Keep order</Button>
-          <Button variant="danger" disabled={busy} onClick={() => action("cancel", "Order cancelled.")}>Cancel order</Button>
+          <Button variant="secondary" onClick={() => setDialog(null)}>{t("Keep order")}</Button>
+          <Button variant="danger" disabled={busy} onClick={() => action("cancel", "Order cancelled.")}>{t("Cancel order")}</Button>
         </div>
       </Dialog>
     </>

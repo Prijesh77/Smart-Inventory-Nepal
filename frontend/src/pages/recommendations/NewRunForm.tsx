@@ -8,6 +8,7 @@ import { useApi } from "../../hooks/useApi";
 import { fmtDate } from "../../lib/format";
 import { waitForRun } from "../../lib/runs";
 import { MODEL_LABEL } from "../forecasts/ForecastRuns";
+import { t } from "../../lib/i18n";
 
 /** New recommendation run from a completed forecast, optionally with different policy settings. */
 export function NewRunForm({ defaults, onDone, onCancel, pollMs }: {
@@ -28,17 +29,17 @@ export function NewRunForm({ defaults, onDone, onCancel, pollMs }: {
     event.preventDefault();
     const sl = Number(serviceLevel);
     const rp = Number(review);
-    if (!(sl >= 50 && sl <= 99.9)) return setError("Service level must be between 50% and 99.9%");
-    if (!Number.isInteger(rp) || rp < 1 || rp > 28) return setError("Review period must be 1–28 whole days");
+    if (!(sl >= 50 && sl <= 99.9)) return setError(t("Service level must be between 50% and 99.9%"));
+    if (!Number.isInteger(rp) || rp < 1 || rp > 28) return setError(t("Review period must be 1–28 whole days"));
     setError(null);
-    setStatus("Calculating recommendations for every product…");
+    setStatus(t("Calculating recommendations for every product…"));
     try {
       const run = await api.post<RecommendationRun>("/recommendations/runs", {
         forecast_run_id: forecastId ? Number(forecastId) : null, service_level: sl / 100, review_period_days: rp });
       await waitForRun("/recommendations/runs", run.id, pollMs);
       onDone(await api.get<RecommendationRun>(`/recommendations/runs/${run.id}`));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not create recommendations");
+      setError(err instanceof ApiError ? err.message : t("Could not create recommendations"));
     } finally {
       setStatus(null);
     }
@@ -47,8 +48,8 @@ export function NewRunForm({ defaults, onDone, onCancel, pollMs }: {
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-4">
       {error && <ErrorMessage message={error} />}
-      <SelectField id="forecast-run" label="Forecast to use" value={forecastId} onChange={(e) => setForecastId(e.target.value)}>
-        <option value="">Latest completed forecast</option>
+      <SelectField id="forecast-run" label={t("Forecast to use")} value={forecastId} onChange={(e) => setForecastId(e.target.value)}>
+        <option value="">{t("Latest completed forecast")}</option>
         {completed.map((r) => (
           <option key={r.id} value={r.id}>
             #{r.id} · {MODEL_LABEL[r.model_name]} · {r.horizon_days} days from {fmtDate(r.origin_date)}
@@ -56,11 +57,11 @@ export function NewRunForm({ defaults, onDone, onCancel, pollMs }: {
         ))}
       </SelectField>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <TextField id="service-level" label="Service level target (%)" inputMode="decimal" value={serviceLevel}
+        <TextField id="service-level" label={t("Service level target (%)")} inputMode="decimal" value={serviceLevel}
                    onChange={(e) => setServiceLevel(e.target.value)}
-                   hint="Chance of not running out in each period. Higher = more safety stock." />
-        <TextField id="review-period" label="Review period (days)" inputMode="numeric" value={review}
-                   onChange={(e) => setReview(e.target.value)} hint="How often stock is checked and orders placed." />
+                   hint={t("Chance of not running out in each period. Higher = more safety stock.")} />
+        <TextField id="review-period" label={t("Review period (days)")} inputMode="numeric" value={review}
+                   onChange={(e) => setReview(e.target.value)} hint={t("How often stock is checked and orders placed.")} />
       </div>
       <p className="text-xs text-slate-500">
         The forecast must cover the lead time plus the review period (e.g. 14 + 7 = 21 days), otherwise those items get
@@ -68,8 +69,8 @@ export function NewRunForm({ defaults, onDone, onCancel, pollMs }: {
       </p>
       <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
         {status && <Spinner label={status} />}
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={!!status}>{status ? "Running…" : "Create recommendations"}</Button>
+        <Button variant="secondary" onClick={onCancel}>{t("Cancel")}</Button>
+        <Button type="submit" disabled={!!status}>{status ? t("Running…") : t("Create recommendations")}</Button>
       </div>
     </form>
   );

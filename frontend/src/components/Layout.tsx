@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
+import { LANGUAGES, lang, setLang, t, type Lang } from "../lib/i18n";
 import { DATE_STYLES, dateStyle, setDateStyle, type DateStyle } from "../lib/nepaliDate";
 import { Icon, type IconName } from "./Icons";
 import { Badge } from "./ui";
@@ -30,15 +31,16 @@ export function Layout() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dates, setDates] = useState<DateStyle>(dateStyle);
+  const [language, setLanguage] = useState<Lang>(lang);
   const current = currentItem(pathname);
 
   useEffect(() => setMenuOpen(false), [pathname]);
 
   const nav = (
-    <nav aria-label="Main" className="space-y-6">
+    <nav aria-label={t("Main")} className="space-y-6">
       {GROUPS.map((group) => (
         <div key={group}>
-          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{group}</p>
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t(group)}</p>
           <ul className="space-y-0.5">
             {NAV_ITEMS.filter((item) => item.group === group).map((item) => {
               const ItemIcon = Icon[item.icon];
@@ -56,7 +58,7 @@ export function Layout() {
                       <>
                         {isActive && <span aria-hidden className="absolute inset-y-2 -left-3 w-1 rounded-r-full bg-brand-400" />}
                         <ItemIcon className={`h-[18px] w-[18px] ${isActive ? "text-brand-300" : "text-slate-400 group-hover:text-slate-200"}`} />
-                        {item.label}
+                        {t(item.label)}
                       </>
                     )}
                   </NavLink>
@@ -71,13 +73,13 @@ export function Layout() {
 
   // Which shop's data is on screen. Demo shops say clearly that their data is made up.
   const dataNote = user && (
-    <section aria-label="Shop" className="rounded-lg bg-white/5 p-3 text-xs leading-relaxed text-slate-400 ring-1 ring-inset ring-white/10">
+    <section aria-label={t("Shop")} className="rounded-lg bg-white/5 p-3 text-xs leading-relaxed text-slate-400 ring-1 ring-inset ring-white/10">
       <p className="mb-1 flex items-center gap-1.5 font-medium text-slate-200">
         <Icon.box className="h-3.5 w-3.5" /> {user.shop.name}
       </p>
       {user.shop.is_demo
-        ? <>Demo shop: <span className="text-violet-300">synthetic</span> sales, stock, costs and lead times · amounts in Rs</>
-        : <>Your shop&apos;s own data · amounts in Rs</>}
+        ? <span className="text-violet-200">{t("Demo shop: synthetic sales, stock, costs and lead times · amounts in Rs")}</span>
+        : t("Your shop's own data · amounts in Rs")}
     </section>
   );
 
@@ -96,17 +98,18 @@ export function Layout() {
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <button type="button" className="rounded-md p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
-                    aria-label="Open menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
+                    aria-label={t("Open menu")} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
               {menuOpen ? <Icon.close /> : <Icon.menu />}
             </button>
             <p className="truncate text-sm text-slate-500">
-              <span className="hidden sm:inline">{current.group} <span aria-hidden className="mx-1.5 text-slate-300">/</span></span>
-              <span className="font-medium text-slate-900">{current.label}</span>
+              <span className="hidden sm:inline">{t(current.group)} <span aria-hidden className="mx-1.5 text-slate-300">/</span></span>
+              <span className="font-medium text-slate-900">{t(current.label)}</span>
             </p>
           </div>
           {user && (
             <UserMenu name={user.full_name} email={user.email} shop={user.shop.name} role={user.role}
-                      dates={dates} onDates={(style) => { setDateStyle(style); setDates(style); }} onLogout={logout} />
+                      dates={dates} onDates={(style) => { setDateStyle(style); setDates(style); }}
+                      language={language} onLanguage={(next) => { setLang(next); setLanguage(next); }} onLogout={logout} />
           )}
         </header>
 
@@ -118,8 +121,8 @@ export function Layout() {
           </div>
         )}
 
-        {/* Re-drawn when the date style changes, so every date on the page switches together. */}
-        <main key={dates} className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8">
+        {/* Re-drawn when the date style or language changes, so the whole page switches together. */}
+        <main key={`${dates}-${language}`} className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8">
           <Outlet />
         </main>
       </div>
@@ -135,16 +138,16 @@ function Brand() {
       </span>
       <span className="leading-tight">
         <span className="block text-sm font-semibold text-white">Smart Inventory Nepal</span>
-        <span className="block text-[11px] text-slate-400">Forecast &amp; reorder</span>
+        <span className="block text-[11px] text-slate-400">{t("Forecast & reorder")}</span>
       </span>
     </div>
   );
 }
 
-/** Who is logged in, plus personal settings (date style) and log out, tucked behind one button. */
-function UserMenu({ name, email, shop, role, dates, onDates, onLogout }: {
+/** Who is logged in, plus personal settings (date style, language) and log out, tucked behind one button. */
+function UserMenu({ name, email, shop, role, dates, onDates, language, onLanguage, onLogout }: {
   name: string; email: string; shop: string; role: keyof typeof ROLE_TONE; dates: DateStyle;
-  onDates: (style: DateStyle) => void; onLogout: () => void;
+  onDates: (style: DateStyle) => void; language: Lang; onLanguage: (next: Lang) => void; onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -173,22 +176,29 @@ function UserMenu({ name, email, shop, role, dates, onDates, onLogout }: {
             <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
             <p className="truncate text-xs text-slate-500">{email}</p>
             <div className="mt-2 flex items-center gap-2">
-              <Badge tone={ROLE_TONE[role]}>{role}</Badge>
+              <Badge tone={ROLE_TONE[role]}>{t(role)}</Badge>
               <span className="truncate text-xs text-slate-500" title={shop}>{shop}</span>
             </div>
           </div>
           <label className="block px-4 py-3">
-            <span className="text-xs font-medium text-slate-600">Show dates as</span>
+            <span className="text-xs font-medium text-slate-600">{t("Show dates as")}</span>
             <select value={dates} onChange={(e) => onDates(e.target.value as DateStyle)}
                     className="mt-1 block w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-2.5 pr-8 text-sm text-slate-700">
               {DATE_STYLES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </label>
+          <label className="block px-4 pb-3">
+            <span className="text-xs font-medium text-slate-600">{t("Language")}</span>
+            <select value={language} onChange={(e) => onLanguage(e.target.value as Lang)}
+                    className="mt-1 block w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-2.5 pr-8 text-sm text-slate-700">
+              {LANGUAGES.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
           </label>
           <div className="border-t border-slate-100 p-1.5">
             <button type="button" onClick={() => { setOpen(false); onLogout(); }}
                     className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:bg-red-50 hover:text-red-700">
               <Icon.logout className="h-4 w-4" />
-              Log out
+              {t("Log out")}
             </button>
           </div>
         </div>

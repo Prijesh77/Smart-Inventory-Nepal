@@ -5,6 +5,7 @@ import type { PolicyDefaults } from "../../api/types";
 import { TextField } from "../../components/fields";
 import { Button, ErrorMessage, SimulatedTag } from "../../components/ui";
 import { fmtMoney, fmtPct } from "../../lib/format";
+import { t } from "../../lib/i18n";
 
 interface Values {
   service_level: string;          // percent, e.g. "95"
@@ -33,14 +34,14 @@ const number = (v: string, min: number, max: number) => v.trim() !== "" && !Numb
 export function validatePolicy(v: Values): Errors {
   const e: Errors = {};
   if (!number(v.service_level, 50, 99.9)) e.service_level = "Between 50 and 99.9";
-  if (!whole(v.review_period_days, 1, 28)) e.review_period_days = "Whole days, 1–28";
+  if (!whole(v.review_period_days, 1, 28)) e.review_period_days = t("Whole days, 1–28");
   if (!number(v.ordering_cost, 0, 100_000)) e.ordering_cost = `Between ${fmtMoney(0)} and ${fmtMoney(100_000)}`;
   if (!number(v.holding_cost_rate, 0.1, 100)) e.holding_cost_rate = "Between 0.1 and 100";
-  if (!whole(v.min_cycle_days, 1, 90)) e.min_cycle_days = "Whole days, 1–90";
-  if (!whole(v.max_cycle_days, 1, 180)) e.max_cycle_days = "Whole days, 1–180";
-  else if (!e.min_cycle_days && +v.max_cycle_days < +v.min_cycle_days) e.max_cycle_days = "Must be at least the minimum";
-  if (!whole(v.excess_cover_days, 7, 365)) e.excess_cover_days = "Whole days, 7–365";
-  if (!v.forecast_horizons.length) e.forecast_horizons = "Choose at least one";
+  if (!whole(v.min_cycle_days, 1, 90)) e.min_cycle_days = t("Whole days, 1–90");
+  if (!whole(v.max_cycle_days, 1, 180)) e.max_cycle_days = t("Whole days, 1–180");
+  else if (!e.min_cycle_days && +v.max_cycle_days < +v.min_cycle_days) e.max_cycle_days = t("Must be at least the minimum");
+  if (!whole(v.excess_cover_days, 7, 365)) e.excess_cover_days = t("Whole days, 7–365");
+  if (!v.forecast_horizons.length) e.forecast_horizons = t("Choose at least one");
   return e;
 }
 
@@ -70,7 +71,7 @@ export function PolicyForm({ policy, canEdit, onSaved }:
     try {
       onSaved(await api.put<PolicyDefaults>("/settings/policy", toPolicy(values)));
     } catch (err) {
-      setServerError(err instanceof ApiError ? err.message : "Could not save the settings");
+      setServerError(err instanceof ApiError ? err.message : t("Could not save the settings"));
     } finally {
       setSaving(false);
     }
@@ -83,23 +84,23 @@ export function PolicyForm({ policy, canEdit, onSaved }:
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-4">
-      {!canEdit && <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">Only admins can change these settings.</p>}
+      {!canEdit && <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">{t("Only admins can change these settings.")}</p>}
       {serverError && <ErrorMessage message={serverError} />}
       <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <legend className="mb-2 text-sm font-semibold text-slate-800">Reorder policy</legend>
-        {field("service_level", "Service level target (%)", "Chance of no stockout per period; higher = more safety stock")}
-        {field("review_period_days", "Review period (days)", "How often stock is checked and orders placed")}
-        {field("excess_cover_days", "Excess stock threshold (days of cover)", "Above this, stock is flagged as excess")}
-        {field("min_cycle_days", "Smallest order (days of demand)", "Lower limit on order size")}
-        {field("max_cycle_days", "Largest order (days of demand)", "Upper limit on order size, whatever EOQ says")}
+        <legend className="mb-2 text-sm font-semibold text-slate-800">{t("Reorder policy")}</legend>
+        {field("service_level", t("Service level target (%)"), t("Chance of no stockout per period; higher = more safety stock"))}
+        {field("review_period_days", t("Review period (days)"), t("How often stock is checked and orders placed"))}
+        {field("excess_cover_days", t("Excess stock threshold (days of cover)"), t("Above this, stock is flagged as excess"))}
+        {field("min_cycle_days", t("Smallest order (days of demand)"), t("Lower limit on order size"))}
+        {field("max_cycle_days", t("Largest order (days of demand)"), t("Upper limit on order size, whatever EOQ says"))}
       </fieldset>
       <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <legend className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">Cost assumptions <SimulatedTag /></legend>
-        {field("ordering_cost", `Cost per order (Rs)`, "Fixed cost of placing one order line")}
-        {field("holding_cost_rate", "Holding cost (% of unit cost per year)", "Cost of keeping stock on the shelf")}
+        <legend className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">{t("Cost assumptions")} <SimulatedTag /></legend>
+        {field("ordering_cost", t("Cost per order (Rs)"), t("Fixed cost of placing one order line"))}
+        {field("holding_cost_rate", t("Holding cost (% of unit cost per year)"), t("Cost of keeping stock on the shelf"))}
       </fieldset>
       <fieldset>
-        <legend className="text-sm font-semibold text-slate-800">Forecast lengths offered</legend>
+        <legend className="text-sm font-semibold text-slate-800">{t("Forecast lengths offered")}</legend>
         <div className="mt-2 flex gap-4">
           {[7, 14, 28].map((h) => (
             <label key={h} className="flex items-center gap-1.5 text-sm">
@@ -118,7 +119,7 @@ export function PolicyForm({ policy, canEdit, onSaved }:
       </p>
       {canEdit && (
         <div className="flex justify-end border-t border-slate-100 pt-4">
-          <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save settings"}</Button>
+          <Button type="submit" disabled={saving}>{saving ? t("Saving…") : t("Save settings")}</Button>
         </div>
       )}
     </form>

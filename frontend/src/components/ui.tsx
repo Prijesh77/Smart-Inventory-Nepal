@@ -1,5 +1,6 @@
 /** Small shared building blocks so every page looks and behaves the same. */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { t } from "../lib/i18n";
 
 import { useIsDemoShop } from "../auth/AuthContext";
 import { Icon, type IconName } from "./Icons";
@@ -45,7 +46,7 @@ export function Card({ title, subtitle, actions, children, className = "" }:
 }
 
 /** A small "working on it" indicator next to an action (training, importing, checking a file). */
-export function Spinner({ label = "Loading…" }: { label?: string }) {
+export function Spinner({ label = t("Loading…") }: { label?: string }) {
   return (
     <div role="status" className="inline-flex items-center gap-2.5 rounded-lg bg-brand-50/60 px-3 py-2 text-sm text-brand-800 ring-1 ring-inset ring-brand-100">
       <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" aria-hidden />
@@ -58,7 +59,7 @@ export function Spinner({ label = "Loading…" }: { label?: string }) {
  * Grey placeholder bars while a list or card loads, shaped like what is coming, so the page does not jump.
  * Screen readers hear the label ("Loading products…").
  */
-export function Skeleton({ label = "Loading…", rows = 4, variant = "table" }:
+export function Skeleton({ label = t("Loading…"), rows = 4, variant = "table" }:
   { label?: string; rows?: number; variant?: "table" | "cards" | "text" }) {
   const bar = "animate-pulse rounded-md bg-slate-200/70";
   return (
@@ -99,11 +100,11 @@ const NOTICE_TONES = {
 /** A message that stays on the page (e.g. one with a link to follow). Short confirmations use toasts instead. */
 export function Notice({ tone = "success", children, className = "" }:
   { tone?: keyof typeof NOTICE_TONES; children: ReactNode; className?: string }) {
-  const t = NOTICE_TONES[tone];
-  const NoticeIcon = Icon[t.name];
+  const style = NOTICE_TONES[tone];
+  const NoticeIcon = Icon[style.name];
   return (
-    <div role="status" className={`flex items-start gap-2.5 rounded-lg border p-3.5 text-sm ${t.box} ${className}`}>
-      <NoticeIcon className={`mt-0.5 h-4 w-4 shrink-0 ${t.icon}`} />
+    <div role="status" className={`flex items-start gap-2.5 rounded-lg border p-3.5 text-sm ${style.box} ${className}`}>
+      <NoticeIcon className={`mt-0.5 h-4 w-4 shrink-0 ${style.icon}`} />
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -116,7 +117,7 @@ export function ErrorMessage({ message, onRetry }: { message: string; onRetry?: 
         <Icon.alert className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
         <span>{message}</span>
       </span>
-      {onRetry && <Button variant="secondary" onClick={onRetry}>Try again</Button>}
+      {onRetry && <Button variant="secondary" onClick={onRetry}>{t("Try again")}</Button>}
     </div>
   );
 }
@@ -166,8 +167,8 @@ export function Badge({ tone = "gray", children }: { tone?: keyof typeof BADGE_T
 export function SimulatedTag() {
   if (!useIsDemoShop()) return null;
   return (
-    <span title="Based on simulated stock, cost or lead-time data, not real retailer records">
-      <Badge tone="purple">Simulated</Badge>
+    <span title={t("Based on simulated stock, cost or lead-time data, not real retailer records")}>
+      <Badge tone="purple">{t("Simulated")}</Badge>
     </span>
   );
 }
