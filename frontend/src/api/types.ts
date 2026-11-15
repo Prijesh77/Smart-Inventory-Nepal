@@ -104,6 +104,27 @@ export interface StockItem {
 
 export type ManualMovement = "adjustment" | "sale" | "return";
 
+export interface SaleLine {
+  product_id: number;
+  sku: string;
+  name: string;
+  units: number;
+  unit_price: string;
+  amount: string;
+  on_hand: number;
+}
+
+/** One day of counter sales: products with units sold, totals, and how many products have a figure. */
+export interface SalesDay {
+  sales_date: string;
+  items: SaleLine[];
+  total_units: number;
+  total_amount: string;
+  products_recorded: number;
+  active_products: number;
+  zero_rows_added: number | null;
+}
+
 export type ForecastModel = "auto" | "random_forest_v1" | "moving_avg_28";
 
 export interface ForecastRun {

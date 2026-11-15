@@ -17,6 +17,7 @@ Base path `/api/v1`. **Reads** need any login (viewer, manager or admin). **Chan
 | Dashboard | `GET /dashboard/summary` | below |
 | Analytics | `GET /analytics/sales-trend` · `/weekly-trend` · `/categories` | below |
 | Products | `GET/POST /products` · `GET/PATCH /products/{id}` · `GET /products/{id}/sales` · `GET /categories` · `GET /suppliers` | [11](11_seed_and_api.md) |
+| Sales entry | `GET /sales?date=` · `POST /sales` (adds to the day's sales and takes the units out of stock; negative units correct an entry; `close_day` records 0 for the rest) | — |
 | Inventory | `GET /inventory` · `/inventory/{id}` · `/inventory/alerts` · `/inventory/transactions` · `POST /inventory/adjustments` | [13](13_inventory_api.md) |
 | Forecasts | `POST/GET /forecasts/runs` · `GET /forecasts/runs/{id}` · `GET /forecasts/products/{id}` · `GET /forecasts/evaluations` | [14](14_forecast_and_recommendation_api.md) |
 | Recommendations | `POST/GET /recommendations/runs` · `GET /recommendations/runs/{id}` · `GET /recommendations` · `PATCH /recommendations/{id}` | [14](14_forecast_and_recommendation_api.md) |
