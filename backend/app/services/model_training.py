@@ -31,6 +31,7 @@ from app.services.forecast_engine import ForecastUnavailable, load_context, mode
 from app.services.forecasting import choose_model, holdout_wape, last_sales_date
 from ml.evaluation.metrics import summarize
 from ml.features.build import MIN_HISTORY_DAYS, build_rows
+from ml.features.demand_class import UNKNOWN, classify_demand
 from ml.models.baselines import moving_average
 from ml.models.forest import fit_forest, predict, save_model, training_rows
 
@@ -68,8 +69,7 @@ def train_shop_model(db: Session, path: Path | None = None) -> dict:
     rf = predict(check_model, holdout).reshape(len(panel.item_ids), HOLDOUT_DAYS)
     ma = moving_average(panel.sales[:, : holdout_origin - 1], HOLDOUT_DAYS, 28)
     actual = panel.sales[:, holdout_origin - 1:]
-    classes = dict(db.execute(select(Product.sku, Product.demand_class)).all())
-    item_class = np.array([classes.get(sku) or "unknown" for sku in panel.item_ids])
+    item_class = _demand_classes(db, panel, holdout_origin)
 
     db.execute(delete(ModelEvaluation).where(ModelEvaluation.model_name.in_(["random_forest_v1", "moving_avg_28"])))
     scores = []
@@ -154,6 +154,20 @@ def train_in_background(session_factory: sessionmaker[Session], shop_id: int) ->
             logger.exception("Training for shop %s failed", shop_id)
             db.rollback()
             _training[shop_id] = {"state": "failed", "message": f"Unexpected error: {type(exc).__name__}"}
+
+
+def _demand_classes(db: Session, panel, holdout_origin: int) -> np.ndarray:
+    """Each item's demand pattern. Products without one get it from their sales before the held-back days, and it is
+    saved on the product, so scoring, model choice and the Products page all use the same pattern."""
+    products = {p.sku: p for p in db.scalars(select(Product).where(Product.sku.in_(list(panel.item_ids))))}
+    computed = classify_demand(panel.sales[:, : holdout_origin - 1])
+    classes = []
+    for sku, pattern in zip(panel.item_ids, computed):
+        product = products.get(sku)
+        if product is not None and not product.demand_class and pattern != UNKNOWN:
+            product.demand_class = pattern
+        classes.append((product.demand_class if product is not None else None) or UNKNOWN)
+    return np.array(classes)
 
 
 def _num(value: float):

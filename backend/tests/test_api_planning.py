@@ -109,6 +109,46 @@ def test_auto_uses_the_moving_average_until_the_shop_has_a_trained_forest(planni
         assert model == "moving_avg_28" and "more accurate" in reason and "48% vs 61%" in reason
 
 
+def test_auto_picks_the_better_model_for_each_demand_pattern(planning, api, empty_model_folder):
+    import json
+    import numpy as np
+    from app.models import ModelEvaluation
+    from app.models.enums import EvaluationPeriod
+    from app.services.forecasting import choose_auto, mix_by_class
+    from ml.features.build import FEATURES
+
+    empty_model_folder.mkdir()
+    (empty_model_folder / "shop_1_random_forest.joblib").write_bytes(b"trained")
+    (empty_model_folder / "shop_1_random_forest.json").write_text(json.dumps({"features": FEATURES}))
+    # Held-back scores: the forest wins overall and on smooth items, the moving average wins on lumpy items.
+    # (wape, mae, n) -> errors = mae x n, actual units = errors / wape
+    scores = {("random_forest_v1", "all"): ("0.40", "1.0", 100), ("moving_avg_28", "all"): ("0.45", "1.1", 100),
+              ("random_forest_v1", "smooth"): ("0.30", "0.6", 50), ("moving_avg_28", "smooth"): ("0.35", "0.7", 50),
+              ("random_forest_v1", "lumpy"): ("1.40", "1.4", 50), ("moving_avg_28", "lumpy"): ("1.00", "1.0", 50)}
+    with api.app.state.make_session() as s:
+        for (name, cls), (wape, mae, n) in scores.items():
+            s.add(ModelEvaluation(model_name=name, model_version="v", period=EvaluationPeriod.TEST, horizon_days=28,
+                                  demand_class=cls, n_observations=n, mae=mae, wape=wape))
+        s.flush()
+        choice = choose_auto(s)
+    assert choice["model"] == "random_forest_v1" and choice["by_class"] == {"lumpy": "moving_avg_28"}
+    # smooth uses the forest: errors 30, actual 100; lumpy uses the moving average: errors 50, actual 50 -> 80 / 150
+    assert choice["combined_wape"] == pytest.approx(80 / 150)
+    assert "lumpy products" in choice["reason"] and "53.3%" in choice["reason"]
+
+    # Only the rows of products with a pattern listed in by_class change.
+    main, alternative = np.ones((3, 2)), np.full((3, 2), 9.0)
+    values, used = mix_by_class(main, {"moving_avg_28": alternative}, np.array([1, 2, 3]),
+                                {1: "smooth", 2: "lumpy", 3: None}, {"lumpy": "moving_avg_28"})
+    assert values[:, 0].tolist() == [1.0, 9.0, 1.0] and used == {"main": 2, "moving_avg_28": 1}
+
+    # When the forest is better for every pattern, nothing is mixed.
+    with api.app.state.make_session() as s:
+        s.query(ModelEvaluation).filter_by(model_name="moving_avg_28", demand_class="lumpy").update({"mae": 2.0})
+        s.flush()
+        assert choose_auto(s)["by_class"] == {}
+
+
 # ---------- recommendations ----------
 
 def start_recommendations(client, **body):

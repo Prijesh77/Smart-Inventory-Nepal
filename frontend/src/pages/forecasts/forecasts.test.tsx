@@ -8,6 +8,7 @@ import { mockFetch } from "../../test/fetchMock";
 import { meRoute, renderLoggedIn } from "../../test/renderWithAuth";
 import { ForecastsPage } from "./ForecastsPage";
 import { bestModels } from "./ModelComparison";
+import { runModelLabel } from "./ForecastRuns";
 
 const RUN: ForecastRun = {
   id: 7, model_name: "random_forest_v1", model_version: "v1-final", origin_date: "2016-05-23", horizon_days: 28,
@@ -60,6 +61,12 @@ describe("chart data helpers", () => {
       { date: "2016-05-23", units: 4, is_available: true }, { date: "2016-05-24", units: 4, is_available: true }] };
     expect(windowWape(backdated)).toBeCloseTo((1 + 1) / 8);   // |3-4| + |5-4| over 8 units
     expect(windowWape(FORECAST)).toBeNull();                   // future: nothing to compare yet
+  });
+
+  it("names both models when Auto used a different one for some demand patterns", () => {
+    expect(runModelLabel({ model_name: "random_forest_v1", params: null })).toBe("Random Forest");
+    expect(runModelLabel({ model_name: "random_forest_v1", params: { model_by_class: { lumpy: "moving_avg_28", intermittent: "moving_avg_28" } } }))
+      .toBe("Random Forest + 28-day moving average");
   });
 
   it("finds the best model per demand class", () => {

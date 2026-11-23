@@ -17,6 +17,12 @@ export const MODEL_LABEL: Record<string, string> = {
   naive: "Naive (repeat last day)",
 };
 
+/** "Random Forest", or "Random Forest + 28-day moving average" when Auto used another model for some demand patterns. */
+export function runModelLabel(run: Pick<ForecastRun, "model_name" | "params">): string {
+  const others = [...new Set(Object.values(run.params?.model_by_class ?? {}))].filter((m) => m !== run.model_name);
+  return [run.model_name, ...others].map((m) => MODEL_LABEL[m] ?? m).join(" + ");
+}
+
 const STATUS_TONE = { pending: "gray", running: "blue", completed: "green", failed: "red" } as const;
 
 export function RunsTable({ runs, selectedId, onSelect }:
@@ -41,7 +47,7 @@ export function RunsTable({ runs, selectedId, onSelect }:
           {runs.map((r) => (
             <tr key={r.id} className={r.id === selectedId ? "bg-brand-50" : ""}>
               <td className="py-2 pr-4 font-medium">#{r.id}</td>
-              <td className="py-2 pr-4">{MODEL_LABEL[r.model_name] ?? r.model_name}</td>
+              <td className="py-2 pr-4">{runModelLabel(r)}</td>
               <td className="py-2 pr-4">{fmtDate(r.origin_date)}</td>
               <td className="py-2 pr-4 text-right tabular-nums">{r.horizon_days}</td>
               <td className="py-2 pr-4">

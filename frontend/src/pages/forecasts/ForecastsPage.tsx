@@ -10,7 +10,7 @@ import { Card, EmptyState, ErrorMessage, PageHeader, Skeleton } from "../../comp
 import { useApi } from "../../hooks/useApi";
 import { fmtDate, fmtDecimal, fmtPct } from "../../lib/format";
 import { ModelComparison } from "./ModelComparison";
-import { MODEL_LABEL, NewRunForm, RunsTable, testScoreText } from "./ForecastRuns";
+import { NewRunForm, RunsTable, runModelLabel, testScoreText } from "./ForecastRuns";
 import { ShopModelCard } from "./ShopModelCard";
 import { t } from "../../lib/i18n";
 
@@ -60,7 +60,7 @@ export function ForecastsPage({ pollMs }: { pollMs?: number }) {
                          onSelect={(p) => { setProduct(p); setParam("product", String(p.id)); }} />
           {selectedRun && (
             <p className="text-sm text-slate-600">
-              Run #{selectedRun.id}: {MODEL_LABEL[selectedRun.model_name]}, {selectedRun.horizon_days} days from{" "}
+              Run #{selectedRun.id}: {runModelLabel(selectedRun)}, {selectedRun.horizon_days} days from{" "}
               {fmtDate(selectedRun.origin_date)}
             </p>
           )}
