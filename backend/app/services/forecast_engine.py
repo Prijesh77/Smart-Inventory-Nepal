@@ -112,12 +112,34 @@ class ForecastContext:
         return self.first_date + timedelta(days=d_num - 1)
 
 
+def fill_unrecorded_zeros(daily: pd.DataFrame) -> pd.DataFrame:
+    """On a day with sales recorded, a product that has sold before but has no row sold nothing.
+
+    Sales files often list only the products that sold, and a day may not be closed; without this, quiet days
+    would count as "no data" and the forecasts would only learn from the days a product sold (too high).
+    Days with nothing recorded at all stay unknown (NaN), and so do days before a product's first sale.
+    """
+    days = pd.DataFrame({"sales_date": np.sort(daily["sales_date"].unique())})
+    first = (daily.sort_values("sales_date").groupby("product_id")
+             .agg(item_id=("item_id", "first"), dept_id=("dept_id", "first"), cat_id=("cat_id", "first"),
+                  first_sale=("sales_date", "first"), list_price=("list_price", "last")).reset_index())
+    grid = first.merge(days, how="cross")
+    grid = grid[grid["sales_date"] >= grid["first_sale"]].drop(columns="first_sale")
+    have = daily[["product_id", "sales_date"]].assign(_have=True)
+    missing = grid.merge(have, on=["product_id", "sales_date"], how="left")
+    missing = missing[missing["_have"].isna()].drop(columns="_have")
+    if missing.empty:
+        return daily
+    missing = missing.assign(sales=0.0, sell_price=missing["list_price"].astype(float), is_available=True)
+    return pd.concat([daily, missing[daily.columns]], ignore_index=True)
+
+
 def load_context(db: Session, through: date) -> ForecastContext:
     """Item x day data for all active products with sales, extended with future rows up to `through`."""
     rows = db.execute(
         select(Product.id.label("product_id"), Product.sku.label("item_id"), Product.department.label("dept_id"),
                Category.code.label("cat_id"), DailySales.sales_date, DailySales.units.label("sales"),
-               DailySales.unit_price.label("sell_price"), DailySales.is_available)
+               DailySales.unit_price.label("sell_price"), DailySales.is_available, Product.unit_price.label("list_price"))
         .join(Product, Product.id == DailySales.product_id)
         .join(Category, Category.id == Product.category_id)
         .where(Product.is_active.is_(True))
@@ -125,9 +147,10 @@ def load_context(db: Session, through: date) -> ForecastContext:
     if not rows:
         raise ForecastUnavailable("No sales history in the database")
     daily = pd.DataFrame(rows, columns=["product_id", "item_id", "dept_id", "cat_id", "sales_date", "sales",
-                                        "sell_price", "is_available"])
+                                        "sell_price", "is_available", "list_price"])
     daily["sell_price"] = daily["sell_price"].astype(float)
     daily["sales"] = daily["sales"].astype(float)
+    daily = fill_unrecorded_zeros(daily).drop(columns="list_price")
     first, last = daily["sales_date"].min(), daily["sales_date"].max()
     through = max(through, last)
 

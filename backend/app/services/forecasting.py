@@ -15,6 +15,7 @@ from app.db.tenancy import shop_session
 from app.models import DailySales, Forecast, ForecastRun, ModelEvaluation, Product, User
 from app.models.enums import EvaluationPeriod, RunStatus
 from app.db.tenancy import current_shop_id
+from app.services import sales as sales_service
 from app.services.forecast_engine import (
     ASSUMPTIONS, MODELS, ForecastUnavailable, forecast_matrix, load_context, model_file, model_is_current,
 )
@@ -133,16 +134,26 @@ def mix_by_class(main: np.ndarray, alternatives: dict[str, np.ndarray], product_
     return values, used
 
 
+MIN_RECORDED_DAYS_FOR_FOREST = 14     # of the 28 days before the origin; the forest's recent-sales features need them
+
+
 def create_run(db: Session, *, model_name: str, horizon_days: int, origin_date: date | None, user: User) -> ForecastRun:
-    choice = choose_auto(db) if model_name == "auto" else {"model": model_name, "reason": None, "by_class": {}}
-    model_name, reason = choice["model"], choice["reason"]
-    mixing = {"model_by_class": choice["by_class"], "combined_wape_28d": choice["combined_wape"]} if choice["by_class"] else {}
-    if model_name not in MODELS:
-        raise InvalidReferenceError(f"Unknown model '{model_name}'. Choose from: {', '.join(MODELS)}")
     default_origin = last_sales_date(db) + timedelta(days=1)
     origin = origin_date or default_origin
     if origin > default_origin:
         raise AppError(f"Origin must be on or before {default_origin} (the day after the last sales data)")
+    choice = choose_auto(db) if model_name == "auto" else {"model": model_name, "reason": None, "by_class": {}}
+    if model_name == "auto" and choice["model"] != "moving_avg_28":
+        recorded = sales_service.coverage(db, through=origin - timedelta(days=1))["recorded_days"]
+        if recorded < MIN_RECORDED_DAYS_FOR_FOREST:
+            choice = {"model": "moving_avg_28", "by_class": {}, "combined_wape": None,
+                      "reason": (f"Auto: 28-day moving average, because only {recorded} of the 28 days before the "
+                                 "forecast have sales recorded, too few for the Random Forest's recent-sales "
+                                 "features. The moving average uses the last 28 days that were recorded.")}
+    model_name, reason = choice["model"], choice["reason"]
+    mixing = {"model_by_class": choice["by_class"], "combined_wape_28d": choice["combined_wape"]} if choice["by_class"] else {}
+    if model_name not in MODELS:
+        raise InvalidReferenceError(f"Unknown model '{model_name}'. Choose from: {', '.join(MODELS)}")
     run = ForecastRun(model_name=model_name, model_version=MODEL_VERSION[model_name], origin_date=origin,
                       horizon_days=horizon_days, status=RunStatus.PENDING, created_by=user.id,
                       params={"assumptions": ASSUMPTIONS, "history_ends": str(origin - timedelta(days=1)),

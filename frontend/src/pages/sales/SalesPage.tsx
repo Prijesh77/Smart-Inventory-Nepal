@@ -12,6 +12,7 @@ import { Button, Card, EmptyState, ErrorMessage, Notice, PageHeader, Skeleton } 
 import { useApi } from "../../hooks/useApi";
 import { fmtDate, fmtInt, fmtMoney } from "../../lib/format";
 import { t } from "../../lib/i18n";
+import { PartialDaysNote } from "../../components/SalesCoverageNotes";
 
 interface DraftLine { id: number; sku: string; name: string; units: string }
 
@@ -84,6 +85,7 @@ export function SalesPage() {
     <>
       <PageHeader title={t("Record sales")}
                   description={t("Enter what was sold at the counter. Each sale is added to the day's total and taken out of stock, so forecasts and reorder suggestions stay up to date.")} />
+      <PartialDaysNote className="mb-4" onPickDay={setDay} reloadKey={version} />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <div className="space-y-6 xl:col-span-2">

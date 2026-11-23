@@ -611,4 +611,11 @@ export const NE: Record<string, string> = {
     "आजको मौज्दात एकाइ, अहिलेसम्म मौज्दात गतिविधि नभएका सामानका लागि। पछिका परिवर्तन मौज्दात समायोजन वा प्राप्त अर्डरबाट हुन्छन्।",
   "Units sold per product per day. Feeds the forecasts; it does not change stock. Existing days are replaced.":
     "हरेक सामानको दैनिक बिकेका एकाइ। यसबाट पूर्वानुमान बन्छ; मौज्दात बदलिँदैन। भइरहेका दिन बदलिन्छन्।",
+  // ---- sales records that are incomplete
+  "No sales are recorded for {n} of the last 28 days (between {from} and {to}). Forecasts skip those days, so they and the order suggestions are less reliable.":
+    "पछिल्लो २८ दिनमध्ये {n} दिनको बिक्री दर्ता छैन ({from} देखि {to} बीच)। पूर्वानुमानले ती दिन छोड्छ, त्यसैले पूर्वानुमान र अर्डर सुझाव कम भरपर्दो हुन्छन्।",
+  "Record the missing days": "छुटेका दिन दर्ता गर्नुहोस्",
+  "Some recent days are only partly entered. Products with no entry count as 0 sold on those days; if sales are missing, add them.":
+    "हालका केही दिनको बिक्री आधा मात्र दर्ता छ। दर्ता नभएका सामान ती दिन ० बिकेको मानिन्छ; बिक्री छुटेको भए थप्नुहोस्।",
+  "{date}: {n} of {total} products": "{date}: {total} मध्ये {n} सामान",
 };

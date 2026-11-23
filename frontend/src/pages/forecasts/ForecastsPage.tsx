@@ -13,6 +13,7 @@ import { ModelComparison } from "./ModelComparison";
 import { NewRunForm, RunsTable, runModelLabel, testScoreText } from "./ForecastRuns";
 import { ShopModelCard } from "./ShopModelCard";
 import { t } from "../../lib/i18n";
+import { MissingDaysNote } from "../../components/SalesCoverageNotes";
 
 export function ForecastsPage({ pollMs }: { pollMs?: number }) {
   const { can } = useAuth();
@@ -53,6 +54,7 @@ export function ForecastsPage({ pollMs }: { pollMs?: number }) {
     <>
       <PageHeader title={t("Demand forecasting")}
                   description={t("Actual sales and predicted demand per product, plus how accurate each model has been.")} />
+      <MissingDaysNote className="mb-4" />
 
       <Card title={t("Actual sales vs forecast")}>
         <div className="mb-4 flex flex-wrap items-end gap-4">

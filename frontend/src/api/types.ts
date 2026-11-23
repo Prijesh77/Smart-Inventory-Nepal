@@ -125,6 +125,15 @@ export interface SalesDay {
   zero_rows_added: number | null;
 }
 
+/** How complete the last 28 days of sales records are (GET /sales/coverage). */
+export interface SalesCoverage {
+  window_start: string | null;
+  window_end: string | null;
+  recorded_days: number;
+  missing_days: string[];
+  partial_days: { date: string; products_recorded: number; products_expected: number }[];
+}
+
 export type ForecastModel = "auto" | "random_forest_v1" | "moving_avg_28";
 
 export interface ForecastRun {
