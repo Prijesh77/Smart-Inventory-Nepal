@@ -12,6 +12,7 @@ import { useApi } from "../hooks/useApi";
 import { RISK_STYLE, STOCK_STATUS_STYLE } from "../lib/colors";
 import { fmtDate, fmtDateTime, fmtInt, fmtMoney, humanize } from "../lib/format";
 import { t } from "../lib/i18n";
+import { PartialDaysNote } from "../components/SalesCoverageNotes";
 import { runPlanning } from "../lib/runs";
 
 const STOCK_ORDER: StockStatus[] = ["out_of_stock", "low", "ok", "no_recent_demand"];
@@ -67,6 +68,7 @@ export function OverviewPage({ pollMs }: { pollMs?: number }) {
   return (
     <>
       {header}
+      <PartialDaysNote className="mb-4" />
       {planning && <div className="mb-4"><Spinner label={planning} /></div>}
       {planError && <div className="mb-4"><ErrorMessage message={planError} /></div>}
 

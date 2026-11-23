@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, status
 from app.api.deps import DbSession, require_roles
 from app.models import User
 from app.models.enums import UserRole
-from app.schemas.sales import SalesDayOut, SalesEntryIn
+from app.schemas.sales import SalesCoverageOut, SalesDayOut, SalesEntryIn
 from app.services import sales as service
 
 router = APIRouter(prefix="/sales", tags=["sales"])
@@ -18,6 +18,12 @@ Manager = Annotated[User, Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER
 @router.get("", response_model=SalesDayOut, summary="Sales recorded for one day (default: today)")
 def sales_for_day(db: DbSession, day: date | None = Query(None, alias="date")) -> SalesDayOut:
     return SalesDayOut(**service.day_summary(db, day or date.today()))
+
+
+@router.get("/coverage", response_model=SalesCoverageOut,
+            summary="How complete the last 28 days of sales records are (days missing or only partly entered)")
+def sales_coverage(db: DbSession) -> SalesCoverageOut:
+    return SalesCoverageOut(**service.coverage(db))
 
 
 @router.post("", response_model=SalesDayOut, status_code=status.HTTP_201_CREATED,

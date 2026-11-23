@@ -14,7 +14,6 @@ them. On slow-moving items they are often hard to beat.
 
 from __future__ import annotations
 
-import warnings
 from functools import partial
 from typing import Callable
 
@@ -57,12 +56,16 @@ def seasonal_naive(history: np.ndarray, horizon: int, season: int = 7) -> np.nda
 
 
 def moving_average(history: np.ndarray, horizon: int, window: int) -> np.ndarray:
-    """Every future day equals the mean of the last `window` available days."""
-    recent = history[:, -window:]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=RuntimeWarning)  # all-NaN rows
-        level = np.nanmean(recent, axis=1)
-    level = np.where(np.isnan(level), last_valid(history), level)
+    """Every future day equals the mean of the last `window` available days.
+
+    Days with no data (out of stock, or nothing recorded) are skipped, not counted, so a gap in the records
+    reaches further back instead of leaving the average to rest on one or two days.
+    """
+    level = np.full(history.shape[0], np.nan)
+    for i, row in enumerate(history):
+        known = row[~np.isnan(row)]
+        if known.size:
+            level[i] = known[-window:].mean()
     return _repeat(level, horizon)
 
 

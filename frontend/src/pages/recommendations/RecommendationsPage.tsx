@@ -16,6 +16,7 @@ import { createDraftOrders } from "./actions";
 import { NewRunForm } from "./NewRunForm";
 import { RecommendationTable } from "./RecommendationTable";
 import { t } from "../../lib/i18n";
+import { MissingDaysNote } from "../../components/SalesCoverageNotes";
 
 const PAGE_SIZE = 25;
 const RISKS: RiskCategory[] = ["critical_stockout_risk", "reorder_soon", "excess_inventory", "healthy", "insufficient_data"];
@@ -89,6 +90,7 @@ export function RecommendationsPage({ pollMs }: { pollMs?: number }) {
         description={t("What to order, how much and why, for every product. Approve the ones you agree with, then turn them into draft purchase orders.")}
         actions={canReview && <Button onClick={() => setCreatingRun(true)}>{t("New recommendations")}</Button>}
       />
+      <MissingDaysNote className="mb-4" />
 
       {message && (message.kind === "error"
         ? <div className="mb-4"><ErrorMessage message={message.text} /></div>

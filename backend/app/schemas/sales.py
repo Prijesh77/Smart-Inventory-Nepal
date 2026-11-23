@@ -37,3 +37,18 @@ class SalesDayOut(BaseModel):
     products_recorded: int = Field(description="Products with a sales row that day, including 0-unit rows")
     active_products: int
     zero_rows_added: int | None = Field(default=None, description="Set when a day was closed")
+
+
+class PartialDayOut(BaseModel):
+    date: date
+    products_recorded: int
+    products_expected: int = Field(description="Active products that had started selling by that day")
+
+
+class SalesCoverageOut(BaseModel):
+    window_start: date | None = Field(description="First day of the 28 days checked (ending on the last sales day)")
+    window_end: date | None
+    recorded_days: int = Field(description="Days in the window with any sales recorded")
+    missing_days: list[date] = Field(description="Open days in the window with nothing recorded; forecasts skip them")
+    partial_days: list[PartialDayOut] = Field(
+        description="Recent days where only some products were entered and the day was not closed")

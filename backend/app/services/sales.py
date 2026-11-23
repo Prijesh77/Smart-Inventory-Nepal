@@ -119,3 +119,38 @@ def day_summary(db: Session, day: date) -> dict:
         "products_recorded": recorded,          # products with a row that day, including 0-unit rows
         "active_products": active,
     }
+
+
+COVERAGE_DAYS = 28          # the window the forecasts look at most closely
+PARTIAL_LOOKBACK_DAYS = 14  # how far back to point out days that were only partly entered
+
+
+def coverage(db: Session, through: date | None = None) -> dict:
+    """How complete the recent sales records are, for warnings on the Forecasting, Reorder and Sales pages.
+
+    missing_days: open days in the last 28 days up to `through` (default: the last sales day) with nothing
+        recorded. The forecasts skip them, so many of them make the forecasts less reliable.
+    partial_days: recent days (not today) where some products that have sold before have no entry (the day
+        was not closed). The forecasts count those products as 0 sold that day.
+    """
+    last = db.scalar(select(func.max(DailySales.sales_date)))
+    if last is None:
+        return {"window_start": None, "window_end": None, "recorded_days": 0, "missing_days": [], "partial_days": []}
+    end = through or last
+    start = end - timedelta(days=COVERAGE_DAYS - 1)
+    counts = dict(db.execute(select(DailySales.sales_date, func.count()).where(DailySales.sales_date.between(
+        min(start, last - timedelta(days=PARTIAL_LOOKBACK_DAYS)), max(end, last))).group_by(DailySales.sales_date)).all())
+    closed = set(db.scalars(select(CalendarDay.day).where(CalendarDay.day.between(start, end),
+                                                          CalendarDay.is_store_open.is_(False))))
+    window = [start + timedelta(days=k) for k in range(COVERAGE_DAYS)]
+    # A product is expected on a day once it has started selling (the same rule the forecasts use).
+    first_sales = list(db.scalars(select(func.min(DailySales.sales_date)).join(Product, Product.id == DailySales.product_id)
+                                  .where(Product.is_active.is_(True)).group_by(DailySales.product_id)))
+    today = date.today()
+    partial = []
+    for d, n in sorted(counts.items()):
+        expected = sum(1 for f in first_sales if f <= d)
+        if last - timedelta(days=PARTIAL_LOOKBACK_DAYS) < d < today and n < expected:
+            partial.append({"date": d, "products_recorded": n, "products_expected": expected})
+    return {"window_start": start, "window_end": end, "recorded_days": sum(1 for d in window if d in counts),
+            "missing_days": [d for d in window if d not in counts and d not in closed], "partial_days": partial}

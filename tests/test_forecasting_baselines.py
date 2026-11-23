@@ -60,10 +60,13 @@ def test_seasonal_naive_uses_week_before_for_closed_day():
     assert out.tolist() == [[1, 2, 30, 4, 5, 6, 7]]
 
 
-def test_moving_average_ignores_unavailable_days():
+def test_moving_average_skips_unavailable_days():
     history = np.array([[9, 2, NAN, 4]])
-    # last 3 days: 2, NaN, 4 -> mean of available = 3
-    assert moving_average(history, 2, window=3).tolist() == [[3, 3]]
+    # last 3 available days: 9, 2, 4 -> mean 5 (the missing day is skipped, not counted)
+    assert moving_average(history, 2, window=3).tolist() == [[5, 5]]
+    # after a long gap the average still rests on `window` known days
+    gap = np.array([[2.0] * 30 + [NAN] * 25 + [0.0]])
+    assert moving_average(gap, 1, window=28).tolist() == [[pytest.approx(54 / 28)]]
 
 
 def test_all_baselines_return_expected_shape():
