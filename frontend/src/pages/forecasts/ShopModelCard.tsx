@@ -50,10 +50,7 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
 
   return (
     <div className="space-y-3 text-sm text-slate-700">
-      <p>
-        <span className="font-medium text-slate-900">Forecasts use: {MODEL_LABEL[data.auto_uses] ?? data.auto_uses}.</span>{" "}
-        {data.auto_reason?.replace(/^Auto: [^,]*, /, "Chosen ")}
-      </p>
+      <p>{autoSentence(data.auto_uses, data.auto_reason)}</p>
       {data.needs_retraining && (
         <p role="note" className="rounded-md bg-amber-50 p-3 text-amber-900">
           This Random Forest was trained before the forecasts learned about Nepali festivals. Retrain it so it can
@@ -93,4 +90,16 @@ export function ShopModelCard({ canTrain, onTrained, pollMs = 2000 }:
       )}
     </div>
   );
+}
+
+
+/** "Forecasts use: Random Forest. Chosen because …", or, when Auto mixes models per demand pattern,
+ * "Forecasts use: this shop's Random Forest for most products, and the 28-day moving average for …". */
+export function autoSentence(uses: string, reason: string | null) {
+  const label = MODEL_LABEL[uses] ?? uses;
+  if (reason?.includes(" for most products")) {
+    return <><span className="font-medium text-slate-900">Forecasts use:</span> {reason.replace(/^Auto: /, "")}</>;
+  }
+  return <><span className="font-medium text-slate-900">Forecasts use: {label}.</span>{" "}
+    {reason?.replace(/^Auto: [^,]*, /, "Chosen ")}</>;
 }

@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -9,6 +9,7 @@ import { meRoute, renderLoggedIn } from "../../test/renderWithAuth";
 import { ForecastsPage } from "./ForecastsPage";
 import { bestModels } from "./ModelComparison";
 import { runModelLabel } from "./ForecastRuns";
+import { autoSentence } from "./ShopModelCard";
 
 const RUN: ForecastRun = {
   id: 7, model_name: "random_forest_v1", model_version: "v1-final", origin_date: "2016-05-23", horizon_days: 28,
@@ -130,4 +131,17 @@ describe("ForecastsPage", () => {
     renderLoggedIn(<ForecastsPage pollMs={0} />, "/forecasts");
     return mocks;
   }
+});
+
+describe("autoSentence", () => {
+  it("reads well for a single model and for models mixed by demand pattern", () => {
+    const { container, rerender } = render(<p>{autoSentence("moving_avg_28",
+      "Auto: 28-day moving average, because this shop's Random Forest is not trained yet.")}</p>);
+    expect(container.textContent).toBe(
+      "Forecasts use: 28-day moving average. Chosen because this shop's Random Forest is not trained yet.");
+    rerender(<p>{autoSentence("random_forest_v1",
+      "Auto: this shop's Random Forest for most products, and the 28-day moving average for lumpy products.")}</p>);
+    expect(container.textContent).toBe(
+      "Forecasts use: this shop's Random Forest for most products, and the 28-day moving average for lumpy products.");
+  });
 });

@@ -68,5 +68,7 @@ describe("date display styles", () => {
     expect(fmtDate("1900-01-01")).toBe("1 Jan 1900");
     expect(formatBs("not a date")).toBeNull();
     expect(fmtDateTime(new Date(2026, 10, 1, 9, 5).toISOString())).toBe("15 Kar, 09:05");
+    // Times saved without a time zone (SQLite) are UTC, so they match the same moment written with "Z".
+    expect(fmtDateTime("2026-11-01 03:20:00")).toBe(fmtDateTime("2026-11-01T03:20:00Z"));
   });
 });

@@ -69,10 +69,12 @@ export function fmtShortDate(value: string): string {
   return bs ?? adDate(value, false);
 }
 
-/** A moment (e.g. when an import ran) as date and local time: "15 Kartik, 10:26". */
+/** A moment (e.g. when an import ran) as date and local time: "15 Kartik, 10:26".
+ * The server stores times in UTC; SQLite drops the time zone, so a time without one is read as UTC. */
 export function fmtDateTime(value: string | null | undefined): string {
   if (!value) return DASH;
-  const moment = new Date(value);
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(value);
+  const moment = new Date(hasZone ? value : `${value.replace(" ", "T")}Z`);
   const time = moment.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   const local = `${moment.getFullYear()}-${String(moment.getMonth() + 1).padStart(2, "0")}-${String(moment.getDate()).padStart(2, "0")}`;
   return `${fmtShortDate(local)}, ${time}`;
