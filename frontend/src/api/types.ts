@@ -134,7 +134,9 @@ export interface ForecastRun {
   origin_date: string;
   horizon_days: number;
   status: RunStatus;
-  params: { assumptions?: string[]; history_ends?: string; model_choice?: string } | null;
+  params: { assumptions?: string[]; history_ends?: string; model_choice?: string;
+           /** Demand patterns forecast with another model than model_name (Auto picks per pattern). */
+           model_by_class?: Record<string, string>; combined_wape_28d?: number } | null;
   metrics: { products?: number; total_units?: number; test_wape_28d?: number; test_bias_pct_28d?: number } | null;
   error_message: string | null;
   created_at: string;

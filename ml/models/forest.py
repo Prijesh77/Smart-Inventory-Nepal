@@ -21,14 +21,16 @@ from sklearn.ensemble import RandomForestRegressor
 from ml import config
 from ml.features.build import FEATURES
 
-# Chosen for a laptop: max_samples and min_samples_leaf keep training to a few
-# minutes and the saved file small. Changing them is a validation experiment,
-# never a test-set decision.
+# Tuned with a rolling-origin backtest over 4 past months on the demo shops
+# (backend/scripts/compare_models.py, docs/31_model_comparison.md): more trees and
+# smaller leaves beat the earlier 100 trees / leaf 50 / 30% samples in both shops.
+# max_samples still keeps training fast on a laptop. Changing these is a
+# validation experiment, never a test-set decision.
 RF_PARAMS: dict[str, Any] = {
-    "n_estimators": 100,
-    "min_samples_leaf": 50,
+    "n_estimators": 200,
+    "min_samples_leaf": 10,
     "max_features": 0.5,
-    "max_samples": 0.3,
+    "max_samples": 0.5,
     "n_jobs": -1,
     "random_state": config.SEED,
 }
