@@ -19,4 +19,5 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   sessionStorage.clear();
+  localStorage.removeItem("smart-inventory.token");      // a remembered login
 });

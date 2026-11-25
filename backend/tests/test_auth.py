@@ -43,6 +43,18 @@ def test_login_returns_token_and_user(api):
     assert "hashed_password" not in body["user"]
 
 
+def test_remember_me_gives_a_30_day_login(api):
+    normal = api.post("/api/v1/auth/login", data={"username": "manager@test.local", "password": TEST_PASSWORD}).json()
+    remembered = api.post("/api/v1/auth/login", data={"username": "manager@test.local", "password": TEST_PASSWORD,
+                                                       "remember": "true"}).json()
+    assert normal["expires_in"] == 60 * 60
+    assert remembered["expires_in"] == 30 * 24 * 60 * 60
+    claims = security.decode_access_token(remembered["access_token"])
+    assert claims["exp"] - claims["iat"] == 30 * 24 * 60 * 60
+    me = api.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {remembered['access_token']}"})
+    assert me.status_code == 200 and me.json()["email"] == "manager@test.local"
+
+
 @pytest.mark.parametrize("email, password", [
     ("manager@test.local", "wrong-password-1"),     # wrong password
     ("nobody@test.local", TEST_PASSWORD),           # unknown email

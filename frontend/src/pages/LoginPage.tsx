@@ -13,6 +13,7 @@ export function LoginPage() {
   const from = (useLocation().state as { from?: string } | null)?.from ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [language, setLanguage] = useState<Lang>(lang);     // re-draws this page when the language changes
@@ -24,7 +25,7 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, remember);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("Login failed. Please try again."));
@@ -103,6 +104,16 @@ export function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
+                       aria-describedby="remember-hint" className="h-4 w-4 rounded border-slate-300" />
+                {t("Remember me on this device")}
+              </label>
+              <p id="remember-hint" className="mt-1 pl-6 text-xs text-slate-500">
+                {t("Stay logged in for 30 days. Do not tick this on a shared computer.")}
+              </p>
             </div>
             <Button type="submit" className="w-full py-2.5" disabled={submitting || !email || !password}>
               {submitting ? t("Logging in…") : t("Log in")}
