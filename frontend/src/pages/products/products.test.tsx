@@ -16,7 +16,7 @@ const CATEGORIES = [{ id: 1, code: "FOODS", name: "Foods" }, { id: 2, code: "HOB
 function product(overrides: Partial<Product> = {}): Product {
   return {
     id: 13, sku: "FOODS_1_013", name: "Foods 1 - Item 013", category: CATEGORIES[0], department: "FOODS_1",
-    supplier: SUPPLIER, unit_price: "1.50", unit_cost: "0.98", lead_time_days: null, effective_lead_time_days: 5,
+    supplier: SUPPLIER, shelf: null, unit_price: "1.50", unit_cost: "0.98", lead_time_days: null, effective_lead_time_days: 5,
     min_order_qty: 6, pack_size: 6, demand_class: "lumpy", is_active: true, on_hand: 93,
     created_at: "2026-10-29T10:00:00Z", updated_at: "2026-10-29T10:00:00Z", ...overrides,
   };
@@ -116,7 +116,7 @@ describe("ProductsPage", () => {
 });
 
 describe("product form rules", () => {
-  const base = { sku: "A_1", name: "x", category_code: "FOODS", department: "", supplier_id: "", unit_price: "1.00",
+  const base = { sku: "A_1", name: "x", category_code: "FOODS", department: "", supplier_id: "", shelf_id: "", unit_price: "1.00",
     unit_cost: "", lead_time_days: "", min_order_qty: "1", pack_size: "1", is_active: true };
 
   it("matches the API's rules", () => {

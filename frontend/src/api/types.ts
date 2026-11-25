@@ -224,6 +224,8 @@ export interface PurchaseOrderLine {
   product_id: number;
   sku: string;
   name: string;
+  shelf_code: string | null;
+  shelf_name: string | null;
   quantity_ordered: number;
   quantity_received: number;
   quantity_outstanding: number;
@@ -363,6 +365,18 @@ export interface Supplier {
 
 export type DemandClass = "smooth" | "erratic" | "intermittent" | "lumpy";
 
+/** A place in the shop where products are kept (GET /shelves). */
+export interface ShelfRef {
+  id: number;
+  code: string;
+  name: string;
+  area: string | null;
+}
+
+export interface Shelf extends ShelfRef {
+  product_count: number;
+}
+
 export interface Product {
   id: number;
   sku: string;
@@ -370,6 +384,7 @@ export interface Product {
   category: Category;
   department: string | null;
   supplier: Supplier | null;
+  shelf: ShelfRef | null;
   unit_price: string;
   unit_cost: string | null;
   lead_time_days: number | null;
@@ -390,6 +405,7 @@ export interface ProductInput {
   category_code: string;
   department: string | null;
   supplier_id: number | null;
+  shelf_id: number | null;
   unit_price: string;
   unit_cost: string | null;
   lead_time_days: number | null;

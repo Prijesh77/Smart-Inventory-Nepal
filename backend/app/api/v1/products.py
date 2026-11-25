@@ -24,13 +24,14 @@ def list_products(
     supplier_id: int | None = None,
     demand_class: str | None = Query(None, description="smooth, erratic, intermittent or lumpy"),
     is_active: bool | None = None,
+    shelf_id: int | None = Query(None, ge=0, description="Products on this shelf; 0 = products with no shelf"),
     sort: service.SortField = "sku",
     order: Literal["asc", "desc"] = "asc",
     db: Session = Depends(get_db),
 ) -> Page[ProductOut]:
     items, total = service.list_products(
         db, page=page, page_size=page_size, search=search, category=category, supplier_id=supplier_id,
-        demand_class=demand_class, is_active=is_active, sort=sort, order=order,
+        demand_class=demand_class, is_active=is_active, shelf_id=shelf_id, sort=sort, order=order,
     )
     return Page.build(items, total, page, page_size)
 

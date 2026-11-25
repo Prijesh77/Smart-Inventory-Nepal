@@ -56,6 +56,7 @@ export function ProductPicker({ label, selected, onSelect, supplierId }: {
                 onMouseDown={(e) => { e.preventDefault(); choose(p); }}
                 className={`cursor-pointer px-3 py-2 ${i === active ? "bg-brand-50 text-brand-700" : "hover:bg-slate-50"}`}>
               <span className="font-medium">{p.sku}</span> <span className="text-slate-500">{p.name}</span>
+              {p.shelf && <span className="ml-2 rounded bg-slate-100 px-1.5 text-xs font-semibold text-slate-600">{p.shelf.code}</span>}
             </li>
           ))}
         </ul>

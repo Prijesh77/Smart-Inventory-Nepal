@@ -35,6 +35,7 @@ export function ProductsPage() {
     category: params.get("category") ?? "",
     supplier_id: params.get("supplier_id") ?? "",
     demand_class: params.get("demand_class") ?? "",
+    shelf_id: params.get("shelf_id") ?? "",
     is_active: params.get("is_active") ?? "true",
     sort: params.get("sort") ?? "sku",
     order: (params.get("order") ?? "asc") as "asc" | "desc",
@@ -53,7 +54,7 @@ export function ProductsPage() {
       page, page_size: PAGE_SIZE, search, ...filters,
       is_active: filters.is_active === "all" ? undefined : filters.is_active,
     }, signal),
-    [page, search, filters.category, filters.supplier_id, filters.demand_class, filters.is_active, filters.sort, filters.order],
+    [page, search, filters.category, filters.supplier_id, filters.demand_class, filters.shelf_id, filters.is_active, filters.sort, filters.order],
   );
 
   function onSort(field: string) {
@@ -84,6 +85,11 @@ export function ProductsPage() {
             <option value="">{t("All suppliers")}</option>
             {reference.data?.suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </FilterSelect>
+          <FilterSelect label={t("Shelf")} value={filters.shelf_id} onChange={(v) => update({ shelf_id: v })}>
+            <option value="">{t("All shelves")}</option>
+            <option value="0">{t("Not on a shelf yet")}</option>
+            {reference.data?.shelves.map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}
+          </FilterSelect>
           <FilterSelect label={t("Demand pattern")} value={filters.demand_class} onChange={(v) => update({ demand_class: v })}>
             <option value="">{t("All demand patterns")}</option>
             {Object.keys(CLASS_TONE).map((c) => <option key={c} value={c}>{t(humanize(c))}</option>)}
@@ -106,6 +112,7 @@ export function ProductsPage() {
                   <SortHeader label={t("SKU")} field="sku" {...filters} onSort={onSort} />
                   <SortHeader label={t("Name")} field="name" {...filters} onSort={onSort} />
                   <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">{t("Category")}</th>
+                  <SortHeader label={t("Shelf")} field="shelf" {...filters} onSort={onSort} />
                   <th scope="col" className="py-2 pr-4 text-left font-medium uppercase tracking-wide">{t("Supplier")}</th>
                   <SortHeader label={t("Price")} field="unit_price" {...filters} onSort={onSort} align="right" />
                   <SortHeader label={t("On hand")} field="on_hand" {...filters} onSort={onSort} align="right" />
@@ -122,6 +129,10 @@ export function ProductsPage() {
                     </td>
                     <td className="py-2 pr-4">{p.name}</td>
                     <td className="py-2 pr-4 text-slate-600">{p.category.name}</td>
+                    <td className="py-2 pr-4">
+                      {p.shelf ? <span title={p.shelf.name} className="rounded bg-brand-50 px-1.5 py-0.5 text-xs font-semibold text-brand-700">{p.shelf.code}</span>
+                        : <span className="text-slate-400">—</span>}
+                    </td>
                     <td className="py-2 pr-4 text-slate-600">{p.supplier?.name ?? "—"}</td>
                     <td className="py-2 pr-4 text-right tabular-nums">{fmtMoney(p.unit_price)}</td>
                     <td className="py-2 pr-4 text-right tabular-nums">{fmtInt(p.on_hand)}</td>
@@ -150,6 +161,7 @@ export function ProductsPage() {
         <ProductForm
           categories={reference.data?.categories ?? []}
           suppliers={reference.data?.suppliers ?? []}
+          shelves={reference.data?.shelves ?? []}
           onCancel={() => setCreating(false)}
           onSaved={(p) => {
             setCreating(false);

@@ -55,6 +55,7 @@ export function ReceiveForm({ order, onReceived, onCancel }:
         <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th scope="col" className="py-2 pr-3 font-medium">{t("Product")}</th>
+            <th scope="col" className="py-2 pr-3 font-medium">{t("Put on shelf")}</th>
             <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Ordered")}</th>
             <th scope="col" className="py-2 pr-3 text-right font-medium">{t("Already received")}</th>
             <th scope="col" className="py-2 font-medium">{t("Received now")}</th>
@@ -64,6 +65,7 @@ export function ReceiveForm({ order, onReceived, onCancel }:
           {open.map((l) => (
             <tr key={l.id}>
               <td className="py-2 pr-3 font-medium">{l.sku}</td>
+              <td className="py-2 pr-3 text-slate-600">{l.shelf_code ?? "—"}</td>
               <td className="py-2 pr-3 text-right tabular-nums">{fmtInt(l.quantity_ordered)}</td>
               <td className="py-2 pr-3 text-right tabular-nums">{fmtInt(l.quantity_received)}</td>
               <td className="py-2">

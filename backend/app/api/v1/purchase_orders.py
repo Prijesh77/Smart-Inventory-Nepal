@@ -29,6 +29,8 @@ def to_out(db: Session, pos: list[PurchaseOrder]) -> list[PurchaseOrderOut]:
             product = details["products"][item.product_id]
             lines.append(LineOut(
                 id=item.id, product_id=item.product_id, sku=product.sku, name=product.name,
+                shelf_code=product.shelf.code if product.shelf else None,
+                shelf_name=product.shelf.name if product.shelf else None,
                 quantity_ordered=item.quantity_ordered, quantity_received=item.quantity_received,
                 quantity_outstanding=item.quantity_ordered - item.quantity_received, unit_cost=item.unit_cost,
                 line_total=service.line_total(item.quantity_ordered, item.unit_cost),

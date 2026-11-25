@@ -32,7 +32,8 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppError, NotFoundError
 from app.db.tenancy import current_shop_id
 from app.models import (
-    CalendarDay, Category, DailySales, ImportJob, InventoryBalance, InventoryTransaction, Product, Supplier, User,
+    CalendarDay, Category, DailySales, ImportJob, InventoryBalance, InventoryTransaction, Product, Shelf, Supplier,
+    User,
 )
 from app.models.enums import RunStatus, TransactionType
 from app.services.bs_calendar import parse_date
@@ -83,6 +84,8 @@ IMPORT_TYPES: dict[str, dict] = {
             Column("pack_size", False, "Units per pack or carton (default 1)", ("4", "30")),
             Column("min_order_qty", False, "Smallest quantity the supplier accepts (default 1)", ("4", "30")),
             Column("lead_time_days", False, "Only if different from the supplier's lead time", ("", "")),
+            Column("shelf", False, "Shelf code where it is kept; a new code creates the shelf (empty = unchanged)",
+                   ("A-1", "B-1")),
         ],
     },
     "opening_stock": {
@@ -366,12 +369,13 @@ def _parse_products(db: Session, table: Table, _mapping: Mapping) -> Parsed:
         pack = row.whole("pack_size", required=False, minimum=1, maximum=100_000, default=1)
         moq = row.whole("min_order_qty", required=False, minimum=1, maximum=100_000, default=1)
         lead = row.whole("lead_time_days", required=False, minimum=1, maximum=365)
+        shelf = row.code("shelf", required=False, max_length=30)
         if row.ok and not _duplicate(result, seen, sku, line, "sku", f"SKU {sku} appears twice"):
             result.rows.append({"sku": sku, "name": name, "category": category,
                                 "supplier_id": suppliers.get(supplier_code) if supplier_code else None,
                                 "supplier_code": supplier_code, "unit_price": price, "unit_cost": cost,
                                 "pack_size": pack, "min_order_qty": moq, "lead_time_days": lead,
-                                "exists": sku in existing})
+                                "shelf": shelf, "exists": sku in existing})
     result.would_replace = sum(r["exists"] for r in result.rows)
     return result
 
@@ -396,13 +400,29 @@ def _category_ids(db: Session, names: set[str]) -> tuple[dict[str, int], int]:
     return ids, created
 
 
+def _shelf_ids(db: Session, codes: set[str]) -> tuple[dict[str, int], int]:
+    """Shelf id for each code; missing shelves are created with the code as their name."""
+    ids = dict(db.execute(select(Shelf.code, Shelf.id)).all())
+    created = 0
+    for code in sorted(codes - set(ids)):
+        shelf = Shelf(code=code, name=code)
+        db.add(shelf)
+        db.flush()
+        ids[code] = shelf.id
+        created += 1
+    return ids, created
+
+
 def _write_products(db: Session, parsed: Parsed, _user: User, _filename: str) -> dict:
     categories, created = _category_ids(db, {r["category"] for r in parsed.rows})
+    shelves, shelves_created = _shelf_ids(db, {r["shelf"] for r in parsed.rows if r.get("shelf")})
     by_sku = {p.sku: p for p in db.scalars(select(Product))}
     for r in parsed.rows:
         fields = {"name": r["name"], "category_id": categories[r["category"]], "supplier_id": r["supplier_id"],
                   "unit_price": r["unit_price"], "unit_cost": r["unit_cost"], "pack_size": r["pack_size"],
                   "min_order_qty": r["min_order_qty"], "lead_time_days": r["lead_time_days"]}
+        if r.get("shelf"):                               # an empty shelf cell leaves the product's shelf as it is
+            fields["shelf_id"] = shelves[r["shelf"]]
         if r["sku"] in by_sku:
             for key, value in fields.items():
                 setattr(by_sku[r["sku"]], key, value)
@@ -412,7 +432,7 @@ def _write_products(db: Session, parsed: Parsed, _user: User, _filename: str) ->
             db.flush()
             db.add(InventoryBalance(product_id=product.id, on_hand=0, backorders=0))
     return {"added": len(parsed.rows) - parsed.would_replace, "replaced": parsed.would_replace,
-            "categories_added": created}
+            "categories_added": created, "shelves_added": shelves_created}
 
 
 # ---------------------------------------------------------------- opening stock

@@ -29,7 +29,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
 from app.models import (
-    CalendarDay, Category, DailySales, InventoryBalance, InventoryTransaction, Product, Supplier,
+    CalendarDay, Category, DailySales, InventoryBalance, InventoryTransaction, Product, Shelf, Supplier,
 )
 from app.models.enums import TransactionType
 from ml.calendar.festivals import festivals
@@ -48,6 +48,17 @@ CATEGORIES = {
     "HOUSEHOLD": "Household & puja",
     "PERSONAL": "Personal care",
 }
+
+# Where each category is kept: shelf code, name, area. The storeroom holds extra stock (no products by default).
+SHELVES = {
+    "GRAINS": ("A-1", "Aisle A: rice, dal and flour", "Front shop"),
+    "OIL_SPICE": ("A-2", "Aisle A: oil, ghee and spices", "Front shop"),
+    "SNACKS": ("B-1", "Aisle B: noodles, biscuits and snacks", "Front shop"),
+    "HOUSEHOLD": ("B-2", "Aisle B: household and puja", "Front shop"),
+    "DRINKS": ("C-1", "Fridge and drinks corner", "Front shop"),
+    "PERSONAL": ("D-1", "Counter shelf: personal care", "Counter"),
+}
+STOREROOM = ("STORE", "Back storeroom", "Storeroom")
 
 # code, name, lead time (days), lead time SD (days)
 SUPPLIERS = [
@@ -250,6 +261,21 @@ def money(value: float) -> Decimal:
 OPENING_REASON = "Opening balance: DEMO synthetic stock"
 
 
+def add_shelves(session: Session) -> int:
+    """Give the current demo shop its shelves and put each product on its category's shelf. Returns shelves added."""
+    if session.scalar(select(Shelf.id).limit(1)) is not None:
+        return 0
+    shelves = {cat: Shelf(code=code, name=name, area=area) for cat, (code, name, area) in SHELVES.items()}
+    session.add_all([*shelves.values(), Shelf(code=STOREROOM[0], name=STOREROOM[1], area=STOREROOM[2])])
+    session.flush()
+    for product in session.scalars(select(Product).join(Category, Category.id == Product.category_id)):
+        shelf = shelves.get(product.category.code)
+        if shelf is not None and product.shelf_id is None:
+            product.shelf_id = shelf.id
+    session.flush()
+    return len(shelves) + 1
+
+
 def load(session: Session, data: DemoShopData, name: str = DEMO_SHOP_NAME) -> dict[str, int]:
     """Create a new demo shop (marked is_demo) holding `data`, and switch the session to it.
 
@@ -275,6 +301,7 @@ def load(session: Session, data: DemoShopData, name: str = DEMO_SHOP_NAME) -> di
                 for p in data.products}
     session.add_all(products.values())
     session.flush()
+    add_shelves(session)
 
     rows = [{"shop_id": shop.id, "product_id": products[sku].id, "sales_date": day, "units": units, "unit_price": money(price),
              "is_available": available}

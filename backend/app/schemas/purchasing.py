@@ -50,6 +50,8 @@ class LineOut(BaseModel):
     product_id: int
     sku: str
     name: str
+    shelf_code: str | None = Field(default=None, description="Where the product is kept, for putting the delivery away")
+    shelf_name: str | None = None
     quantity_ordered: int
     quantity_received: int
     quantity_outstanding: int

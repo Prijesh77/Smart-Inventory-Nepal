@@ -92,6 +92,7 @@ export function PurchaseOrderDetailPage() {
                   <td className="py-2 pr-3">
                     <Link to={`/products/${l.product_id}`} className="font-medium text-brand-600 hover:underline">{l.sku}</Link>
                     <p className="text-xs text-slate-500">{l.name}{l.recommendation_id && " · from a reorder recommendation"}</p>
+                    {l.shelf_code && <p className="text-xs text-slate-500">{t("Shelf {code}", { code: l.shelf_code })} · {l.shelf_name}</p>}
                   </td>
                   <td className="py-2 pr-3 text-right tabular-nums">{fmtInt(l.quantity_ordered)}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{fmtInt(l.quantity_received)}</td>
