@@ -20,6 +20,10 @@ export const Icon = {
   box: (p: IconProps) => (
     <Svg {...p}><path d="M21 8 12 3 3 8l9 5 9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" /></Svg>
   ),
+  shelf: (p: IconProps) => (
+    <Svg {...p}><path d="M4 3v18M20 3v18" /><path d="M4 8h16M4 14h16M4 20h16" /><rect x="7" y="4.5" width="3" height="3.5" rx=".5" />
+      <rect x="12" y="10.5" width="4" height="3.5" rx=".5" /></Svg>
+  ),
   warehouse: (p: IconProps) => (
     <Svg {...p}><path d="M3 21V9l9-5 9 5v12" /><path d="M7 21v-8h10v8" /><path d="M7 17h10" /></Svg>
   ),

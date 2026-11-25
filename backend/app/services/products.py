@@ -9,7 +9,7 @@ from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.errors import ConflictError, InvalidReferenceError, NotFoundError
-from app.models import Category, DailySales, InventoryBalance, Product, Supplier
+from app.models import Category, DailySales, InventoryBalance, Product, Shelf, Supplier
 from app.schemas.products import ProductCreate, ProductOut, ProductUpdate, SalesHistory, SalesPoint
 
 SORT_COLUMNS = {
@@ -18,14 +18,15 @@ SORT_COLUMNS = {
     "unit_price": Product.unit_price,
     "on_hand": func.coalesce(InventoryBalance.on_hand, 0),
     "created_at": Product.created_at,
+    "shelf": Shelf.code,
 }
-SortField = Literal["sku", "name", "unit_price", "on_hand", "created_at"]
+SortField = Literal["sku", "name", "unit_price", "on_hand", "created_at", "shelf"]
 
 
 def to_out(product: Product, on_hand: int | None) -> ProductOut:
     return ProductOut(
         id=product.id, sku=product.sku, name=product.name, category=product.category,
-        department=product.department, supplier=product.supplier, unit_price=product.unit_price,
+        department=product.department, supplier=product.supplier, shelf=product.shelf, unit_price=product.unit_price,
         unit_cost=product.unit_cost, lead_time_days=product.lead_time_days,
         effective_lead_time_days=product.effective_lead_time_days, min_order_qty=product.min_order_qty,
         pack_size=product.pack_size, demand_class=product.demand_class, is_active=product.is_active,
@@ -38,15 +39,17 @@ def _base_query() -> Select:
         select(Product, InventoryBalance.on_hand)
         .outerjoin(InventoryBalance, InventoryBalance.product_id == Product.id)
         .join(Category, Category.id == Product.category_id)
-        .options(joinedload(Product.category), joinedload(Product.supplier))
+        .outerjoin(Shelf, Shelf.id == Product.shelf_id)
+        .options(joinedload(Product.category), joinedload(Product.supplier), joinedload(Product.shelf))
     )
 
 
 def list_products(
     db: Session, *, page: int, page_size: int, search: str | None = None, category: str | None = None,
     supplier_id: int | None = None, demand_class: str | None = None, is_active: bool | None = None,
-    sort: SortField = "sku", order: Literal["asc", "desc"] = "asc",
+    shelf_id: int | None = None, sort: SortField = "sku", order: Literal["asc", "desc"] = "asc",
 ) -> tuple[list[ProductOut], int]:
+    """`shelf_id` 0 means products with no shelf yet."""
     query = _base_query()
     if search:
         pattern = f"%{search.strip()}%"
@@ -57,6 +60,8 @@ def list_products(
         query = query.where(Product.supplier_id == supplier_id)
     if demand_class:
         query = query.where(Product.demand_class == demand_class)
+    if shelf_id is not None:
+        query = query.where(Product.shelf_id.is_(None) if shelf_id == 0 else Product.shelf_id == shelf_id)
     if is_active is not None:
         query = query.where(Product.is_active == is_active)
 
@@ -86,11 +91,17 @@ def _check_supplier(db: Session, supplier_id: int | None) -> None:
         raise InvalidReferenceError(f"Unknown supplier id {supplier_id}")
 
 
+def _check_shelf(db: Session, shelf_id: int | None) -> None:
+    if shelf_id is not None and db.get(Shelf, shelf_id) is None:
+        raise InvalidReferenceError(f"Unknown shelf id {shelf_id}")
+
+
 def create_product(db: Session, data: ProductCreate) -> ProductOut:
     """Create a product and its (empty) stock balance in one transaction."""
     if db.scalar(select(Product.id).where(Product.sku == data.sku)) is not None:
         raise ConflictError(f"A product with SKU '{data.sku}' already exists")
     _check_supplier(db, data.supplier_id)
+    _check_shelf(db, data.shelf_id)
     fields = data.model_dump(exclude={"category_code"})
     product = Product(**fields, category_id=_category_id(db, data.category_code))
     db.add(product)
@@ -109,6 +120,8 @@ def update_product(db: Session, product_id: int, data: ProductUpdate) -> Product
         product.category_id = _category_id(db, changes.pop("category_code"))
     if "supplier_id" in changes:
         _check_supplier(db, changes["supplier_id"])
+    if "shelf_id" in changes:
+        _check_shelf(db, changes["shelf_id"])
     for field, value in changes.items():
         setattr(product, field, value)
     db.commit()

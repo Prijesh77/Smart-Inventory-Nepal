@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 
 import { api, ApiError } from "../../api/client";
-import type { Category, Product, ProductInput, Supplier } from "../../api/types";
+import type { Category, Product, ProductInput, ShelfRef, Supplier } from "../../api/types";
 import { SelectField, TextField } from "../../components/fields";
 import { Button, ErrorMessage } from "../../components/ui";
 import { t } from "../../lib/i18n";
@@ -12,6 +12,7 @@ interface FormValues {
   category_code: string;
   department: string;
   supplier_id: string;
+  shelf_id: string;
   unit_price: string;
   unit_cost: string;
   lead_time_days: string;
@@ -52,6 +53,7 @@ export function toInput(v: FormValues, isNew: boolean): ProductInput {
     category_code: v.category_code,
     department: v.department.trim() || null,
     supplier_id: v.supplier_id ? Number(v.supplier_id) : null,
+    shelf_id: v.shelf_id ? Number(v.shelf_id) : null,
     unit_price: v.unit_price.trim(),
     unit_cost: v.unit_cost.trim() || null,
     lead_time_days: v.lead_time_days.trim() ? Number(v.lead_time_days) : null,
@@ -63,16 +65,18 @@ export function toInput(v: FormValues, isNew: boolean): ProductInput {
 function initialValues(p?: Product): FormValues {
   return {
     sku: p?.sku ?? "", name: p?.name ?? "", category_code: p?.category.code ?? "", department: p?.department ?? "",
-    supplier_id: p?.supplier ? String(p.supplier.id) : "", unit_price: String(p?.unit_price ?? ""),
+    supplier_id: p?.supplier ? String(p.supplier.id) : "", shelf_id: p?.shelf ? String(p.shelf.id) : "",
+    unit_price: String(p?.unit_price ?? ""),
     unit_cost: String(p?.unit_cost ?? ""), lead_time_days: p?.lead_time_days ? String(p.lead_time_days) : "",
     min_order_qty: String(p?.min_order_qty ?? 1), pack_size: String(p?.pack_size ?? 1), is_active: p?.is_active ?? true,
   };
 }
 
-export function ProductForm({ product, categories, suppliers, onSaved, onCancel }: {
+export function ProductForm({ product, categories, suppliers, shelves = [], onSaved, onCancel }: {
   product?: Product;
   categories: Category[];
   suppliers: Supplier[];
+  shelves?: ShelfRef[];
   onSaved: (product: Product) => void;
   onCancel: () => void;
 }) {
@@ -129,6 +133,10 @@ export function ProductForm({ product, categories, suppliers, onSaved, onCancel 
         <SelectField id="supplier" label={t("Supplier")} value={values.supplier_id} onChange={set("supplier_id")}>
           <option value="">{t("No supplier")}</option>
           {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.lead_time_days}-day lead time)</option>)}
+        </SelectField>
+        <SelectField id="shelf" label={t("Shelf")} value={values.shelf_id} onChange={set("shelf_id")}>
+          <option value="">{t("No shelf")}</option>
+          {shelves.map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}
         </SelectField>
         <TextField id="lead_time" label={t("Lead time override (days)")} inputMode="numeric" value={values.lead_time_days}
                    onChange={set("lead_time_days")} error={errors.lead_time_days}

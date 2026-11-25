@@ -1,4 +1,4 @@
-"""Product master data: categories, suppliers, products."""
+"""Product master data: categories, suppliers, shelves, products."""
 
 from __future__ import annotations
 
@@ -35,6 +35,18 @@ class Supplier(ShopOwned, TimestampMixin, Base):
     contact_email: Mapped[str | None] = mapped_column(String(254))
 
 
+class Shelf(ShopOwned, TimestampMixin, Base):
+    """A place in the shop where products are kept, so staff can find them (e.g. A-1 "Aisle A, top shelf")."""
+
+    __tablename__ = "shelves"
+    __table_args__ = (UniqueConstraint("shop_id", "code", name="uq_shelves_shop_code"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(30))
+    name: Mapped[str] = mapped_column(String(120))
+    area: Mapped[str | None] = mapped_column(String(60))     # e.g. "Front shop", "Storeroom"
+
+
 class Product(ShopOwned, TimestampMixin, Base):
     __tablename__ = "products"
     __table_args__ = (
@@ -52,6 +64,7 @@ class Product(ShopOwned, TimestampMixin, Base):
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), index=True)
     department: Mapped[str | None] = mapped_column(String(50))
     supplier_id: Mapped[int | None] = mapped_column(ForeignKey("suppliers.id"), index=True)
+    shelf_id: Mapped[int | None] = mapped_column(ForeignKey("shelves.id", ondelete="SET NULL"), index=True)
     unit_price: Mapped[Decimal]
     unit_cost: Mapped[Decimal | None]          # unknown cost is allowed; the engine warns
     lead_time_days: Mapped[int | None]         # None = use the supplier's lead time
@@ -62,6 +75,7 @@ class Product(ShopOwned, TimestampMixin, Base):
 
     category: Mapped[Category] = relationship()
     supplier: Mapped[Supplier | None] = relationship()
+    shelf: Mapped[Shelf | None] = relationship()
 
     @property
     def effective_lead_time_days(self) -> int | None:

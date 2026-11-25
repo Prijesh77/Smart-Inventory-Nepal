@@ -64,6 +64,7 @@ export function ProductDetailPage() {
             <Item label={t("Unit cost")} value={fmtMoney(p.unit_cost)} />
             <Item label={t("On hand")} value={`${fmtInt(p.on_hand)} units`} />
             <Item label={t("Supplier")} value={p.supplier?.name ?? "—"} />
+            <Item label={t("Shelf")} value={p.shelf ? `${p.shelf.code} · ${p.shelf.name}` : t("No shelf set")} />
             <Item label={t("Lead time")} value={p.effective_lead_time_days ? `${p.effective_lead_time_days} days${p.lead_time_days ? " (override)" : ""}` : "—"} />
             <Item label={t("Minimum order")} value={fmtInt(p.min_order_qty)} />
             <Item label={t("Pack size")} value={fmtInt(p.pack_size)} />
@@ -100,6 +101,7 @@ export function ProductDetailPage() {
 
       <Dialog title={`Edit ${p.sku}`} open={editing} onClose={() => setEditing(false)} wide>
         <ProductForm product={p} categories={reference.data?.categories ?? []} suppliers={reference.data?.suppliers ?? []}
+                     shelves={reference.data?.shelves ?? []}
                      onCancel={() => setEditing(false)}
                      onSaved={() => { setEditing(false); product.reload(); }} />
       </Dialog>

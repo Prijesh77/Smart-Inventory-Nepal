@@ -32,6 +32,54 @@ CodeStr = Annotated[str, Field(min_length=1, max_length=30, pattern=r"^[A-Za-z0-
                                description="Letters, digits, '_' or '-'. Stored in upper case.")]
 
 
+class ShelfRef(BaseModel):
+    """The shelf shown next to a product."""
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    name: str
+    area: str | None = None
+
+
+class ShelfOut(ShelfRef):
+    product_count: int = Field(description="Active products kept on this shelf")
+
+
+class ShelfCreate(BaseModel):
+    code: CodeStr
+    name: str = Field(min_length=1, max_length=120, description='e.g. "Aisle A, top shelf"')
+    area: str | None = Field(default=None, max_length=60, description='e.g. "Front shop" or "Storeroom"')
+
+    @field_validator("code", mode="before")
+    @classmethod
+    def normalise_code(cls, value: object) -> object:
+        return value.strip().upper() if isinstance(value, str) else value
+
+    @field_validator("name")
+    @classmethod
+    def strip_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("name cannot be blank")
+        return value.strip()
+
+    @field_validator("area")
+    @classmethod
+    def strip_area(cls, value: str | None) -> str | None:
+        return value.strip() or None if value is not None else None
+
+
+class ShelfUpdate(BaseModel):
+    """Only the fields sent are changed; the code can change too (products refer to the shelf by id)."""
+    code: CodeStr | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    area: str | None = Field(default=None, max_length=60)
+
+    @field_validator("code", mode="before")
+    @classmethod
+    def normalise_code(cls, value: object) -> object:
+        return value.strip().upper() if isinstance(value, str) else value
+
+
 class CategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     code: CodeStr | None = Field(default=None, description="Leave empty to make one from the name")
@@ -79,6 +127,7 @@ class ProductCreate(BaseModel):
     category_code: str = Field(min_length=1, max_length=30)
     department: str | None = Field(default=None, max_length=50)
     supplier_id: int | None = None
+    shelf_id: int | None = None
     unit_price: MoneyIn
     unit_cost: MoneyIn | None = None
     lead_time_days: int | None = Field(default=None, ge=1, le=365,
@@ -106,6 +155,7 @@ class ProductUpdate(BaseModel):
     category_code: str | None = Field(default=None, min_length=1, max_length=30)
     department: str | None = Field(default=None, max_length=50)
     supplier_id: int | None = None
+    shelf_id: int | None = None
     unit_price: MoneyIn | None = None
     unit_cost: MoneyIn | None = None
     lead_time_days: int | None = Field(default=None, ge=1, le=365)
@@ -121,6 +171,7 @@ class ProductOut(BaseModel):
     category: CategoryOut
     department: str | None
     supplier: SupplierOut | None
+    shelf: ShelfRef | None = None
     unit_price: Decimal
     unit_cost: Decimal | None
     lead_time_days: int | None

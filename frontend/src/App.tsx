@@ -20,6 +20,7 @@ const ProductsPage = named(() => import("./pages/products/ProductsPage"), "Produ
 const ProductDetailPage = named(() => import("./pages/products/ProductDetailPage"), "ProductDetailPage");
 const InventoryPage = named(() => import("./pages/inventory/InventoryPage"), "InventoryPage");
 const SalesPage = named(() => import("./pages/sales/SalesPage"), "SalesPage");
+const ShelvesPage = named(() => import("./pages/shelves/ShelvesPage"), "ShelvesPage");
 const ForecastsPage = named(() => import("./pages/forecasts/ForecastsPage"), "ForecastsPage");
 const RecommendationsPage = named(() => import("./pages/recommendations/RecommendationsPage"), "RecommendationsPage");
 const PurchaseOrdersPage = named(() => import("./pages/purchase-orders/PurchaseOrdersPage"), "PurchaseOrdersPage");
@@ -38,6 +39,7 @@ export function AppRoutes() {
         <Route path="/products" element={page(<ProductsPage />)} />
         <Route path="/products/:id" element={page(<ProductDetailPage />)} />
         <Route path="/inventory" element={page(<InventoryPage />)} />
+        <Route path="/shelves" element={page(<ShelvesPage />)} />
         <Route path="/sales" element={page(<SalesPage />)} />
         <Route path="/forecasts" element={page(<ForecastsPage />)} />
         <Route path="/recommendations" element={page(<RecommendationsPage />)} />

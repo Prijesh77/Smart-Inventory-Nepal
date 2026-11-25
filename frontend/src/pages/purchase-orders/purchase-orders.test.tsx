@@ -18,9 +18,9 @@ function order(overrides: Partial<PurchaseOrder> = {}): PurchaseOrder {
     id: 1, po_number: "PO-000001", supplier_id: 4, supplier_code: "SUP_D", supplier_name: "Supplier D", status: "draft",
     expected_date: "2016-06-02", submitted_at: null, received_at: null, notes: null, created_at: "2026-10-29T12:00:00Z",
     lines: [
-      { id: 11, product_id: 50, sku: "HOBBIES_2_147", name: "Hobbies 2 - Item 147", quantity_ordered: 12, quantity_received: 0,
+      { id: 11, product_id: 50, sku: "HOBBIES_2_147", name: "Hobbies 2 - Item 147", shelf_code: "B-2", shelf_name: "Aisle B", quantity_ordered: 12, quantity_received: 0,
         quantity_outstanding: 12, unit_cost: "1.50", line_total: "18.00", recommendation_id: 101 },
-      { id: 12, product_id: 51, sku: "HOBBIES_2_148", name: "Hobbies 2 - Item 148", quantity_ordered: 6, quantity_received: 0,
+      { id: 12, product_id: 51, sku: "HOBBIES_2_148", name: "Hobbies 2 - Item 148", shelf_code: null, shelf_name: null, quantity_ordered: 6, quantity_received: 0,
         quantity_outstanding: 6, unit_cost: "2.00", line_total: "12.00", recommendation_id: null },
     ],
     total_units: 18, total_cost: "30.00", note: "Orders are only recorded in this app; nothing is sent to suppliers.",

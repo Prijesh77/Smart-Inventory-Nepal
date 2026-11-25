@@ -66,12 +66,38 @@ def setup() -> None:
     print(f"Demo admin accounts written to {CREDENTIALS_FILE.relative_to(ROOT)} (passwords not printed).")
 
 
+def upgrade() -> None:
+    """Bring a demo.db made by an older version up to date (SQLite has no Alembic here)."""
+    from sqlalchemy import inspect, select, text
+    from sqlalchemy.orm import Session
+
+    import app.models  # noqa: F401
+    from app.db.base import Base
+    from app.db.session import get_engine
+    from app.db.tenancy import SHOP_KEY
+    from app.models import Shop
+    from app.services import demo_shop
+
+    engine = get_engine()
+    Base.metadata.create_all(engine)                       # adds new tables only
+    if "shelf_id" not in {c["name"] for c in inspect(engine).get_columns("products")}:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE products ADD COLUMN shelf_id INTEGER REFERENCES shelves(id) ON DELETE SET NULL"))
+    with Session(engine) as plain:
+        demo_shops = list(plain.scalars(select(Shop.id).where(Shop.is_demo.is_(True))))
+    for shop_id in demo_shops:
+        with Session(engine, info={SHOP_KEY: shop_id}) as session:
+            if demo_shop.add_shelves(session):
+                session.commit()
+
+
 def serve(port: int = 8000) -> None:
     import uvicorn
 
 
     if not DB_FILE.exists():
         raise SystemExit("Run 'demo_sqlite.py setup' first.")
+    upgrade()
     os.chdir(ROOT / "backend")
     uvicorn.run("app.main:app", host="127.0.0.1", port=port, log_level="warning")
 

@@ -12,6 +12,7 @@ export const NAV_ITEMS = [
   { to: "/products", label: "Products", icon: "box", group: "Operations" },
   { to: "/sales", label: "Record sales", icon: "money", group: "Operations" },
   { to: "/inventory", label: "Inventory", icon: "warehouse", group: "Operations" },
+  { to: "/shelves", label: "Shelves", icon: "shelf", group: "Operations" },
   { to: "/purchase-orders", label: "Purchase orders", icon: "clipboard", group: "Operations" },
   { to: "/forecasts", label: "Forecasting", icon: "trend", group: "Planning" },
   { to: "/recommendations", label: "Reorder", icon: "cart", group: "Planning" },
