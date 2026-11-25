@@ -4,6 +4,8 @@
  * The token is kept in memory and in sessionStorage, so a page refresh keeps
  * you logged in but closing the tab logs you out. Tokens expire after
  * 60 minutes on the server; any 401 response logs the user out here.
+ * "Remember me" asks the server for a 30-day token and keeps it in
+ * localStorage instead, so the login survives closing the browser.
  * (A production system would prefer an HttpOnly cookie, which page scripts
  * cannot read. That is listed as a limitation in docs/18.)
  */
@@ -17,7 +19,7 @@ const STORAGE_KEY = "smart-inventory.token";
 interface AuthState {
   user: User | null;
   loading: boolean;               // true while checking a stored token at start-up
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: (reason?: string) => void;
   notice: string | null;          // e.g. "Session expired" shown on the login page
   can: (...roles: Role[]) => boolean;
@@ -27,16 +29,18 @@ const AuthContext = createContext<AuthState | null>(null);
 
 function readStoredToken(): string | null {
   try {
-    return sessionStorage.getItem(STORAGE_KEY);
+    return sessionStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(STORAGE_KEY);
   } catch {
     return null;                  // storage blocked (private mode etc.): just log in again
   }
 }
 
-function storeToken(token: string | null): void {
+/** This tab only (sessionStorage), or this browser until logout when remembered (localStorage). */
+function storeToken(token: string | null, remember = false): void {
   try {
-    if (token) sessionStorage.setItem(STORAGE_KEY, token);
-    else sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    if (token) (remember ? localStorage : sessionStorage).setItem(STORAGE_KEY, token);
   } catch {
     /* ignore: the in-memory token still works for this page */
   }
@@ -74,11 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setUnauthorizedHandler(null);
   }, [logout]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, remember = false) => {
     // The login endpoint uses the standard OAuth2 form: the email goes in "username".
-    const data = await api.postForm<TokenResponse>("/auth/login", new URLSearchParams({ username: email, password }));
+    const form = new URLSearchParams({ username: email, password });
+    if (remember) form.set("remember", "true");
+    const data = await api.postForm<TokenResponse>("/auth/login", form);
     setAuthToken(data.access_token);
-    storeToken(data.access_token);
+    storeToken(data.access_token, remember);
     setNotice(null);
     setUser(data.user);
   }, []);

@@ -82,6 +82,32 @@ describe("login flow", () => {
     expect(sessionStorage.getItem("smart-inventory.token")).toBeNull();
   });
 
+  it("remembers the login in this browser when asked", async () => {
+    const { calls } = mockFetch({
+      "POST /auth/login": () => ({ body: { access_token: "long", token_type: "bearer", expires_in: 2592000, user: TEST_USER } }),
+    });
+    renderApp("/inventory");
+    await userEvent.type(await screen.findByLabelText("Email"), "manager@test.local");
+    await userEvent.type(screen.getByLabelText("Password"), "test-password-123");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Remember me on this device" }));
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByRole("heading", { name: "Inventory" })).toBeInTheDocument();
+    expect(String(calls[0].init?.body)).toContain("remember=true");
+    expect(localStorage.getItem("smart-inventory.token")).toBe("long");     // survives closing the browser
+    expect(sessionStorage.getItem("smart-inventory.token")).toBeNull();
+  });
+
+  it("restores a remembered login, and logging out forgets it", async () => {
+    localStorage.setItem("smart-inventory.token", "remembered");
+    mockFetch({ "GET /auth/me": () => ({ body: TEST_USER }) });
+    renderApp("/");
+    await userEvent.click(await screen.findByRole("button", { name: /Test Manager/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Log out" }));
+    expect(await screen.findByLabelText("Email")).toBeInTheDocument();
+    expect(localStorage.getItem("smart-inventory.token")).toBeNull();
+  });
+
   it("logs out", async () => {
     sessionStorage.setItem("smart-inventory.token", "stored");
     mockFetch({ "GET /auth/me": () => ({ body: TEST_USER }) });

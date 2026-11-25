@@ -618,6 +618,10 @@ export const NE: Record<string, string> = {
   "Some recent days are only partly entered. Products with no entry count as 0 sold on those days; if sales are missing, add them.":
     "हालका केही दिनको बिक्री आधा मात्र दर्ता छ। दर्ता नभएका सामान ती दिन ० बिकेको मानिन्छ; बिक्री छुटेको भए थप्नुहोस्।",
   "{date}: {n} of {total} products": "{date}: {total} मध्ये {n} सामान",
+  // ---- login
+  "Remember me on this device": "यो उपकरणमा मलाई सम्झनुहोस्",
+  "Stay logged in for 30 days. Do not tick this on a shared computer.":
+    "३० दिनसम्म लग इन रहनुहोस्। साझा कम्प्युटरमा यो नछान्नुहोस्।",
   // ---- shelves
   "Shelves": "र्‍याकहरू",
   "Shelf": "र्‍याक",

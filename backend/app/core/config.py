@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    remember_me_days: int = 30          # sign-in lifetime when "Remember me" is ticked
 
 
 @lru_cache
